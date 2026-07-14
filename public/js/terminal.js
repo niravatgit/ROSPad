@@ -6,18 +6,30 @@
  */
 
 // ── Shared xterm theme / options ──────────────────────────────────────────────
+const _xtermThemeDark = {
+  background: '#0d1117', foreground: '#e6edf3', cursor: '#58a6ff',
+  black: '#0d1117',    brightBlack: '#3d444d',
+  red: '#f85149',      brightRed: '#ff7b72',
+  green: '#3fb950',    brightGreen: '#56d364',
+  yellow: '#d29922',   brightYellow: '#e3b341',
+  blue: '#1f6feb',     brightBlue: '#58a6ff',
+  magenta: '#8957e5',  brightMagenta: '#bc8cff',
+  cyan: '#39c5cf',     brightCyan: '#56d4dd',
+  white: '#8b949e',    brightWhite: '#e6edf3',
+};
+const _xtermThemeLight = {
+  background: '#f6f8fa', foreground: '#24292f', cursor: '#0969da',
+  black: '#24292f',    brightBlack: '#57606a',
+  red: '#cf222e',      brightRed: '#a40e26',
+  green: '#1a7f37',    brightGreen: '#116329',
+  yellow: '#9a6700',   brightYellow: '#7d4e00',
+  blue: '#0969da',     brightBlue: '#0550ae',
+  magenta: '#8250df',  brightMagenta: '#6639ba',
+  cyan: '#0969da',     brightCyan: '#0550ae',
+  white: '#57606a',    brightWhite: '#24292f',
+};
 const XTERM_OPTIONS = {
-  theme: {
-    background: '#0d1117', foreground: '#e6edf3', cursor: '#58a6ff',
-    black: '#0d1117',    brightBlack: '#3d444d',
-    red: '#f85149',      brightRed: '#ff7b72',
-    green: '#3fb950',    brightGreen: '#56d364',
-    yellow: '#d29922',   brightYellow: '#e3b341',
-    blue: '#1f6feb',     brightBlue: '#58a6ff',
-    magenta: '#8957e5',  brightMagenta: '#bc8cff',
-    cyan: '#39c5cf',     brightCyan: '#56d4dd',
-    white: '#8b949e',    brightWhite: '#e6edf3',
-  },
+  theme: localStorage.getItem('rospad-theme') === 'light' ? _xtermThemeLight : _xtermThemeDark,
   fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
   fontSize: 12,
   lineHeight: 1.4,
@@ -610,6 +622,17 @@ class TerminalManager {
     });
   }
 }
+
+// ── Theme helper (called by index.html toggleTheme) ───────────────────────────
+window.applyTerminalTheme = function(mode) {
+  const t = mode === 'light' ? _xtermThemeLight : _xtermThemeDark;
+  XTERM_OPTIONS.theme = t;
+  if (window.termManager) {
+    window.termManager.sessions.forEach(s => {
+      if (s.xterm) s.xterm.options.theme = t;
+    });
+  }
+};
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 window.termManager = new TerminalManager();

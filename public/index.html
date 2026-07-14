@@ -52,6 +52,18 @@
       --ros:    #1a7f37;
     }
 
+    [data-theme="light"] .topbtn {
+      background: var(--bg3);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    [data-theme="light"] .topbtn:hover { background: #d0d7de; }
+    [data-theme="light"] .topbtn.run   { background: #dafbe1; border-color: #1a7f37; color: #116329; }
+    [data-theme="light"] .topbtn.run:hover { background: #c6f5cd; }
+    [data-theme="light"] .topbtn.stop  { background: #ffebe9; border-color: #cf222e; color: #a40e26; }
+    [data-theme="light"] .topbtn.stop:hover { background: #ffd5d2; }
+    [data-theme="light"] .topbtn.active { background: #ddf4ff; border-color: #0969da; color: #0550ae; }
+
     #theme-toggle {
       background: none; border: none; cursor: pointer;
       color: var(--text2); font-size: 17px; line-height: 1;
@@ -960,11 +972,13 @@ function toggleTheme() {
     document.getElementById('theme-toggle').textContent = '🌙';
     localStorage.setItem('rospad-theme', 'dark');
     if (window.monacoReady) monaco.editor.setTheme('rospad');
+    window.applyTerminalTheme?.('dark');
   } else {
     document.documentElement.setAttribute('data-theme', 'light');
     document.getElementById('theme-toggle').textContent = '☀';
     localStorage.setItem('rospad-theme', 'light');
     if (window.monacoReady) monaco.editor.setTheme('vs');
+    window.applyTerminalTheme?.('light');
   }
 }
 
