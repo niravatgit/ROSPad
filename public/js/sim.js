@@ -176,6 +176,35 @@ function _makeFloorTex() {
 }
 
 
+// ── 3D Turtle (appears in main sim scene when /turtle1/cmd_vel is received) ───
+let _simTurtle = null;
+const _simTurtleState = { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false };
+
+function _makeTurtle3D() {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.025, 32),
+    new THREE.MeshLambertMaterial({ color: 0x3fb950 })
+  );
+  body.position.y = 0.0125;
+  body.castShadow = true;
+  g.add(body);
+  const shell = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshLambertMaterial({ color: 0x22c55e, transparent: true, opacity: 0.8 })
+  );
+  shell.position.y = 0.025;
+  g.add(shell);
+  const nose = new THREE.Mesh(
+    new THREE.ConeGeometry(0.04, 0.10, 8),
+    new THREE.MeshLambertMaterial({ color: 0x85e89d })
+  );
+  nose.rotation.z = -Math.PI / 2;
+  nose.position.set(0.22, 0.02, 0);
+  g.add(nose);
+  return g;
+}
+
 // ── initSim ───────────────────────────────────────────────────────────────────
 function initSim() {
   const canvas = document.getElementById('sim-canvas');
@@ -232,6 +261,24 @@ function initSim() {
   rosBus.subscribe('/joint_states', 'sensor_msgs/JointState', (data) => {
     if (simRobot && simRobot.userData.type === 'arm' && data.position) {
       updateArmJoints(data.position);
+    }
+  });
+
+  // Turtle sim — appears in 3D scene when /turtle1/cmd_vel arrives (no URDF needed)
+  _simTurtle = _makeTurtle3D();
+  _simTurtle.visible = false;
+  simScene.add(_simTurtle);
+  rosBus.subscribe('/turtle1/cmd_vel', 'geometry_msgs/Twist', (data) => {
+    _simTurtleState.vx = data.linear?.x  || 0;
+    _simTurtleState.wz = data.angular?.z || 0;
+    if (!_simTurtleState.active) {
+      _simTurtleState.active = true;
+      _simTurtle.visible = true;
+      _setSimLabel('Turtle');
+      // Start sim_bridge and declare turtle topics on first cmd_vel
+      startSim();
+      rosBus.trackSubscriber('/turtle1/cmd_vel', 'sim_bridge');
+      rosBus.trackPublisher('/turtle1/pose', 'sim_bridge');
     }
   });
 
@@ -843,6 +890,10 @@ function resetSim() {
     robotBody.setWorldTransform(_tmpAmmoTransform);
     robotBody.getMotionState().setWorldTransform(_tmpAmmoTransform);
   }
+  // Reset turtle
+  _simTurtleState.x = 0; _simTurtleState.y = 0; _simTurtleState.theta = 0;
+  _simTurtleState.vx = 0; _simTurtleState.wz = 0;
+  if (_simTurtle) _simTurtle.position.set(0, 0, 0);
   // If a robot is already loaded, reset it to origin
   if (simRobot) loadRobot(simRobot.userData.type);
 }
@@ -916,6 +967,30 @@ function animate(time = 0) {
     });
   }
 
+  // Turtle kinematics — runs when turtle is active (WASD or /turtle1/cmd_vel)
+  if (_simTurtleState.active && _simTurtle) {
+    if (simCanvasFocused && time - lastTeleopPublish >= 100) {
+      let tvx = 0, twz = 0;
+      if (keysDown['w']) tvx += 1.5;
+      if (keysDown['s']) tvx -= 1.5;
+      if (keysDown['a']) twz += 1.5;
+      if (keysDown['d']) twz -= 1.5;
+      if (tvx !== 0 || twz !== 0) {
+        rosBus.publish('/turtle1/cmd_vel', 'geometry_msgs/Twist', {
+          linear: { x: tvx, y: 0, z: 0 }, angular: { x: 0, y: 0, z: twz },
+        });
+      }
+    }
+    _simTurtleState.theta += _simTurtleState.wz * dt;
+    _simTurtleState.x     += _simTurtleState.vx * Math.cos(_simTurtleState.theta) * dt;
+    _simTurtleState.y     += _simTurtleState.vx * Math.sin(_simTurtleState.theta) * dt;
+    _simTurtle.position.set(_simTurtleState.x, 0, _simTurtleState.y);
+    _simTurtle.rotation.y = _simTurtleState.theta;
+    rosBus.publish('/turtle1/pose', 'turtlesim/Pose', {
+      x: _simTurtleState.x, y: _simTurtleState.y, theta: _simTurtleState.theta,
+      linear_velocity: _simTurtleState.vx, angular_velocity: _simTurtleState.wz,
+    });
+  }
 
   updateOrbitCamera();
   updateLidar(time);
