@@ -973,12 +973,14 @@ function toggleTheme() {
     localStorage.setItem('rospad-theme', 'dark');
     if (window.monacoReady) monaco.editor.setTheme('rospad');
     window.applyTerminalTheme?.('dark');
+    window.updateGraphTheme?.('dark');
   } else {
     document.documentElement.setAttribute('data-theme', 'light');
     document.getElementById('theme-toggle').textContent = '☀';
     localStorage.setItem('rospad-theme', 'light');
     if (window.monacoReady) monaco.editor.setTheme('vs');
     window.applyTerminalTheme?.('light');
+    window.updateGraphTheme?.('light');
   }
 }
 

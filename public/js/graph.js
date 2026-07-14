@@ -8,60 +8,97 @@ let _lastHash  = '';
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const CY_STYLE = [
-  {
-    selector: 'node[ntype="ros-node"]',
-    style: {
-      shape: 'roundrectangle',
-      width: 130, height: 34,
-      'background-color': '#0d2218',
-      'border-color': '#3fb950', 'border-width': 1.5,
-      label: 'data(label)',
-      color: '#3fb950',
-      'font-size': 11, 'font-weight': 'bold',
-      'font-family': 'monospace, sans-serif',
-      'text-valign': 'center', 'text-halign': 'center',
+const _PALETTES = {
+  dark: {
+    nodeBg: '#0d2218', nodeBorder: '#3fb950', nodeText: '#3fb950',
+    topicBg: '#0c1a2a', topicBorder: '#58a6ff', topicText: '#58a6ff',
+    pubLine: '#2d7a42', pubArrow: '#3fb950',
+    subLine: '#1e4a78', subArrow: '#58a6ff',
+    selectedBorder: '#e6edf3',
+    canvasBg: '#0d1117',
+    emptyText: '#8b949e', emptyHint: '#30363d',
+  },
+  light: {
+    nodeBg: '#dcfce7', nodeBorder: '#1a7f37', nodeText: '#116329',
+    topicBg: '#dbeafe', topicBorder: '#0969da', topicText: '#0550ae',
+    pubLine: '#1a7f37', pubArrow: '#116329',
+    subLine: '#0969da', subArrow: '#0550ae',
+    selectedBorder: '#24292f',
+    canvasBg: '#f6f8fa',
+    emptyText: '#57606a', emptyHint: '#d0d7de',
+  },
+};
+
+function _buildStyle(p) {
+  return [
+    {
+      selector: 'node[ntype="ros-node"]',
+      style: {
+        shape: 'roundrectangle', width: 130, height: 34,
+        'background-color': p.nodeBg,
+        'border-color': p.nodeBorder, 'border-width': 1.5,
+        label: 'data(label)', color: p.nodeText,
+        'font-size': 11, 'font-weight': 'bold',
+        'font-family': 'monospace, sans-serif',
+        'text-valign': 'center', 'text-halign': 'center',
+      },
     },
-  },
-  {
-    selector: 'node[ntype="topic"]',
-    style: {
-      shape: 'ellipse',
-      width: 160, height: 34,
-      'background-color': '#0c1a2a',
-      'border-color': '#58a6ff', 'border-width': 1.5,
-      label: 'data(label)',
-      color: '#58a6ff',
-      'font-size': 10,
-      'font-family': 'monospace, sans-serif',
-      'text-valign': 'center', 'text-halign': 'center',
+    {
+      selector: 'node[ntype="topic"]',
+      style: {
+        shape: 'ellipse', width: 160, height: 34,
+        'background-color': p.topicBg,
+        'border-color': p.topicBorder, 'border-width': 1.5,
+        label: 'data(label)', color: p.topicText,
+        'font-size': 10, 'font-family': 'monospace, sans-serif',
+        'text-valign': 'center', 'text-halign': 'center',
+      },
     },
-  },
-  {
-    selector: 'node:selected',
-    style: { 'border-color': '#e6edf3', 'border-width': 2.5 },
-  },
-  {
-    selector: 'edge[etype="pub"]',
-    style: {
-      'line-color': '#2d7a42',
-      'target-arrow-color': '#3fb950',
-      'target-arrow-shape': 'triangle',
-      'curve-style': 'bezier',
-      width: 1.5, opacity: 0.85,
+    {
+      selector: 'node:selected',
+      style: { 'border-color': p.selectedBorder, 'border-width': 2.5 },
     },
-  },
-  {
-    selector: 'edge[etype="sub"]',
-    style: {
-      'line-color': '#1e4a78',
-      'target-arrow-color': '#58a6ff',
-      'target-arrow-shape': 'triangle',
-      'curve-style': 'bezier',
-      width: 1.5, opacity: 0.85,
+    {
+      selector: 'edge[etype="pub"]',
+      style: {
+        'line-color': p.pubLine, 'target-arrow-color': p.pubArrow,
+        'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
+        width: 1.5, opacity: 0.85,
+      },
     },
-  },
-];
+    {
+      selector: 'edge[etype="sub"]',
+      style: {
+        'line-color': p.subLine, 'target-arrow-color': p.subArrow,
+        'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
+        width: 1.5, opacity: 0.85,
+      },
+    },
+  ];
+}
+
+function _currentPalette() {
+  return localStorage.getItem('rospad-theme') === 'light' ? _PALETTES.light : _PALETTES.dark;
+}
+
+window.updateGraphTheme = function(mode) {
+  const p = _PALETTES[mode] || _PALETTES.dark;
+  const bg = document.getElementById('graph-cy');
+  if (bg) bg.style.background = p.canvasBg;
+  const emptyText = document.querySelector('#graph-empty span:first-child');
+  const emptyHint = document.querySelector('#graph-empty span:last-child');
+  if (emptyText) emptyText.style.color = p.emptyText;
+  if (emptyHint) emptyHint.style.color = p.emptyHint;
+  if (_cy) _cy.style(_buildStyle(p));
+  // Update legend swatch colors
+  const swatches = document.querySelectorAll('#graph-legend .swatch-node, #graph-legend .swatch-topic, #graph-legend .swatch-pub, #graph-legend .swatch-sub');
+  swatches.forEach(el => {
+    if (el.classList.contains('swatch-node'))  { el.style.background = p.nodeBg;  el.style.borderColor = p.nodeBorder; }
+    if (el.classList.contains('swatch-topic')) { el.style.background = p.topicBg; el.style.borderColor = p.topicBorder; }
+    if (el.classList.contains('swatch-pub'))   el.style.background = p.pubLine;
+    if (el.classList.contains('swatch-sub'))   el.style.background = p.subLine;
+  });
+};
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 // Structured bipartite layout: ros-nodes (left column) ↔ topics (right column).
@@ -110,47 +147,58 @@ function initGraph() {
   const panel = document.getElementById('panel-graph');
   if (!panel) return;
 
+  const p = _currentPalette();
   panel.innerHTML = `
     <div style="display:flex;align-items:center;padding:5px 10px;border-bottom:1px solid var(--border);flex-shrink:0;gap:8px">
       <span style="font-size:11px;color:var(--text2);flex:1">Node / Topic graph — live</span>
       <button onclick="graphRelayout()" style="font-size:11px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:2px 8px;border-radius:4px;cursor:pointer;line-height:1.6">⟳ Relayout</button>
     </div>
     <div style="flex:1;position:relative;overflow:hidden;min-height:0">
-      <div id="graph-cy" style="position:absolute;inset:0;background:#0d1117"></div>
+      <div id="graph-cy" style="position:absolute;inset:0;background:${p.canvasBg}"></div>
       <div id="graph-empty"
            style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:6px;pointer-events:none">
-        <span style="font-size:13px;color:#8b949e">No nodes running</span>
-        <span style="font-size:11px;color:#30363d">Start a node or launch a package</span>
+        <span style="font-size:13px;color:${p.emptyText}">No nodes running</span>
+        <span style="font-size:11px;color:${p.emptyHint}">Start a node or launch a package</span>
       </div>
       <div id="graph-legend" style="position:absolute;bottom:10px;left:12px;display:flex;flex-direction:column;gap:5px;pointer-events:none">
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:14px;height:10px;border-radius:3px;background:#0d2218;border:1.5px solid #3fb950;flex-shrink:0"></div>
-          <span style="font-size:10px;color:#8b949e">Node</span>
-          <div style="width:28px;height:1.5px;background:#2d7a42;margin-left:8px;flex-shrink:0;position:relative">
-            <div style="position:absolute;right:-4px;top:-3px;width:0;height:0;border-left:6px solid #3fb950;border-top:3.5px solid transparent;border-bottom:3.5px solid transparent"></div>
+          <div class="swatch-node" style="width:14px;height:10px;border-radius:3px;background:${p.nodeBg};border:1.5px solid ${p.nodeBorder};flex-shrink:0"></div>
+          <span style="font-size:10px;color:var(--text2)">Node</span>
+          <div class="swatch-pub" style="width:28px;height:1.5px;background:${p.pubLine};margin-left:8px;flex-shrink:0;position:relative">
+            <div style="position:absolute;right:-4px;top:-3px;width:0;height:0;border-left:6px solid ${p.pubArrow};border-top:3.5px solid transparent;border-bottom:3.5px solid transparent"></div>
           </div>
-          <span style="font-size:10px;color:#8b949e">publish</span>
+          <span style="font-size:10px;color:var(--text2)">publish</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:14px;height:10px;border-radius:7px;background:#0c1a2a;border:1.5px solid #1e4a78;flex-shrink:0"></div>
-          <span style="font-size:10px;color:#8b949e">Topic</span>
-          <div style="width:28px;height:1.5px;background:#1e4a78;margin-left:8px;flex-shrink:0;position:relative">
-            <div style="position:absolute;right:-4px;top:-3px;width:0;height:0;border-left:6px solid #58a6ff;border-top:3.5px solid transparent;border-bottom:3.5px solid transparent"></div>
+          <div class="swatch-topic" style="width:14px;height:10px;border-radius:7px;background:${p.topicBg};border:1.5px solid ${p.topicBorder};flex-shrink:0"></div>
+          <span style="font-size:10px;color:var(--text2)">Topic</span>
+          <div class="swatch-sub" style="width:28px;height:1.5px;background:${p.subLine};margin-left:8px;flex-shrink:0;position:relative">
+            <div style="position:absolute;right:-4px;top:-3px;width:0;height:0;border-left:6px solid ${p.subArrow};border-top:3.5px solid transparent;border-bottom:3.5px solid transparent"></div>
           </div>
-          <span style="font-size:10px;color:#8b949e">subscribe</span>
+          <span style="font-size:10px;color:var(--text2)">subscribe</span>
         </div>
       </div>
     </div>`;
 
-  // Two rAFs: first ensures the DOM is painted, second ensures layout pass complete
+  // Double rAF: ensures DOM is painted and layout pass complete before Cytoscape measures size
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const container = document.getElementById('graph-cy');
-      if (!container) return;
+      if (!container || container.offsetWidth === 0) {
+        // Container not yet sized — retry once more
+        setTimeout(() => {
+          const c2 = document.getElementById('graph-cy');
+          if (!c2) return;
+          _cy = cytoscape({ container: c2, style: _buildStyle(_currentPalette()), layout: { name: 'preset' }, zoomingEnabled: true, userZoomingEnabled: true, panningEnabled: true, userPanningEnabled: true, minZoom: 0.1, maxZoom: 4, pixelRatio: 'auto' });
+          _cy.resize();
+          _updateGraph();
+        }, 100);
+        return;
+      }
 
       _cy = cytoscape({
         container,
-        style:              CY_STYLE,
+        style:              _buildStyle(_currentPalette()),
         layout:             { name: 'preset' },
         zoomingEnabled:     true,
         userZoomingEnabled: true,
@@ -160,7 +208,7 @@ function initGraph() {
         maxZoom: 4,
         pixelRatio: 'auto',
       });
-
+      _cy.resize();
       _updateGraph();
     });
   });
