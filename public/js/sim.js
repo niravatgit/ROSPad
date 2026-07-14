@@ -139,12 +139,9 @@ function startSim() {
   if (simRunning) return;
   simRunning = true;
   rosBus.registerNode('sim_bridge');
-  // Declare topics sim_bridge publishes
-  ['/scan', '/odom', '/tf', '/tf_static', '/turtle1/pose', '/cmd_vel', '/turtle1/cmd_vel']
-    .forEach(t => rosBus.trackPublisher(t, 'sim_bridge'));
-  // Declare topics sim_bridge subscribes to (for graph arrows)
-  ['/cmd_vel', '/turtle1/cmd_vel', '/joint_states', '/robot_description', '/turtle1/pose']
-    .forEach(t => rosBus.trackSubscriber(t, 'sim_bridge'));
+  // Only declare universal topics here — robot-specific ones are added in _loadRobotFromUrdf()
+  ['/tf', '/tf_static'].forEach(t => rosBus.trackPublisher(t, 'sim_bridge'));
+  rosBus.trackSubscriber('/robot_description', 'sim_bridge');
 }
 
 function stopSim() {
@@ -178,174 +175,6 @@ function _makeFloorTex() {
   return tex;
 }
 
-// ── 3D Turtle (in main sim scene) ─────────────────────────────────────────────
-let _simTurtle = null;
-const _simTurtleState = { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false };
-
-function _makeTurtle3D() {
-  const g = new THREE.Group();
-  // Flat body disc
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.18, 0.025, 32),
-    new THREE.MeshLambertMaterial({ color: 0x3fb950 })
-  );
-  body.position.y = 0.0125;
-  body.castShadow = true;
-  g.add(body);
-  // Shell dome (slightly transparent)
-  const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(0.14, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshLambertMaterial({ color: 0x22c55e, transparent: true, opacity: 0.8 })
-  );
-  shell.position.y = 0.025;
-  g.add(shell);
-  // Nose indicator — small cone pointing forward (+X in local space)
-  const nose = new THREE.Mesh(
-    new THREE.ConeGeometry(0.04, 0.10, 8),
-    new THREE.MeshLambertMaterial({ color: 0x85e89d })
-  );
-  nose.rotation.z = -Math.PI / 2;
-  nose.position.set(0.22, 0.02, 0);
-  g.add(nose);
-  return g;
-}
-
-// ── 2D Turtle canvas (turtlesim mode) ────────────────────────────────────────
-let _turtleCtx = null, _turtlePose = { x: 5.5, y: 5.5, theta: 0 };
-let _turtleTrail = [[]]; // array of path segments
-
-function initTurtleCanvas() {
-  const cv = document.getElementById('turtle-canvas');
-  if (!cv) return;
-  _turtleCtx = cv.getContext('2d');
-  _resizeTurtleCanvas();
-  new ResizeObserver(_resizeTurtleCanvas).observe(cv.parentElement);
-
-  // Enable WASD when turtle canvas is active (same pattern as 3D canvas)
-  cv.setAttribute('tabindex', '0');
-  cv.style.outline = 'none';
-  cv.style.cursor  = 'crosshair';
-  cv.addEventListener('mousedown', () => cv.focus());
-  cv.addEventListener('focus', () => { simCanvasFocused = true; });
-  cv.addEventListener('blur',  () => {
-    simCanvasFocused = false;
-    ['w','a','s','d'].forEach(k => { keysDown[k] = false; });
-  });
-
-  rosBus.subscribe('/turtle1/pose', '*', (data) => {
-    // Update 2D canvas trail from pose (manual setSimView('turtle') to view it)
-    const prev = { ..._turtlePose };
-    _turtlePose = {
-      x:     typeof data.x     === 'number' ? data.x     : _turtlePose.x,
-      y:     typeof data.y     === 'number' ? data.y     : _turtlePose.y,
-      theta: typeof data.theta === 'number' ? data.theta : _turtlePose.theta,
-    };
-    // Append to current trail segment
-    const seg = _turtleTrail[_turtleTrail.length - 1];
-    if (seg.length === 0) seg.push([prev.x, prev.y]);
-    seg.push([_turtlePose.x, _turtlePose.y]);
-    _drawTurtle();
-  }, 'sim_bridge');
-}
-
-function _resizeTurtleCanvas() {
-  const cv = document.getElementById('turtle-canvas');
-  if (!cv || cv.clientWidth === 0) return;
-  cv.width  = cv.clientWidth  * window.devicePixelRatio;
-  cv.height = cv.clientHeight * window.devicePixelRatio;
-  _drawTurtle();
-}
-
-function _turtleWorld2Canvas(x, y) {
-  const cv = document.getElementById('turtle-canvas');
-  if (!cv) return [0, 0];
-  const W = cv.width, H = cv.height;
-  // turtlesim world: 0–11.09 in both axes, Y is flipped (0=bottom in turtlesim)
-  return [x / 11.09 * W, (1 - y / 11.09) * H];
-}
-
-function _drawTurtle() {
-  const cv = document.getElementById('turtle-canvas');
-  if (!cv || !_turtleCtx) return;
-  const ctx = _turtleCtx;
-  const W = cv.width, H = cv.height;
-
-  // Background — classic turtlesim teal
-  ctx.fillStyle = '#2d4a6b';
-  ctx.fillRect(0, 0, W, H);
-
-  // Grid lines every 1 m
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 11; i++) {
-    const [gx] = _turtleWorld2Canvas(i, 0);
-    const [, gy] = _turtleWorld2Canvas(0, i);
-    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
-  }
-
-  // Trail segments
-  _turtleTrail.forEach((seg, si) => {
-    if (seg.length < 2) return;
-    ctx.beginPath();
-    ctx.strokeStyle = `hsl(${(si * 47) % 360},80%,60%)`;
-    ctx.lineWidth   = 2.5 * window.devicePixelRatio;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-    seg.forEach(([wx, wy], i) => {
-      const [cx, cy] = _turtleWorld2Canvas(wx, wy);
-      i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
-    });
-    ctx.stroke();
-  });
-
-  // Turtle icon — arrow triangle
-  const [tx, ty] = _turtleWorld2Canvas(_turtlePose.x, _turtlePose.y);
-  const r = 14 * window.devicePixelRatio;
-  const a = -_turtlePose.theta; // canvas Y is flipped vs ROS
-
-  ctx.save();
-  ctx.translate(tx, ty);
-  ctx.rotate(a);
-  ctx.fillStyle   = '#56d364';
-  ctx.strokeStyle = '#3fb950';
-  ctx.lineWidth   = 2;
-  ctx.beginPath();
-  ctx.moveTo( r,      0);
-  ctx.lineTo(-r * 0.6,  r * 0.6);
-  ctx.lineTo(-r * 0.3,  0);
-  ctx.lineTo(-r * 0.6, -r * 0.6);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  // Eyes
-  ctx.fillStyle = '#0d1117';
-  ctx.beginPath(); ctx.arc(r * 0.4,  r * 0.25, r * 0.15, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(r * 0.4, -r * 0.25, r * 0.15, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-}
-
-function clearTurtle() {
-  _turtlePose = { x: 5.5, y: 5.5, theta: 0 };
-  _turtleTrail = [[]];
-  _drawTurtle();
-}
-
-window.clearTurtle = clearTurtle;
-
-// Switch sim view: '3d' or 'turtle'
-function setSimView(mode) {
-  const c3d = document.getElementById('sim-canvas');
-  const c2d = document.getElementById('turtle-canvas');
-  if (mode === 'turtle') {
-    c3d.style.display = 'none'; c2d.style.display = 'block';
-    requestAnimationFrame(_resizeTurtleCanvas);
-  } else {
-    c3d.style.display = 'block'; c2d.style.display = 'none';
-    resize();
-  }
-}
-window.setSimView = setSimView;
 
 // ── initSim ───────────────────────────────────────────────────────────────────
 function initSim() {
@@ -399,19 +228,6 @@ function initSim() {
     }
   });
 
-  // Turtle in 3D sim — responds to /turtle1/cmd_vel
-  _simTurtle = _makeTurtle3D();
-  _simTurtle.visible = false;
-  simScene.add(_simTurtle);
-  rosBus.subscribe('/turtle1/cmd_vel', 'geometry_msgs/Twist', (data) => {
-    _simTurtleState.vx = data.linear?.x  || 0;
-    _simTurtleState.wz = data.angular?.z || 0;
-    if (!_simTurtleState.active) {
-      _simTurtleState.active = true;
-      _simTurtle.visible = true;
-    }
-  });
-
   // Receive /joint_states for arm animation
   rosBus.subscribe('/joint_states', 'sensor_msgs/JointState', (data) => {
     if (simRobot && simRobot.userData.type === 'arm' && data.position) {
@@ -425,7 +241,6 @@ function initSim() {
     if (urdf) { startSim(); _loadRobotFromUrdf(urdf); }
   });
 
-  initTurtleCanvas();
   _initVizMonitor();
   try { _initPhysics(); } catch(e) { console.error('_initPhysics failed:', e); }
 }
@@ -997,11 +812,19 @@ function _loadRobotFromUrdf(urdfXml) {
   } else if (revolutes >= 4) {
     type = 'arm';
   } else {
-    // Unknown — load as arm fallback for now
     type = 'arm';
   }
 
-  setSimView('3d');
+  // Declare only the topics this robot type actually uses
+  if (type === 'diffbot') {
+    ['/scan', '/odom', '/cmd_vel'].forEach(t => rosBus.trackPublisher(t, 'sim_bridge'));
+    rosBus.trackSubscriber('/cmd_vel', 'sim_bridge');
+  } else if (type === 'arm') {
+    rosBus.trackSubscriber('/joint_states', 'sim_bridge');
+  }
+
+  const simCanvas = document.getElementById('sim-canvas');
+  if (simCanvas) { simCanvas.style.display = 'block'; resize(); }
   loadRobot(type);
 }
 
@@ -1020,10 +843,6 @@ function resetSim() {
     robotBody.setWorldTransform(_tmpAmmoTransform);
     robotBody.getMotionState().setWorldTransform(_tmpAmmoTransform);
   }
-  // Reset turtle position
-  _simTurtleState.x = 0; _simTurtleState.y = 0; _simTurtleState.theta = 0;
-  _simTurtleState.vx = 0; _simTurtleState.wz = 0;
-  if (_simTurtle) _simTurtle.position.set(0, 0, 0);
   // If a robot is already loaded, reset it to origin
   if (simRobot) loadRobot(simRobot.userData.type);
 }
@@ -1053,19 +872,6 @@ function animate(time = 0) {
           angular: { x: 0,  y: 0, z: wz },
         });
         lastTeleopActive = active;
-      }
-      // WASD also directly drives turtle when active (no teleop node needed)
-      if (_simTurtleState.active) {
-        let tvx = 0, twz = 0;
-        if (keysDown['w']) tvx += 1.5;
-        if (keysDown['s']) tvx -= 1.5;
-        if (keysDown['a']) twz += 1.5;
-        if (keysDown['d']) twz -= 1.5;
-        if (tvx !== 0 || twz !== 0) {
-          rosBus.publish('/turtle1/cmd_vel', 'geometry_msgs/Twist', {
-            linear: { x: tvx, y: 0, z: 0 }, angular: { x: 0, y: 0, z: twz }
-          });
-        }
       }
       lastTeleopPublish = time;
     }
@@ -1110,19 +916,6 @@ function animate(time = 0) {
     });
   }
 
-  // 3D turtle kinematics (no collision detection — flat & unconstrained)
-  if (_simTurtleState.active && _simTurtle) {
-    _simTurtleState.theta += _simTurtleState.wz * dt;
-    _simTurtleState.x     += _simTurtleState.vx * Math.cos(_simTurtleState.theta) * dt;
-    _simTurtleState.y     += _simTurtleState.vx * Math.sin(_simTurtleState.theta) * dt;
-    _simTurtle.position.set(_simTurtleState.x, 0, _simTurtleState.y);
-    _simTurtle.rotation.y = _simTurtleState.theta;
-    // Publish pose so existing turtle canvas & any listeners get updates
-    rosBus.publish('/turtle1/pose', 'turtlesim/Pose', {
-      x: _simTurtleState.x, y: _simTurtleState.y, theta: _simTurtleState.theta,
-      linear_velocity: _simTurtleState.vx, angular_velocity: _simTurtleState.wz
-    });
-  }
 
   updateOrbitCamera();
   updateLidar(time);
