@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction to ROS2 — ROSpad</title>
+<style>
+:root {
+  --bg:#F2F5F8; --surface:#FFFFFF; --surface-2:#EBF0F5; --border:#CED6E0;
+  --text:#111827; --text-muted:#4F6070; --text-faint:#8A9BB0;
+  --accent:#0A8A72; --accent-faint:#DDF4EF;
+  --blue:#1A6AB0; --blue-faint:#E0EEFA;
+  --orange:#B85C1A; --orange-faint:#FEF0E6;
+  --code-bg:#111820; --code-text:#C8D8E8; --code-prompt:#39E5C5;
+  --code-kw:#79B8FF; --code-str:#85E89D; --code-comment:#4A6A7A;
+  --note-bg:#FFFBF0; --note-border:#D49020;
+  --warn-bg:#FFF4F4; --warn-border:#C04040;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0D1117; --surface:#161C24; --surface-2:#1E2730; --border:#252E3A;
+    --text:#E2EAF0; --text-muted:#8090A0; --text-faint:#4F6070;
+    --accent:#39E5C5; --accent-faint:#0A2520;
+    --blue:#58A6FF; --blue-faint:#0A1828;
+    --orange:#E5813A; --orange-faint:#1E0E04;
+    --code-bg:#080C12; --code-text:#C8D8E8; --code-prompt:#39E5C5;
+    --code-kw:#79B8FF; --code-str:#85E89D; --code-comment:#4A6A7A;
+    --note-bg:#1A1204; --note-border:#C07820;
+    --warn-bg:#1A0808; --warn-border:#A04040;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0D1117; --surface:#161C24; --surface-2:#1E2730; --border:#252E3A;
+  --text:#E2EAF0; --text-muted:#8090A0; --text-faint:#4F6070;
+  --accent:#39E5C5; --accent-faint:#0A2520;
+  --blue:#58A6FF; --blue-faint:#0A1828;
+  --orange:#E5813A; --orange-faint:#1E0E04;
+  --code-bg:#080C12; --code-text:#C8D8E8;
+  --note-bg:#1A1204; --note-border:#C07820;
+  --warn-bg:#1A0808; --warn-border:#A04040;
+}
+:root[data-theme="light"] {
+  --bg:#F2F5F8; --surface:#FFFFFF; --surface-2:#EBF0F5; --border:#CED6E0;
+  --text:#111827; --text-muted:#4F6070; --text-faint:#8A9BB0;
+  --accent:#0A8A72; --accent-faint:#DDF4EF;
+  --blue:#1A6AB0; --blue-faint:#E0EEFA;
+  --orange:#B85C1A; --orange-faint:#FEF0E6;
+  --code-bg:#111820; --code-text:#C8D8E8;
+  --note-bg:#FFFBF0; --note-border:#D49020;
+  --warn-bg:#FFF4F4; --warn-border:#C04040;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--text);
+  line-height: 1.7; min-height: 100vh;
+}
+
+/* Layout */
+.layout { display: flex; max-width: 1140px; margin: 0 auto; padding: 2rem 1.5rem; gap: 2.5rem; }
+.toc {
+  flex: 0 0 210px; position: sticky; top: 2rem;
+  align-self: flex-start; max-height: calc(100vh - 4rem); overflow-y: auto;
+}
+.toc-title { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: .75rem; }
+.toc a {
+  display: block; padding: .3rem .6rem; border-left: 2px solid var(--border);
+  color: var(--text-muted); text-decoration: none; font-size: .85rem;
+  transition: all .15s;
+}
+.toc a:hover, .toc a.active { border-color: var(--accent); color: var(--accent); }
+.toc .toc-sub { padding-left: 1.2rem; font-size: .8rem; }
+
+main { flex: 1; min-width: 0; }
+
+/* Typography */
+h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.15; color: var(--text); margin-bottom: .5rem; }
+h2 { font-size: 1.45rem; font-weight: 700; margin: 2.5rem 0 .75rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text); }
+h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 .5rem; color: var(--text); }
+p { margin-bottom: 1rem; color: var(--text); }
+ul, ol { padding-left: 1.4rem; margin-bottom: 1rem; }
+li { margin-bottom: .3rem; }
+strong { font-weight: 600; }
+code { font-family: "JetBrains Mono","Fira Code",monospace; font-size: .85em; background: var(--surface-2); padding: .15em .35em; border-radius: 4px; color: var(--blue); }
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, var(--accent-faint) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--accent); border-radius: 10px;
+  padding: 2rem 2.5rem; margin-bottom: 2rem;
+}
+.hero .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: .75rem; }
+.hero p { color: var(--text-muted); margin: 0; font-size: 1.05rem; }
+
+/* Code blocks */
+.code-block { background: var(--code-bg); border-radius: 8px; overflow: hidden; margin: 1.25rem 0; }
+.code-chrome { background: #1A2230; padding: .45rem .9rem; display: flex; align-items: center; gap: .5rem; }
+.code-dots { display: flex; gap: .3rem; }
+.code-dots span { width: 10px; height: 10px; border-radius: 50%; }
+.code-dots .r { background: #FF5F56; } .code-dots .y { background: #FFBD2E; } .code-dots .g { background: #27C93F; }
+.code-label { font-family: monospace; font-size: .75rem; color: #607090; margin-left: .25rem; }
+.code-body {
+  padding: 1rem 1.25rem; font-family: "JetBrains Mono","Fira Code",monospace;
+  font-size: .83rem; line-height: 1.65; color: var(--code-text); white-space: pre; overflow-x: auto;
+}
+.kw { color: var(--code-kw); } .st { color: var(--code-str); } .cm { color: var(--code-comment); } .pr { color: var(--code-prompt); }
+
+/* Callouts */
+.callout { border-radius: 8px; padding: 1rem 1.25rem; margin: 1.25rem 0; border-left: 4px solid; }
+.callout.note { background: var(--note-bg); border-color: var(--note-border); }
+.callout.warn { background: var(--warn-bg); border-color: var(--warn-border); }
+.callout.info { background: var(--blue-faint); border-color: var(--blue); }
+.callout.success { background: var(--accent-faint); border-color: var(--accent); }
+.callout-title { font-weight: 700; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .4rem; }
+.callout.note .callout-title { color: var(--note-border); }
+.callout.warn .callout-title { color: var(--warn-border); }
+.callout.info .callout-title { color: var(--blue); }
+.callout.success .callout-title { color: var(--accent); }
+.callout p { margin: 0; font-size: .92rem; }
+
+/* Concept cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1.25rem 0; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1.1rem 1.2rem;
+}
+.card-icon { font-size: 1.6rem; margin-bottom: .5rem; }
+.card h4 { font-size: .95rem; font-weight: 700; margin-bottom: .4rem; color: var(--text); }
+.card p { font-size: .85rem; color: var(--text-muted); margin: 0; }
+
+/* Graph diagram */
+.graph {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 1.5rem; margin: 1.25rem 0; overflow-x: auto;
+}
+.graph-row { display: flex; align-items: center; justify-content: center; gap: .5rem; flex-wrap: wrap; }
+.gnode {
+  background: var(--surface-2); border: 2px solid var(--blue);
+  border-radius: 8px; padding: .5rem 1rem; font-size: .85rem;
+  font-weight: 600; text-align: center; min-width: 120px; color: var(--text);
+  font-family: "JetBrains Mono",monospace;
+}
+.gnode.pub { border-color: var(--accent); }
+.gnode.sub { border-color: var(--orange); }
+.garrow { color: var(--text-faint); font-size: 1.2rem; flex-shrink: 0; }
+.gtopic {
+  background: var(--accent-faint); border: 1px solid var(--accent);
+  border-radius: 4px; padding: .2rem .6rem; font-size: .75rem;
+  color: var(--accent); font-family: monospace; white-space: nowrap;
+}
+.graph-caption { text-align: center; font-size: .8rem; color: var(--text-faint); margin-top: .75rem; }
+
+/* Comparison table */
+.cmp-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: .88rem; }
+.cmp-table th { background: var(--surface-2); padding: .65rem .9rem; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); }
+.cmp-table td { padding: .6rem .9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.cmp-table tr:last-child td { border-bottom: none; }
+.cmp-table .match { color: var(--accent); font-weight: 600; }
+.cmp-table .diff { color: var(--orange); font-weight: 600; }
+.cmp-table .na { color: var(--text-faint); }
+
+/* Migration steps */
+.steps { counter-reset: step; margin: 1.25rem 0; }
+.step { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  flex-shrink: 0; width: 28px; height: 28px;
+  background: var(--accent); color: #fff;
+  border-radius: 50%; font-weight: 700; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-body { padding-top: .1rem; }
+.step-body strong { display: block; margin-bottom: .2rem; }
+.step-body p { margin: 0; font-size: .9rem; color: var(--text-muted); }
+
+/* Top bar */
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-brand { font-weight: 800; font-size: 1rem; color: var(--accent); }
+.theme-btn {
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 6px; padding: .3rem .75rem; font-size: .8rem; cursor: pointer;
+}
+.theme-btn:hover { color: var(--text); }
+
+@media (max-width: 760px) {
+  .toc { display: none; }
+  .layout { padding: 1.25rem 1rem; }
+  h1 { font-size: 1.7rem; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/" style="font-size:.75rem;font-weight:700;color:var(--accent);text-decoration:none;letter-spacing:.05em;opacity:.8">← ROSpad</a>
+  <span class="topbar-brand">ROSpad · Intro to ROS2</span>
+  <button class="theme-btn" onclick="toggleTheme()">Toggle theme</button>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#what-is-ros2">What is ROS2?</a>
+    <a href="#computation-graph">Computation Graph</a>
+    <a class="toc-sub" href="#nodes">Nodes</a>
+    <a class="toc-sub" href="#topics">Topics</a>
+    <a class="toc-sub" href="#services">Services & Actions</a>
+    <a href="#dds">DDS & Middleware</a>
+    <a href="#getting-started">Getting Started</a>
+    <a href="#comparison">ROSpad vs Real ROS2</a>
+    <a href="#migration">Migration Guide</a>
+    <a href="#keep-in-mind">What to Keep in Mind</a>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <span class="tag">ROSpad — Student Reference</span>
+      <h1>Introduction to ROS2</h1>
+      <p>Architecture, core concepts, and how to move between ROSpad and a real ROS2 installation.</p>
+    </div>
+
+    <!-- ── What is ROS2? ── -->
+    <h2 id="what-is-ros2">What is ROS2?</h2>
+    <p>ROS2 stands for <strong>Robot Operating System 2</strong> — but don't let the name fool you. It is <em>not</em> an operating system. ROS2 is a <strong>middleware framework</strong>: a layer of software that sits between your robot's hardware drivers and your high-level application code, handling communication, discovery, and message passing.</p>
+    <p>Think of it as a shared language and postal system for robot software components. Each component (a camera driver, a path planner, a motor controller) runs as a separate program. ROS2 lets them find each other and exchange data without knowing anything about each other's implementation.</p>
+
+    <div class="callout info">
+      <div class="callout-title">Key insight</div>
+      <p>ROS2 does for robots what TCP/IP does for computers on a network: it defines how messages are addressed, routed, and delivered — so your algorithms can focus on <em>what</em> to compute, not <em>how</em> to talk to each other.</p>
+    </div>
+
+    <h3>Why ROS2 (not ROS1)?</h3>
+    <p>ROS2 was designed from the ground up to fix the limitations of ROS1:</p>
+    <ul>
+      <li><strong>No single point of failure:</strong> ROS1 required a central <code>roscore</code> process. ROS2 uses DDS (see below) for fully distributed discovery.</li>
+      <li><strong>Real-time capable:</strong> ROS2 supports real-time scheduling and deterministic messaging where needed.</li>
+      <li><strong>Security:</strong> Built-in support for encrypted, authenticated communication.</li>
+      <li><strong>Multi-platform:</strong> Works natively on Linux, Windows, and macOS.</li>
+      <li><strong>Quality of Service (QoS):</strong> Fine-grained control over reliability, history, and latency.</li>
+    </ul>
+
+    <!-- ── Computation Graph ── -->
+    <h2 id="computation-graph">The Computation Graph</h2>
+    <p>Everything in ROS2 is organized as a <strong>computation graph</strong> — a network of processes (nodes) connected by named communication channels (topics, services, actions).</p>
+
+    <div class="graph">
+      <div class="graph-row">
+        <div class="gnode pub">camera_driver</div>
+        <div class="garrow">→</div>
+        <div class="gtopic">/image_raw</div>
+        <div class="garrow">→</div>
+        <div class="gnode sub">image_processor</div>
+      </div>
+      <div style="display:flex;justify-content:center;margin:.5rem 0;gap:.5rem;align-items:center;">
+        <div class="gnode pub" style="border-color:var(--orange)">image_processor</div>
+        <div class="garrow">→</div>
+        <div class="gtopic" style="background:var(--orange-faint);border-color:var(--orange);color:var(--orange)">/detections</div>
+        <div class="garrow">→</div>
+        <div class="gnode sub" style="border-color:var(--orange)">planner</div>
+      </div>
+      <div class="graph-caption">Each arrow is a topic. Nodes can publish and subscribe to multiple topics simultaneously.</div>
+    </div>
+
+    <h3 id="nodes">Nodes</h3>
+    <p>A <strong>node</strong> is a single executable program — one process, one purpose. A robot system typically has many nodes running simultaneously:</p>
+    <ul>
+      <li>A <code>camera_driver</code> node reads frames from a USB camera and publishes them</li>
+      <li>A <code>lidar_driver</code> node reads laser scan data</li>
+      <li>A <code>slam_node</code> node subscribes to lidar data and builds a map</li>
+      <li>A <code>path_planner</code> node subscribes to the map and publishes velocity commands</li>
+    </ul>
+    <p>Nodes are written in Python or C++. In Python, every node inherits from <code>rclpy.node.Node</code>:</p>
+
+    <div class="code-block">
+      <div class="code-chrome"><div class="code-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div><span class="code-label">my_node.py</span></div>
+      <div class="code-body"><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+
+<span class="kw">class</span> <span class="st">MyNode</span>(Node):
+    <span class="kw">def</span> __init__(self):
+        <span class="kw">super</span>().<span class="kw">__init__</span>(<span class="st">'my_node'</span>)          <span class="cm"># node name</span>
+        self.pub = self.create_publisher(String, <span class="st">'/chatter'</span>, 10)
+        self.timer = self.create_timer(1.0, self.tick)
+
+    <span class="kw">def</span> tick(self):
+        msg = String()
+        msg.data = <span class="st">'Hello!'</span>
+        self.pub.publish(msg)
+        self.get_logger().info(<span class="st">'Published: Hello!'</span>)
+
+<span class="kw">def</span> main():
+    rclpy.init()
+    rclpy.spin(MyNode())
+
+<span class="kw">if</span> __name__ == <span class="st">'__main__'</span>:
+    main()</div>
+    </div>
+
+    <h3 id="topics">Topics</h3>
+    <p>Topics are <strong>named, typed, asynchronous</strong> data streams. Any node can publish to a topic; any node can subscribe to a topic. Neither knows about the other — they only know the topic name and message type.</p>
+    <ul>
+      <li><strong>Name:</strong> a slash-separated path like <code>/camera/image_raw</code> or <code>/cmd_vel</code></li>
+      <li><strong>Type:</strong> a message type like <code>sensor_msgs/Image</code> or <code>geometry_msgs/Twist</code></li>
+      <li><strong>Pattern:</strong> publish-subscribe — one publisher can have many subscribers</li>
+    </ul>
+    <p>Common message packages: <code>std_msgs</code> (primitives), <code>geometry_msgs</code> (vectors, poses), <code>sensor_msgs</code> (cameras, lidar, IMU), <code>nav_msgs</code> (maps, odometry).</p>
+
+    <h3 id="services">Services &amp; Actions</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">⟺</div>
+        <h4>Services</h4>
+        <p>Synchronous request–response. One node calls a service, another handles it and returns a result. Good for short, fast operations: <em>"What is the current joint angle?"</em></p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⟳</div>
+        <h4>Actions</h4>
+        <p>Like services, but for long-running goals. The caller gets progress feedback and can cancel mid-flight. Good for: <em>"Navigate to this waypoint"</em> or <em>"Pick up this object."</em></p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙</div>
+        <h4>Parameters</h4>
+        <p>Named, typed configuration values per node. Can be set at launch time or changed at runtime: <em>loop_rate</em>, <em>max_speed</em>, <em>threshold</em>. Read with <code>declare_parameter()</code>.</p>
+      </div>
+    </div>
+
+    <!-- ── DDS ── -->
+    <h2 id="dds">DDS &amp; Middleware</h2>
+    <p>Under the hood, ROS2 uses <strong>DDS</strong> (Data Distribution Service) for all communication. DDS handles node discovery (how nodes find each other on the network), serialization, and delivery guarantees.</p>
+    <p>You rarely interact with DDS directly, but you should know about <strong>Quality of Service (QoS)</strong> profiles, which control how messages are delivered:</p>
+    <ul>
+      <li><strong>Reliability:</strong> <code>RELIABLE</code> (guaranteed delivery, like TCP) vs <code>BEST_EFFORT</code> (fast but lossy, like UDP)</li>
+      <li><strong>History:</strong> how many past messages to buffer for late subscribers</li>
+      <li><strong>Durability:</strong> whether messages persist for nodes that haven't started yet</li>
+    </ul>
+
+    <div class="callout note">
+      <div class="callout-title">ROSpad note</div>
+      <p>ROSpad replaces DDS with a <strong>BroadcastChannel</strong>-based message bus running in the browser. The API (topics, services, pub/sub) is identical — DDS discovery and transport are simulated. QoS settings are accepted but not enforced.</p>
+    </div>
+
+    <!-- ── Getting Started ── -->
+    <h2 id="getting-started">Getting Started on ROSpad</h2>
+    <p>On ROSpad, the full ROS2 workflow runs in the browser. Here is the standard flow:</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-body">
+          <strong>Create a package</strong>
+          <p>A package bundles related nodes and their dependencies. Use <code>ros2 pkg create --build-type ament_python my_package</code> in the terminal.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Create and write your node file</strong>
+          <p>Use <code>touch src/my_package/my_package/my_node.py</code> then open it in the editor. Write your Node class with publishers, subscribers, and timers.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Register the entry point in setup.py</strong>
+          <p>Edit <code>src/my_package/setup.py</code> and add <code>'my_node = my_package.my_node:main'</code> under <code>console_scripts</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Build</strong>
+          <p>Run <code>colcon build</code>. In ROSpad this indexes your packages so <code>ros2 run</code> can find them.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Run your node</strong>
+          <p>Use <code>ros2 run my_package my_node</code>. The node opens in its own terminal tab. Check output with <code>ros2 topic list</code> and <code>ros2 topic echo /topic_name</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Comparison ── -->
+    <h2 id="comparison">ROSpad vs Real ROS2</h2>
+    <p>ROSpad faithfully simulates the ROS2 API. Most of what you learn here transfers directly to a real installation.</p>
+
+    <div style="overflow-x:auto">
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Feature</th><th>Real ROS2</th><th>ROSpad</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>rclpy</code> Node API</td>
+          <td>C++/Python node classes</td>
+          <td>Python shim via Pyodide</td>
+          <td class="match">Identical API</td>
+        </tr>
+        <tr>
+          <td>Publishers / Subscribers</td>
+          <td>DDS over network</td>
+          <td>BroadcastChannel in browser</td>
+          <td class="match">Same API</td>
+        </tr>
+        <tr>
+          <td>Timers</td>
+          <td>ROS2 timer via executor</td>
+          <td><code>setInterval</code> via Pyodide</td>
+          <td class="match">Same behavior</td>
+        </tr>
+        <tr>
+          <td>Logging (<code>get_logger()</code>)</td>
+          <td>Writes to <code>/rosout</code> + console</td>
+          <td>Prints to ROSpad terminal</td>
+          <td class="match">Same output</td>
+        </tr>
+        <tr>
+          <td>Services</td>
+          <td>Full synchronous RPC</td>
+          <td>Stub (API accepted, not dispatched)</td>
+          <td class="diff">Partial</td>
+        </tr>
+        <tr>
+          <td>Actions</td>
+          <td>Feedback + cancellation</td>
+          <td>Not implemented</td>
+          <td class="diff">Not available</td>
+        </tr>
+        <tr>
+          <td>QoS profiles</td>
+          <td>Enforced by DDS</td>
+          <td>Accepted, not enforced</td>
+          <td class="diff">No-op</td>
+        </tr>
+        <tr>
+          <td>Multi-machine networking</td>
+          <td>DDS discovery across network</td>
+          <td>Single browser tab only</td>
+          <td class="diff">Not available</td>
+        </tr>
+        <tr>
+          <td><code>ros2 topic list/echo/hz</code></td>
+          <td>CLI tools</td>
+          <td>Built into terminal</td>
+          <td class="match">Works identically</td>
+        </tr>
+        <tr>
+          <td><code>colcon build</code></td>
+          <td>Compiles C++, indexes Python</td>
+          <td>Indexes Python entry points</td>
+          <td class="match">Equivalent for Python</td>
+        </tr>
+        <tr>
+          <td>Launch files</td>
+          <td><code>.launch.py</code> with full LaunchDescription</td>
+          <td>Parses <code>Node()</code> entries, starts nodes</td>
+          <td class="diff">Basic support</td>
+        </tr>
+        <tr>
+          <td>C++ nodes</td>
+          <td>Full C++17 support</td>
+          <td>Python only</td>
+          <td class="na">N/A</td>
+        </tr>
+        <tr>
+          <td>Hardware I/O</td>
+          <td>Real sensors / actuators</td>
+          <td>3D simulation (Three.js)</td>
+          <td class="diff">Simulated</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <!-- ── Migration ── -->
+    <h2 id="migration">Migration Guide</h2>
+
+    <h3>ROSpad → Real ROS2</h3>
+    <p>When you're ready to move your code to a real machine:</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-body">
+          <strong>Install ROS2</strong>
+          <p>Follow the official docs for your OS at <code>docs.ros.org</code>. Humble (LTS) or Iron are recommended for new projects.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Copy your package files</strong>
+          <p>Download your package folder from ROSpad (file tree → ⬇ button) and place it in your <code>ros2_ws/src/</code> directory.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Install dependencies</strong>
+          <p>Run <code>rosdep install --from-paths src --ignore-src -r -y</code> to install any missing packages.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Build with colcon</strong>
+          <p>Run <code>colcon build</code> then <code>source install/setup.bash</code>. The shell overlay makes your packages visible to <code>ros2 run</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Run and verify</strong>
+          <p>Use <code>ros2 run my_package my_node</code> and <code>ros2 topic echo /topic</code> just like in ROSpad.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Real ROS2 → ROSpad</h3>
+    <p>Bringing an existing ROS2 Python node into ROSpad:</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-body">
+          <strong>Check for unsupported features</strong>
+          <p>Services, actions, parameters, lifecycle nodes, and tf2 are not fully supported. Simplify or stub these out.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Remove unsupported imports</strong>
+          <p>ROSpad includes <code>rclpy</code>, <code>std_msgs</code>, <code>geometry_msgs</code>, <code>sensor_msgs</code>, and <code>nav_msgs</code>. Remove other package imports.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <strong>Upload and run</strong>
+          <p>Create a package in ROSpad, paste your node file, register it in <code>setup.py</code>, and <code>colcon build</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Keep in Mind ── -->
+    <h2 id="keep-in-mind">What to Keep in Mind</h2>
+
+    <div class="callout warn">
+      <div class="callout-title">Threading model</div>
+      <p>On a real system, <code>rclpy.spin()</code> blocks the calling thread to process callbacks. In ROSpad, <code>spin()</code> exits immediately — timers and callbacks are driven by the browser's JS event loop. Your code logic is the same; the machinery underneath differs.</p>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-title">Concurrent nodes share a Python runtime</div>
+      <p>In real ROS2, each node is a separate process. In ROSpad, each node runs in its own Web Worker with its own Pyodide instance — effectively separate processes. Global state is NOT shared between nodes.</p>
+    </div>
+
+    <div class="callout note">
+      <div class="callout-title">Naming conventions</div>
+      <p>Topic names in ROS2 use snake_case and start with <code>/</code> for absolute names or no slash for relative names. In ROSpad, always use absolute names (starting with <code>/</code>). Example: <code>/cmd_vel</code>, <code>/scan</code>, <code>/robot_description</code>.</p>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-title">Good news: the API is the same</div>
+      <p>The code you write in ROSpad — node classes, publishers, subscribers, timers, logger calls — runs unchanged on a real ROS2 installation. The learning you do here transfers directly.</p>
+    </div>
+
+    <div style="height:3rem"></div>
+  </main>
+</div>
+
+<script>
+function toggleTheme() {
+  const r = document.documentElement;
+  const cur = r.getAttribute('data-theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  r.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+}
+
+// Active TOC link on scroll
+const headings = document.querySelectorAll('h2[id], h3[id]');
+const tocLinks  = document.querySelectorAll('.toc a[href^="#"]');
+function updateTOC() {
+  let active = '';
+  headings.forEach(h => { if (h.getBoundingClientRect().top < 140) active = h.id; });
+  tocLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + active);
+  });
+}
+window.addEventListener('scroll', updateTOC, { passive: true });
+updateTOC();
+</script>
+</body>
+</html>

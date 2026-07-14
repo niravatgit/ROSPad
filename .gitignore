@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# User data (sessions, workspaces, uploaded files — never commit)
+rospad_user_data/
+
+# Environment / secrets
+.env
+
+# Build artefacts
+dist/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+
+# Claude Code local settings
+.claude/

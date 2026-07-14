@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROS2 Lecture — ROSpad Instructor Deck</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+body {
+  font-family: "Helvetica Neue", "Arial Nova", Arial, sans-serif;
+  background: #080d16;
+  color: #e8eef8;
+  user-select: none;
+}
+
+/* ── Slide system ── */
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 5vh 7vw;
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s ease, transform .35s ease;
+  transform: translateY(18px);
+  overflow: hidden;
+}
+.slide.active {
+  opacity: 1; pointer-events: all;
+  transform: translateY(0);
+}
+.slide.exit {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* ── Themes per section ── */
+.slide[data-section="intro"]    { background: #060b14; }
+.slide[data-section="concepts"] { background: #06100f; }
+.slide[data-section="build"]    { background: #0b0a14; }
+.slide[data-section="rospad"]   { background: #0d0906; }
+
+/* ── Section badge ── */
+.badge {
+  display: inline-block; font-size: .62rem; font-weight: 800;
+  letter-spacing: .2em; text-transform: uppercase;
+  padding: .3rem .7rem; border-radius: 3px; margin-bottom: 2.5vh;
+  align-self: flex-start;
+}
+.slide[data-section="intro"]    .badge { background: rgba(88,166,255,.15); color: #58a6ff; border: 1px solid rgba(88,166,255,.3); }
+.slide[data-section="concepts"] .badge { background: rgba(34,211,170,.15); color: #22d3aa; border: 1px solid rgba(34,211,170,.3); }
+.slide[data-section="build"]    .badge { background: rgba(188,140,255,.15); color: #bc8cff; border: 1px solid rgba(188,140,255,.3); }
+.slide[data-section="rospad"]   .badge { background: rgba(255,176,60,.15); color: #ffb03c; border: 1px solid rgba(255,176,60,.3); }
+
+/* ── Typography ── */
+.slide h1 {
+  font-size: clamp(2.4rem, 6vw, 4.6rem);
+  font-weight: 900; line-height: 1.06;
+  letter-spacing: -.03em;
+  color: #f0f4ff;
+  margin-bottom: 2.5vh;
+}
+.slide h2 {
+  font-size: clamp(1.8rem, 4.5vw, 3.4rem);
+  font-weight: 800; line-height: 1.1;
+  letter-spacing: -.02em; color: #f0f4ff;
+  margin-bottom: 2vh;
+}
+.slide .sub {
+  font-size: clamp(.95rem, 2vw, 1.3rem);
+  color: #7a8aa8; max-width: 680px; line-height: 1.55;
+  margin-bottom: 3vh;
+}
+.slide ul {
+  list-style: none; padding: 0;
+  display: flex; flex-direction: column; gap: .9vh;
+  max-width: 700px;
+}
+.slide ul li {
+  font-size: clamp(.9rem, 1.8vw, 1.15rem); line-height: 1.5;
+  padding: .5rem .7rem .5rem 1rem;
+  border-left: 3px solid rgba(255,255,255,.12);
+  color: #c8d8f0;
+}
+.slide ul li strong { color: #f0f4ff; }
+
+/* ── Cover slide ── */
+.cover { justify-content: center; }
+.cover .kicker {
+  font-size: clamp(.7rem, 1.5vw, .9rem);
+  font-weight: 700; letter-spacing: .25em; text-transform: uppercase;
+  color: #3a5a8a; margin-bottom: 1.5vh;
+}
+.cover h1 { font-size: clamp(4rem, 10vw, 8rem); margin-bottom: .5rem; }
+.cover .cover-sub {
+  font-size: clamp(1rem, 2.5vw, 1.5rem); color: #4a6080;
+  font-weight: 400; letter-spacing: .01em; margin-bottom: 4vh;
+}
+.cover .cover-rule {
+  width: 3rem; height: 3px; background: #1f3a5a; margin-bottom: 3vh;
+}
+.cover .cover-detail {
+  font-size: clamp(.75rem, 1.5vw, .9rem); color: #2a4060;
+  font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+}
+
+/* ── Two-column ── */
+.cols { display: flex; gap: 4vw; align-items: flex-start; }
+.col { flex: 1; }
+
+/* ── Diagram elements ── */
+.diagram { display: flex; align-items: center; justify-content: flex-start; gap: 1.2vw; flex-wrap: wrap; margin: 1.5vh 0; }
+.dnode {
+  border-radius: 8px; padding: .6rem 1.2rem;
+  font-family: "JetBrains Mono","Courier New",monospace;
+  font-size: clamp(.7rem, 1.5vw, .9rem); font-weight: 700;
+  white-space: nowrap;
+}
+.dnode.blue { background: rgba(88,166,255,.15); border: 1.5px solid rgba(88,166,255,.5); color: #58a6ff; }
+.dnode.teal { background: rgba(34,211,170,.12); border: 1.5px solid rgba(34,211,170,.4); color: #22d3aa; }
+.dnode.amber { background: rgba(255,176,60,.12); border: 1.5px solid rgba(255,176,60,.4); color: #ffb03c; }
+.dnode.purple { background: rgba(188,140,255,.12); border: 1.5px solid rgba(188,140,255,.4); color: #bc8cff; }
+.darrow { color: #2a4060; font-size: 1.4rem; }
+.dtopic {
+  font-family: "JetBrains Mono","Courier New",monospace;
+  font-size: clamp(.6rem, 1.2vw, .78rem);
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 4px; padding: .2rem .5rem; color: #6a7a9a;
+}
+
+/* ── Code block ── */
+.code {
+  background: #030609; border: 1px solid #1a2030;
+  border-radius: 8px; padding: 1rem 1.4rem;
+  font-family: "JetBrains Mono","Courier New",monospace;
+  font-size: clamp(.65rem, 1.3vw, .82rem); line-height: 1.7;
+  color: #c8d8e8; white-space: pre; overflow-x: auto;
+  margin: 1.5vh 0;
+}
+.kw { color: #79b8ff; } .st { color: #85e89d; } .cm { color: #3a5a6a; } .fn { color: #b392f0; }
+
+/* ── Big stat ── */
+.big-stat {
+  font-size: clamp(3rem, 8vw, 7rem); font-weight: 900;
+  line-height: 1; letter-spacing: -.04em; margin-bottom: .5rem;
+}
+.stat-label { font-size: clamp(.8rem, 1.8vw, 1.1rem); color: #4a6080; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+
+/* ── Feature chips ── */
+.chips { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5vh 0; }
+.chip {
+  border-radius: 6px; padding: .5rem 1rem;
+  font-size: clamp(.75rem, 1.4vw, .88rem); font-weight: 600;
+}
+.chip.yes { background: rgba(34,211,170,.1); color: #22d3aa; border: 1px solid rgba(34,211,170,.25); }
+.chip.partial { background: rgba(255,176,60,.1); color: #ffb03c; border: 1px solid rgba(255,176,60,.25); }
+.chip.no  { background: rgba(255,100,60,.1);  color: #ff6060; border: 1px solid rgba(255,100,60,.25); }
+
+/* ── Progress bar & nav ── */
+#progress-bar {
+  position: fixed; bottom: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, #1f4080, #22d3aa);
+  transition: width .35s ease; z-index: 100;
+}
+#nav {
+  position: fixed; bottom: 1.5rem; right: 2rem;
+  display: flex; align-items: center; gap: .75rem; z-index: 100;
+}
+#slide-counter { font-size: .75rem; color: #2a4060; font-weight: 700; letter-spacing: .06em; min-width: 52px; text-align: center; }
+.nav-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid #1a2a3a; background: rgba(8,13,22,.8);
+  color: #4a6080; cursor: pointer; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; backdrop-filter: blur(8px);
+}
+.nav-btn:hover { border-color: #22d3aa; color: #22d3aa; }
+.nav-btn:disabled { opacity: .25; cursor: not-allowed; }
+
+/* ── Speaker notes ── */
+#notes-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(4,8,14,.96); border-top: 1px solid #1a2a3a;
+  padding: 1rem 2rem; max-height: 0; overflow: hidden;
+  transition: max-height .3s ease; z-index: 200;
+  font-size: .85rem; color: #6a8aaa; line-height: 1.6;
+  backdrop-filter: blur(12px);
+}
+#notes-panel.open { max-height: 180px; }
+#notes-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .12em; color: #2a4060; font-weight: 700; margin-bottom: .4rem; }
+
+/* ── Mapping table ── */
+.map-table { width: 100%; border-collapse: collapse; font-size: clamp(.7rem, 1.4vw, .85rem); }
+.map-table th { color: #3a5070; font-weight: 700; text-transform: uppercase; font-size: .7rem; letter-spacing: .08em; padding: .4rem .7rem; border-bottom: 1px solid #0f1a2a; }
+.map-table td { padding: .45rem .7rem; border-bottom: 1px solid #0a1520; color: #8090b0; }
+.map-table td:first-child { color: #58a6ff; font-family: monospace; }
+.map-table td:last-child { color: #22d3aa; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ SLIDES ══ -->
+
+<!-- 1. Cover -->
+<div class="slide cover active" data-section="intro" id="slide-1" data-notes="Welcome the class. This deck walks through ROS2 from first principles to how ROSpad maps to real ROS2. Expect Q&A throughout.">
+  <div class="kicker">IIT Madras · Robotics Laboratory</div>
+  <h1>ROS2</h1>
+  <div class="cover-sub">Robot Operating System 2</div>
+  <div class="cover-rule"></div>
+  <div class="cover-detail">Lecture — ROSpad Instructor Deck</div>
+</div>
+
+<!-- 2. ROS2 Architecture diagram (visual overview) -->
+<div class="slide" data-section="intro" id="slide-arch-diagram" data-notes="Walk bottom-up. OS foundation → DDS for transport → rmw hides vendor → rcl common core → rclcpp/rclpy your API → user nodes at top. Key question to ask: 'Which layer do you write code in?' Answer: only the top. Everything below is infrastructure you never touch directly.">
+  <span class="badge">Architecture</span>
+  <h2 style="font-size:clamp(1.4rem,3vw,2.2rem);margin-bottom:1.2vh">ROS 2 Architecture Overview</h2>
+
+  <!-- 3-column grid: label | diagram | description -->
+  <div style="display:grid;grid-template-columns:9.5rem 1fr 1fr;gap:.55vh 1.2rem;align-items:center;flex:1">
+
+    <!-- ── Application Layer ─────────────────────────────────────────────── -->
+    <div style="font-size:.67rem;font-weight:700;color:#7a8aa8;text-align:right;letter-spacing:.04em;align-self:center">Application Layer</div>
+    <div style="background:#1565c0;border:1.5px solid #2979ff;border-radius:6px;padding:.5rem .9rem;text-align:center;font-size:.8rem;font-weight:700;color:#e3f2fd">User Code (ROS 2 Nodes)</div>
+    <div style="font-size:.68rem;line-height:1.55;color:#6a7a9a">
+      Your Python or C++ programs that define robot behaviour.
+      Each <strong style="color:#8090b0">Node</strong> is a named process that publishes data, subscribes to topics, and calls services.
+      <span style="color:#3a5070">This is the only layer you directly write.</span>
+    </div>
+
+    <!-- ── Client Library Layer ──────────────────────────────────────────── -->
+    <div style="font-size:.67rem;font-weight:700;color:#7a8aa8;text-align:right;letter-spacing:.04em;align-self:start;padding-top:.3rem">ROS 2 Client Layer</div>
+    <div style="display:flex;flex-direction:column;gap:.3vh">
+      <div style="display:flex;gap:.5rem">
+        <div style="flex:1;background:rgba(255,176,60,.14);border:1.5px solid rgba(255,176,60,.4);border-radius:5px;padding:.35rem .4rem;text-align:center;font-size:.7rem;font-weight:600;color:#ffb03c">rclcpp<br><span style="font-weight:400;font-size:.64rem;color:#c08030">C++ API</span></div>
+        <div style="flex:1;background:rgba(255,176,60,.14);border:1.5px solid rgba(255,176,60,.4);border-radius:5px;padding:.35rem .4rem;text-align:center;font-size:.7rem;font-weight:600;color:#ffb03c">rclpy<br><span style="font-weight:400;font-size:.64rem;color:#c08030">Python API</span></div>
+        <div style="flex:1;background:rgba(255,176,60,.14);border:1.5px solid rgba(255,176,60,.4);border-radius:5px;padding:.35rem .4rem;text-align:center;font-size:.7rem;font-weight:600;color:#ffb03c">Other<br><span style="font-weight:400;font-size:.64rem;color:#c08030">languages</span></div>
+      </div>
+      <div style="background:rgba(255,176,60,.07);border:1.5px solid rgba(255,176,60,.22);border-radius:5px;padding:.32rem .8rem;text-align:center;font-size:.7rem;font-weight:600;color:#c08030">rcl &nbsp;<span style="font-weight:400;color:#7a5a20">(shared C implementation)</span></div>
+    </div>
+    <div style="font-size:.68rem;line-height:1.55;color:#6a7a9a;align-self:start;padding-top:.1rem">
+      <strong style="color:#ffb03c">rclcpp</strong> — C++ library for production robots; low overhead, real-time capable.<br>
+      <strong style="color:#ffb03c">rclpy</strong> — Python library used in ROSpad; fast to write, ideal for learning.<br>
+      <strong style="color:#c08030">rcl</strong> — shared C core both wrap; handles node lifecycle &amp; parameter management.
+    </div>
+
+    <!-- ── Abstract DDS / rmw Layer ──────────────────────────────────────── -->
+    <div style="font-size:.67rem;font-weight:700;color:#7a8aa8;text-align:right;letter-spacing:.04em">Abstract DDS Layer</div>
+    <div style="background:rgba(34,211,170,.1);border:1.5px solid rgba(34,211,170,.4);border-radius:6px;padding:.45rem .9rem;text-align:center;font-size:.78rem;font-weight:700;color:#22d3aa">ROS Middleware Interface <span style="font-weight:400;color:#16a07a">(rmw)</span></div>
+    <div style="font-size:.68rem;line-height:1.55;color:#6a7a9a">
+      A thin abstraction layer that <strong style="color:#8090b0">hides which DDS vendor is installed.</strong>
+      Swap eProsima ↔ CycloneDDS by changing one env variable — zero code changes.
+      Keeps ROS2 vendor-neutral and portable.
+    </div>
+
+    <!-- ── DDS Implementation Layer ──────────────────────────────────────── -->
+    <div style="font-size:.67rem;font-weight:700;color:#7a8aa8;text-align:right;letter-spacing:.04em;align-self:center">DDS Implementation</div>
+    <div style="display:flex;align-items:center;gap:.4rem">
+      <div style="flex:1;border:1.5px solid #2a3a4a;border-radius:5px;padding:.35rem .3rem;text-align:center;font-size:.66rem;font-weight:600;color:#8090b0">eProsima<br>Fast DDS</div>
+      <div style="color:#2a4060;font-size:.75rem;font-weight:700">or</div>
+      <div style="flex:1;border:1.5px solid #2a3a4a;border-radius:5px;padding:.35rem .3rem;text-align:center;font-size:.66rem;font-weight:600;color:#8090b0">Eclipse<br>Cyclone DDS</div>
+      <div style="color:#2a4060;font-size:.75rem;font-weight:700">or</div>
+      <div style="flex:1;border:1.5px solid #2a3a4a;border-radius:5px;padding:.35rem .3rem;text-align:center;font-size:.66rem;font-weight:600;color:#8090b0">RTI<br>Connext DDS</div>
+    </div>
+    <div style="font-size:.68rem;line-height:1.55;color:#6a7a9a">
+      DDS (Data Distribution Service) is an <strong style="color:#8090b0">industry standard</strong> used in aerospace &amp; medical devices.
+      It handles automatic peer discovery (no broker), serialisation, and QoS.
+      <strong style="color:#6a7a9a">Fast-DDS</strong> is the ROS2 Humble default; <strong style="color:#6a7a9a">CycloneDDS</strong> is popular for embedded systems.
+    </div>
+
+    <!-- ── OS Layer ──────────────────────────────────────────────────────── -->
+    <div style="font-size:.67rem;font-weight:700;color:#7a8aa8;text-align:right;letter-spacing:.04em">Operating System</div>
+    <div style="display:flex;align-items:center;gap:.4rem">
+      <div style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid #2a3540;border-radius:5px;padding:.35rem;text-align:center;font-size:.7rem;font-weight:600;color:#6a8a9a">Linux</div>
+      <div style="color:#2a4060;font-size:.75rem;font-weight:700">or</div>
+      <div style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid #2a3540;border-radius:5px;padding:.35rem;text-align:center;font-size:.7rem;font-weight:600;color:#6a8a9a">Windows</div>
+      <div style="color:#2a4060;font-size:.75rem;font-weight:700">or</div>
+      <div style="flex:1;background:rgba(255,255,255,.04);border:1.5px solid #2a3540;border-radius:5px;padding:.35rem;text-align:center;font-size:.7rem;font-weight:600;color:#6a8a9a">macOS</div>
+    </div>
+    <div style="font-size:.68rem;line-height:1.55;color:#6a7a9a">
+      ROS2 Humble runs on <strong style="color:#8090b0">Ubuntu 22.04</strong> (recommended), Windows 10/11, and macOS Monterey+.
+      Most real robots run Ubuntu — it is the most tested and supported platform.
+      <span style="color:#3a5070">ROSpad replaces this layer entirely with the browser sandbox.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- 4. ROS2 Architecture (layers detail) -->
+<div class="slide" data-section="intro" id="slide-arch" data-notes="Walk each layer bottom-up. Key insight: everything above DDS is portable — swap hardware without touching algorithm code. Ask: which layer does rclpy live in? (Client Library). The colcon + launch + tf2 tools layer is what lets a 10-node system boot with one command.">
+  <span class="badge">Architecture</span>
+  <h2>ROS2 — Layer by Layer</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5vw .8vw;margin-top:1.2vh;flex:1">
+
+    <!-- Left column: top 3 layers -->
+    <div style="display:flex;flex-direction:column;gap:.5vh">
+
+      <div style="background:rgba(255,176,60,.08);border:1.5px solid rgba(255,176,60,.3);border-radius:7px;padding:.55rem .85rem;flex:1">
+        <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#ffb03c;margin-bottom:.3rem">Application Layer</div>
+        <div style="font-size:clamp(.68rem,1.25vw,.82rem);color:#c8d8f0;line-height:1.5">
+          <strong>Nav2</strong> — autonomous navigation &amp; path planning<br>
+          <strong>MoveIt2</strong> — motion planning for robotic arms<br>
+          <strong>Gazebo / ROSpad</strong> — physics &amp; browser simulation
+        </div>
+      </div>
+
+      <div style="background:rgba(188,140,255,.07);border:1.5px solid rgba(188,140,255,.25);border-radius:7px;padding:.55rem .85rem;flex:1">
+        <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#bc8cff;margin-bottom:.3rem">Tools &amp; Infrastructure</div>
+        <div style="font-size:clamp(.68rem,1.25vw,.82rem);color:#c8d8f0;line-height:1.5">
+          <strong>colcon build</strong> — package workspace builder<br>
+          <strong>ros2 CLI</strong> · <strong>launch files</strong> · <strong>ros2 bag</strong><br>
+          <strong>tf2</strong> (transforms) · <strong>rqt</strong> · <strong>rviz2</strong>
+        </div>
+      </div>
+
+      <div style="background:rgba(34,211,170,.07);border:1.5px solid rgba(34,211,170,.25);border-radius:7px;padding:.55rem .85rem;flex:1">
+        <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#22d3aa;margin-bottom:.3rem">Core Abstractions</div>
+        <div style="font-size:clamp(.68rem,1.25vw,.82rem);color:#c8d8f0;line-height:1.5">
+          <strong>Nodes</strong> — isolated processes with name &amp; lifecycle<br>
+          <strong>Topics</strong> (pub/sub) · <strong>Services</strong> (req/resp) · <strong>Actions</strong><br>
+          <strong>Parameters</strong> · <strong>Message types</strong> (typed contracts)
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column: bottom 2 layers + diagram -->
+    <div style="display:flex;flex-direction:column;gap:.5vh">
+
+      <div style="background:rgba(88,166,255,.07);border:1.5px solid rgba(88,166,255,.25);border-radius:7px;padding:.55rem .85rem;flex:1">
+        <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#58a6ff;margin-bottom:.3rem">Client Libraries</div>
+        <div style="font-size:clamp(.68rem,1.25vw,.82rem);color:#c8d8f0;line-height:1.5">
+          <strong>rclpy</strong> (Python) · <strong>rclcpp</strong> (C++)<br>
+          <strong>Executors</strong> — single/multi-threaded spin loops<br>
+          <strong>rcl</strong> — shared C core underneath both
+        </div>
+      </div>
+
+      <div style="background:rgba(63,185,80,.07);border:1.5px solid rgba(63,185,80,.22);border-radius:7px;padding:.55rem .85rem;flex:1">
+        <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#3fb950;margin-bottom:.3rem">Transport / DDS</div>
+        <div style="font-size:clamp(.68rem,1.25vw,.82rem);color:#c8d8f0;line-height:1.5">
+          <strong>RMW</strong> — middleware abstraction; swap vendors freely<br>
+          <strong>DDS</strong> (Fast-DDS, CycloneDDS) — discovery &amp; serialisation<br>
+          <strong>QoS</strong> policies · UDP multicast · shared memory
+        </div>
+      </div>
+
+      <!-- Key insight box -->
+      <div style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:.55rem .85rem;flex:1;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#3a5070;margin-bottom:.4rem;font-weight:700">Key insight</div>
+        <div style="font-size:clamp(.68rem,1.2vw,.8rem);color:#5a7090;line-height:1.55">
+          Your algorithm only touches the <span style="color:#58a6ff">Client Library</span> layer.<br>
+          DDS handles discovery &amp; delivery — no sockets, no IP config.<br>
+          Swap hardware → only the driver node changes.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 3. The Problem -->
+<div class="slide" data-section="intro" id="slide-2" data-notes="Ask: how many separate software components does a mobile robot need? Camera driver, SLAM, path planner, motor controller, IMU, GPS, UI... they all need to talk to each other. How do you wire them together without spaghetti code?">
+  <span class="badge">Foundations</span>
+  <h2>A real robot is<br>many programs at once</h2>
+  <div class="sub">Each one needs to talk to the others — without knowing anything about their implementation.</div>
+  <div class="diagram" style="margin-bottom:1.5vh">
+    <div class="dnode blue">camera</div>
+    <div class="darrow">→</div>
+    <div class="dnode teal">slam</div>
+    <div class="darrow">→</div>
+    <div class="dnode purple">planner</div>
+    <div class="darrow">→</div>
+    <div class="dnode amber">motors</div>
+  </div>
+  <ul>
+    <li><strong>Problem:</strong> each program needs data from others, in real-time, reliably</li>
+    <li><strong>Naive solution:</strong> hard-wire sockets between every pair — O(n²) connections, fragile</li>
+    <li><strong>ROS2 solution:</strong> named message channels anyone can publish to or subscribe from</li>
+  </ul>
+</div>
+
+<!-- 3. What is ROS2 really? -->
+<div class="slide" data-section="intro" id="slide-3" data-notes="Emphasise: it is NOT an OS. It provides the plumbing — message passing, discovery, serialisation — so your code can focus on the algorithm, not the transport.">
+  <span class="badge">Foundations</span>
+  <h2>Not an OS.<br>A middleware.</h2>
+  <div class="sub">ROS2 sits between your hardware and your algorithms. It handles discovery, serialisation, and delivery.</div>
+  <div class="diagram" style="flex-direction:column;align-items:flex-start;gap:.6rem;margin:1.5vh 0">
+    <div class="dnode purple" style="width:340px;text-align:center">Your algorithm (Python / C++)</div>
+    <div style="color:#2a4060;padding-left:1rem">↕ rclpy / rclcpp API</div>
+    <div class="dnode teal"  style="width:340px;text-align:center">ROS2 middleware (rmw)</div>
+    <div style="color:#2a4060;padding-left:1rem">↕ DDS</div>
+    <div class="dnode blue"  style="width:340px;text-align:center">Network / OS / Hardware</div>
+  </div>
+  <ul>
+    <li>Your code calls <strong>rclpy</strong> (Python) or <strong>rclcpp</strong> (C++) — the ROS2 client library</li>
+    <li>ROS2 uses <strong>DDS</strong> underneath: industry-standard distributed middleware used in aerospace & medical devices</li>
+    <li>You never interact with DDS directly — ROS2 abstracts it</li>
+  </ul>
+</div>
+
+<!-- 4. Computation Graph -->
+<div class="slide" data-section="concepts" id="slide-4" data-notes="This is the most important mental model. Draw this on the board if needed. Every ROS2 system is a graph: nodes are vertices, topics/services are edges.">
+  <span class="badge">Core Concepts</span>
+  <h2>The Computation Graph</h2>
+  <div class="sub">Nodes are processes. Topics are typed, named data streams connecting them.</div>
+  <div class="cols" style="margin-top:1vh">
+    <div class="col">
+      <div class="diagram" style="flex-direction:column;align-items:flex-start;gap:1rem">
+        <div style="display:flex;align-items:center;gap:.8rem">
+          <div class="dnode teal">talker</div>
+          <div class="darrow">→</div>
+          <div class="dtopic">/chatter</div>
+          <div class="darrow">→</div>
+          <div class="dnode teal">listener</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.8rem">
+          <div class="dnode blue">lidar_driver</div>
+          <div class="darrow">→</div>
+          <div class="dtopic">/scan</div>
+          <div class="darrow">→</div>
+          <div class="dnode blue">slam_node</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.8rem">
+          <div class="dnode purple">planner</div>
+          <div class="darrow">→</div>
+          <div class="dtopic">/cmd_vel</div>
+          <div class="darrow">→</div>
+          <div class="dnode amber">drive_node</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <ul>
+        <li>Topics are <strong>decoupled</strong> — publisher and subscriber never reference each other</li>
+        <li>One publisher, <strong>many subscribers</strong> — or vice versa</li>
+        <li>Message types are contracts: both sides agree on the data structure</li>
+        <li>Run <code style="font-family:monospace;color:#22d3aa">ros2 topic list</code> to see the live graph</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Nodes -->
+<div class="slide" data-section="concepts" id="slide-5" data-notes="Show the code. Point out: inherits from Node, name passed to super().__init__, publisher created in __init__, timer fires the callback. Ask students: where does the data go?">
+  <span class="badge">Core Concepts</span>
+  <h2>A Node in Python</h2>
+  <div class="cols">
+    <div class="col">
+<div class="code"><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+
+<span class="kw">class</span> <span class="fn">Talker</span>(Node):
+  <span class="kw">def</span> <span class="fn">__init__</span>(self):
+    <span class="kw">super</span>().<span class="fn">__init__</span>(<span class="st">'talker'</span>)
+    self.pub = self.<span class="fn">create_publisher</span>(
+        String, <span class="st">'/chatter'</span>, 10)
+    self.<span class="fn">create_timer</span>(1.0, self.tick)
+
+  <span class="kw">def</span> <span class="fn">tick</span>(self):
+    msg = <span class="fn">String</span>()
+    msg.data = <span class="st">'Hello!'</span>
+    self.pub.<span class="fn">publish</span>(msg)
+
+<span class="kw">def</span> <span class="fn">main</span>():
+  rclpy.<span class="fn">init</span>()
+  rclpy.<span class="fn">spin</span>(<span class="fn">Talker</span>())</div>
+    </div>
+    <div class="col">
+      <ul style="margin-top:.5rem">
+        <li>Inherit from <strong>Node</strong> — provides the ROS2 context</li>
+        <li><strong>create_publisher</strong>: bind to a topic and message type</li>
+        <li><strong>create_timer</strong>: call <code style="color:#22d3aa;font-family:monospace">tick()</code> every 1 second</li>
+        <li><strong>spin()</strong>: hand control to the event loop — callbacks fire from here</li>
+        <li>A node can have multiple publishers, subscribers, timers, and services simultaneously</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 6. Topics: Pub/Sub -->
+<div class="slide" data-section="concepts" id="slide-6" data-notes="Stress the decoupling: the listener doesn't know the talker exists. If you add a third node that also subscribes to /chatter, no code change needed anywhere. This is the power of pub/sub.">
+  <span class="badge">Core Concepts</span>
+  <h2>Publish / Subscribe</h2>
+  <div class="sub">Sender and receiver are completely independent. They share only a topic name and message type.</div>
+  <div class="cols">
+    <div class="col">
+<div class="code"><span class="cm"># Publisher side</span>
+self.pub = self.<span class="fn">create_publisher</span>(
+    String, <span class="st">'/chatter'</span>, 10)
+self.pub.<span class="fn">publish</span>(msg)
+
+<span class="cm"># Subscriber side</span>
+self.sub = self.<span class="fn">create_subscription</span>(
+    String,
+    <span class="st">'/chatter'</span>,
+    self.callback,
+    10)
+
+<span class="kw">def</span> <span class="fn">callback</span>(self, msg):
+    self.<span class="fn">get_logger</span>().<span class="fn">info</span>(
+        <span class="st">f'Heard: {msg.data}'</span>)</div>
+    </div>
+    <div class="col">
+      <ul>
+        <li>The <strong>10</strong> is queue depth — how many messages to buffer</li>
+        <li>Message types live in packages: <strong>std_msgs</strong>, <strong>geometry_msgs</strong>, <strong>sensor_msgs</strong></li>
+        <li>Topic names are namespaced: <code style="font-family:monospace;color:#22d3aa">/robot1/cmd_vel</code> isolates robots</li>
+        <li>Try it: run talker, then <code style="font-family:monospace;color:#22d3aa">ros2 topic echo /chatter</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 7. Services & Actions -->
+<div class="slide" data-section="concepts" id="slide-7" data-notes="Good analogy for services: like a function call across processes. Good analogy for actions: like a function call that gives you progress updates and you can cancel.">
+  <span class="badge">Core Concepts</span>
+  <h2>Services &amp; Actions</h2>
+  <div class="sub">Not everything is a continuous stream. Some interactions are request–response.</div>
+  <div class="cols">
+    <div class="col">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#3a5070;margin-bottom:.75rem;font-weight:700">Services — synchronous call</div>
+      <ul>
+        <li>Client sends a <strong>Request</strong>, server returns a <strong>Response</strong></li>
+        <li>Use for: queries, mode changes, one-shot actions</li>
+        <li>Examples: <code style="font-family:monospace;color:#bc8cff">/set_mode</code>, <code style="font-family:monospace;color:#bc8cff">/get_state</code></li>
+        <li>Blocks the caller until response arrives</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#3a5070;margin-bottom:.75rem;font-weight:700">Actions — long-running goals</div>
+      <ul>
+        <li>Like a service, but returns <strong>feedback</strong> while executing</li>
+        <li>Can be <strong>cancelled</strong> mid-flight</li>
+        <li>Use for: navigation, manipulation, any multi-second task</li>
+        <li>Examples: <code style="font-family:monospace;color:#bc8cff">NavigateToPose</code>, <code style="font-family:monospace;color:#bc8cff">GripperCommand</code></li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:2.5vh;padding:.75rem 1rem;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:8px;font-size:.85rem;color:#4a6080">
+    <strong style="color:#58a6ff">Rule of thumb:</strong> Use topics for continuous data streams. Use services for quick queries. Use actions for long tasks that need feedback.
+  </div>
+</div>
+
+<!-- 8. Building a Package -->
+<div class="slide" data-section="build" id="slide-8" data-notes="Walk students through this on ROSpad live. Create a package, create the file, write code, update setup.py, colcon build, ros2 run. Each step should produce visible output.">
+  <span class="badge">Building</span>
+  <h2>From idea to running node</h2>
+  <div class="sub">Five steps — the same on ROSpad and a real machine.</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;margin-top:1vh">
+    <div style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:.4rem">📦</div>
+      <div style="font-size:.72rem;font-weight:700;color:#bc8cff;margin-bottom:.35rem">1. Create package</div>
+      <div class="code" style="font-size:.62rem;text-align:left">ros2 pkg create \
+  my_pkg</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:.4rem">📝</div>
+      <div style="font-size:.72rem;font-weight:700;color:#bc8cff;margin-bottom:.35rem">2. Write node</div>
+      <div class="code" style="font-size:.62rem;text-align:left">touch my_pkg/
+  my_node.py
+<span class="cm"># write your Node class</span></div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:.4rem">⚙️</div>
+      <div style="font-size:.72rem;font-weight:700;color:#bc8cff;margin-bottom:.35rem">3. Register</div>
+      <div class="code" style="font-size:.62rem;text-align:left">setup.py:
+<span class="st">'my_node =
+  my_pkg.
+  my_node:main'</span></div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:.4rem">🔨</div>
+      <div style="font-size:.72rem;font-weight:700;color:#bc8cff;margin-bottom:.35rem">4. Build</div>
+      <div class="code" style="font-size:.62rem;text-align:left">colcon build</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:.4rem">▶</div>
+      <div style="font-size:.72rem;font-weight:700;color:#bc8cff;margin-bottom:.35rem">5. Run</div>
+      <div class="code" style="font-size:.62rem;text-align:left">ros2 run \
+  my_pkg \
+  my_node</div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. Real-world considerations -->
+<div class="slide" data-section="build" id="slide-9" data-notes="These are things students won't hit on ROSpad but will encounter on real hardware. Plant the seeds now so the concepts aren't new when they get to the lab.">
+  <span class="badge">Building</span>
+  <h2>Real-world ROS2 you'll encounter</h2>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li><strong>Namespaces:</strong> prefix all topics with <code style="font-family:monospace;color:#bc8cff">/robot_name/</code> to run multiple robots on the same network</li>
+        <li><strong>QoS profiles:</strong> use <code style="font-family:monospace;color:#bc8cff">BEST_EFFORT</code> for sensor streams (speed), <code style="font-family:monospace;color:#bc8cff">RELIABLE</code> for commands (correctness)</li>
+        <li><strong>Lifecycle nodes:</strong> manage startup/shutdown of critical hardware nodes — unconfigured → active → deactivating</li>
+      </ul>
+    </div>
+    <div class="col">
+      <ul>
+        <li><strong>Launch files:</strong> <code style="font-family:monospace;color:#bc8cff">.launch.py</code> scripts start many nodes at once with configurable parameters</li>
+        <li><strong>tf2:</strong> the transform library — tracks coordinate frames over time. Essential for sensor fusion and manipulation</li>
+        <li><strong>rqt &amp; rviz:</strong> GUI tools for visualising topics, images, robot state — the ROS2 dashboard</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 10. Why ROSpad? -->
+<div class="slide" data-section="rospad" id="slide-10" data-notes="This is the sales pitch for why you're using ROSpad in this course. The key point: students learn the exact same API, concepts, and workflow — but with zero setup friction. The 30-minute install problem is gone.">
+  <span class="badge">ROSpad</span>
+  <h2>Why ROSpad?</h2>
+  <div class="sub">The same concepts. The same API. Zero installation.</div>
+  <div class="cols">
+    <div class="col" style="display:flex;flex-direction:column;gap:1.2vh">
+      <div style="padding:.85rem 1rem;background:rgba(255,176,60,.06);border:1px solid rgba(255,176,60,.15);border-radius:8px">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:#ffb03c;margin-bottom:.35rem">Without ROSpad</div>
+        <div style="font-size:.85rem;color:#6a7a9a;line-height:1.5">30-min install · OS-specific issues · version conflicts · no hardware · broken environments eating into lab time</div>
+      </div>
+      <div style="padding:.85rem 1rem;background:rgba(34,211,170,.07);border:1px solid rgba(34,211,170,.18);border-radius:8px">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:#22d3aa;margin-bottom:.35rem">With ROSpad</div>
+        <div style="font-size:.85rem;color:#6a7a9a;line-height:1.5">Open a browser · log in · start coding. Every student on the same environment, instantly.</div>
+      </div>
+    </div>
+    <div class="col">
+      <ul>
+        <li>Python nodes run via <strong>Pyodide</strong> — real CPython in the browser</li>
+        <li>The 3D simulator responds to <code style="font-family:monospace;color:#22d3aa">/cmd_vel</code> topics just like a real robot</li>
+        <li>Publish-subscribe, timers, logging — <strong>identical API</strong> to real rclpy</li>
+        <li>Code written here runs on a real ROS2 machine with zero changes (for supported features)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 11. ROSpad Architecture -->
+<div class="slide" data-section="rospad" id="slide-11" data-notes="This explains how ROSpad achieves the same pub/sub semantics without DDS. BroadcastChannel is a browser API for cross-worker messaging — conceptually identical to a topic bus.">
+  <span class="badge">ROSpad</span>
+  <h2>How ROSpad maps to ROS2</h2>
+  <div class="sub">Different implementation, same mental model.</div>
+  <table class="map-table" style="margin-top:1.5vh">
+    <thead>
+      <tr><th>Real ROS2</th><th>ROSpad equivalent</th><th>Coverage</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>DDS / rmw</td><td>BroadcastChannel bus</td><td style="color:#22d3aa">Full pub/sub ✓</td></tr>
+      <tr><td>rclpy Node</td><td>Python shim via Pyodide</td><td style="color:#22d3aa">Same API ✓</td></tr>
+      <tr><td>Executors / threads</td><td>Web Workers (one per node)</td><td style="color:#22d3aa">Isolated ✓</td></tr>
+      <tr><td>Timer callbacks</td><td>setInterval in Web Worker</td><td style="color:#22d3aa">Same timing ✓</td></tr>
+      <tr><td>Hardware (sensors, motors)</td><td>Three.js 3D simulation</td><td style="color:#ffb03c">Simulated</td></tr>
+      <tr><td>Services / Actions</td><td>Stubs only</td><td style="color:#ff6060">Partial</td></tr>
+      <tr><td>Multi-machine networking</td><td>Single browser session</td><td style="color:#ff6060">Not available</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 12. Hands-on & Next Steps -->
+<div class="slide" data-section="rospad" id="slide-12" data-notes="Give students 30 minutes to complete the talker/listener exercise. Walk around and help. The goal: everyone has two nodes talking to each other before the end of class.">
+  <span class="badge">ROSpad</span>
+  <h2>Now: build it yourself</h2>
+  <div class="sub">Follow the Teaching Guide to build your first talker/listener pair.</div>
+  <div class="cols" style="margin-top:1vh">
+    <div class="col">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:#ffb03c;font-weight:700;margin-bottom:1vh">This session</div>
+      <ul>
+        <li>Create a ROS2 package</li>
+        <li>Write a talker node that publishes to <code style="font-family:monospace;color:#22d3aa">/chatter</code></li>
+        <li>Write a listener node that subscribes</li>
+        <li>Run both — see messages in the terminal</li>
+        <li>Verify with <code style="font-family:monospace;color:#22d3aa">ros2 topic echo /chatter</code></li>
+      </ul>
+    </div>
+    <div class="col">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:#ffb03c;font-weight:700;margin-bottom:1vh">Beyond this course</div>
+      <ul>
+        <li>Install ROS2 Humble on Ubuntu 22.04</li>
+        <li>Explore <strong>Nav2</strong> for autonomous navigation</li>
+        <li>Learn <strong>MoveIt2</strong> for manipulation</li>
+        <li>Read: docs.ros.org — the official tutorials</li>
+        <li>Build something real: lidar SLAM, arm control, visual servoing</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ UI ══ -->
+
+<a href="/" style="position:fixed;top:.75rem;left:1rem;z-index:200;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2a4060;text-decoration:none;padding:.3rem .7rem;border:1px solid #1a2a3a;border-radius:4px;background:rgba(8,13,22,.7);backdrop-filter:blur(8px);transition:color .15s,border-color .15s" onmouseover="this.style.color='#22d3aa';this.style.borderColor='#22d3aa'" onmouseout="this.style.color='#2a4060';this.style.borderColor='#1a2a3a'">← ROSpad</a>
+
+<div id="progress-bar"></div>
+
+<div id="nav">
+  <button class="nav-btn" id="btn-prev" onclick="go(-1)" disabled>←</button>
+  <span id="slide-counter">1 / 12</span>
+  <button class="nav-btn" id="btn-next" onclick="go(1)">→</button>
+</div>
+
+<div id="notes-panel">
+  <div id="notes-label">Speaker notes — press N to toggle</div>
+  <div id="notes-text"></div>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const total = slides.length;
+let cur = 0;
+let notesOpen = false;
+
+function go(dir) {
+  const next = cur + dir;
+  if (next < 0 || next >= total) return;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('exit');
+  setTimeout(() => slides[cur - dir] && slides[cur - dir].classList.remove('exit'), 400);
+  cur = next;
+  slides[cur].classList.add('active');
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('slide-counter').textContent = `${cur + 1} / ${total}`;
+  document.getElementById('btn-prev').disabled = cur === 0;
+  document.getElementById('btn-next').disabled = cur === total - 1;
+  document.getElementById('progress-bar').style.width = `${((cur + 1) / total) * 100}%`;
+  document.getElementById('notes-text').textContent = slides[cur].dataset.notes || '';
+}
+
+function toggleNotes() {
+  notesOpen = !notesOpen;
+  document.getElementById('notes-panel').classList.toggle('open', notesOpen);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); go(-1); }
+  if (e.key === 'n' || e.key === 'N') toggleNotes();
+  if (e.key === 'Home') { cur = 0; slides.forEach(s => { s.classList.remove('active','exit'); }); slides[0].classList.add('active'); updateUI(); }
+  if (e.key === 'End')  { cur = total-1; slides.forEach(s => { s.classList.remove('active','exit'); }); slides[cur].classList.add('active'); updateUI(); }
+});
+
+// Click anywhere on slide body to advance
+slides.forEach(s => {
+  s.addEventListener('click', e => {
+    if (!e.target.closest('button') && !e.target.closest('a')) go(1);
+  });
+});
+
+updateUI();
+</script>
+</body>
+</html>

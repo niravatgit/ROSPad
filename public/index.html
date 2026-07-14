@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROSpad — ROS2 IDE in Browser</title>
+
+  <!-- xterm.js — must load BEFORE Monaco's AMD loader or window.Terminal won't be set -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <!-- Three.js — likewise before AMD loader -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <!-- URDFLoader — builds kinematic chain from URDF using window.THREE (no cross-instance issues) -->
+  <script src="/js/URDFLoader.js"></script>
+  <!-- ammo.js — Bullet physics compiled to JS/WASM -->
+  <script src="https://cdn.jsdelivr.net/npm/ammo.js/builds/ammo.js"></script>
+  <!-- Cytoscape.js — must load BEFORE Monaco's AMD loader (same reason as xterm/Three) -->
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+  <!-- Monaco Editor — AMD loader last so it doesn't hijack xterm/Three globals -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --bg2:      #161b22;
+      --bg3:      #21262d;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --text2:    #8b949e;
+      --accent:   #58a6ff;
+      --green:    #3fb950;
+      --yellow:   #d29922;
+      --red:      #f85149;
+      --ros:      #22c55e;
+      --sidebar:  220px;
+      --terminal: 220px;
+      --topbar:   42px;
+    }
+
+    [data-theme="light"] {
+      --bg:     #ffffff;
+      --bg2:    #f6f8fa;
+      --bg3:    #eaeef2;
+      --border: #d0d7de;
+      --text:   #24292f;
+      --text2:  #57606a;
+      --accent: #0969da;
+      --green:  #1a7f37;
+      --yellow: #9a6700;
+      --red:    #cf222e;
+      --ros:    #1a7f37;
+    }
+
+    #theme-toggle {
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 17px; line-height: 1;
+      padding: 4px 6px; border-radius: 5px;
+      transition: color 0.15s, background 0.15s;
+      display: flex; align-items: center;
+    }
+    #theme-toggle:hover { background: var(--bg3); color: var(--text); }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    #topbar {
+      height: var(--topbar);
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; font-weight: 700;
+      color: var(--ros);
+      margin-right: 12px;
+    }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ros);
+      box-shadow: 0 0 8px var(--ros); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .topbtn {
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); border-radius: 5px; padding: 4px 12px;
+      font-size: 12px; cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .topbtn:hover { background: var(--border); }
+    .topbtn.run { background: #1a4d1a; border-color: var(--green); color: var(--green); }
+    .topbtn.run:hover { background: #1f5c1f; }
+    .topbtn.stop { background: #4d1a1a; border-color: var(--red); color: var(--red); }
+    .topbtn.stop:hover { background: #5c1f1f; }
+    .topbtn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+    .spacer { flex: 1; }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text2);
+      transition: background 0.3s;
+    }
+    .status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    #node-counter {
+      font-size: 11px; color: var(--text2);
+      background: var(--bg3); padding: 3px 8px; border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Main layout ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar / file tree ── */
+    #sidebar {
+      width: var(--sidebar);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 8px 12px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text2); text-transform: uppercase; letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .sidebar-icon-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text2); font-size: 14px; padding: 2px 4px;
+      border-radius: 3px;
+    }
+    .sidebar-icon-btn:hover { background: var(--bg3); color: var(--text); }
+
+    #file-tree {
+      flex: 1; overflow-y: auto; padding: 4px 0;
+    }
+
+    .tree-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 12px; font-size: 13px; cursor: pointer;
+      color: var(--text2); user-select: none;
+      transition: background 0.1s;
+    }
+    .tree-item:hover { background: var(--bg3); color: var(--text); }
+    .tree-item.active { background: rgba(88,166,255,0.1); color: var(--accent); }
+    .tree-item.dir { font-weight: 600; color: var(--text); }
+    .tree-item.indented  { padding-left: 28px; }
+    .tree-item.indented2 { padding-left: 44px; }
+    .tree-item.indented3 { padding-left: 60px; }
+
+    .tree-item.ros2-sys { color: var(--text2); opacity: 0.85; }
+    .tree-item.ros2-sys.dir { color: var(--text); opacity: 0.85; }
+    .tree-item.ros2-sys:hover { opacity: 1; }
+    .tree-item.ros2-binary { opacity: 0.4; cursor: default; }
+    .tree-item.ros2-binary:hover { background: none; color: var(--text2); opacity: 0.4; }
+
+    .tree-section {
+      padding: 8px 12px 3px;
+      font-size: 10px; font-weight: 700;
+      color: var(--text2); text-transform: uppercase; letter-spacing: 1px;
+      border-top: 1px solid var(--border);
+      margin-top: 4px; user-select: none;
+    }
+    .tree-section:first-child { border-top: none; margin-top: 0; }
+    .tree-section-sys { opacity: 0.7; }
+
+    .tree-icon { font-size: 12px; opacity: 0.7; width: 14px; text-align: center; }
+
+    /* ── Center: editor + terminal ── */
+    #center {
+      flex: 1;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* Tab bar */
+    #tabs {
+      height: 36px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-end;
+      padding: 0 0;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      font-size: 12px; cursor: pointer;
+      background: var(--bg3);
+      border-right: 1px solid var(--border);
+      color: var(--text2);
+      white-space: nowrap;
+      transition: background 0.1s;
+      border-top: 2px solid transparent;
+    }
+    .tab.active {
+      background: var(--bg);
+      color: var(--text);
+      border-top-color: var(--accent);
+    }
+    .tab-close {
+      opacity: 0; font-size: 11px; padding: 0 2px;
+      border-radius: 2px; line-height: 1;
+    }
+    .tab:hover .tab-close { opacity: 0.5; }
+    .tab-close:hover { opacity: 1 !important; background: var(--bg3); }
+    .tab-readonly {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.03em;
+      color: var(--accent); opacity: 0.7;
+      border: 1px solid var(--accent); border-radius: 2px;
+      padding: 0 3px; margin-right: 5px; line-height: 14px;
+    }
+
+    /* Editor */
+    #editor-container {
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* Terminal */
+    #terminal-panel {
+      height: var(--terminal);
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+      min-height: 100px;
+    }
+
+    #statusbar {
+      height: 22px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px;
+      flex-shrink: 0;
+      font-size: 10px;
+      color: var(--text2);
+      letter-spacing: 0.04em;
+      user-select: none;
+    }
+    #statusbar-nodes { color: var(--green); }
+
+    /* ── Running-nodes bar (appears above terminal when nodes are active) ── */
+    #running-nodes-bar {
+      display: none; /* shown by JS when workers > 0 */
+      flex-wrap: wrap; gap: 5px;
+      padding: 4px 8px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .node-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: #0d2b0d; border: 1px solid #2d6a2d;
+      color: var(--green); border-radius: 99px;
+      padding: 2px 8px 2px 7px; font-size: 10px; user-select: none;
+    }
+    .node-pill-dot { font-size: 9px; opacity: 0.8; }
+    .node-pill-stop {
+      cursor: pointer; opacity: 0.55; font-size: 11px; line-height: 1;
+      padding: 0 1px; border-radius: 50%;
+    }
+    .node-pill-stop:hover { opacity: 1; color: var(--red); }
+
+    .terminal-header {
+      height: 28px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 8px; gap: 0;
+      font-size: 11px; color: var(--text2);
+      flex-shrink: 0; overflow: hidden;
+    }
+
+    #term-session-tabs {
+      display: flex; align-items: stretch; gap: 1px; height: 100%;
+    }
+    .term-stab {
+      display: flex; align-items: center; gap: 5px;
+      padding: 0 10px; cursor: pointer; font-size: 11px;
+      border-right: 1px solid var(--border); white-space: nowrap;
+      color: var(--text2);
+    }
+    .term-stab:hover { background: var(--bg3); color: var(--text); }
+    .term-stab.active { background: var(--bg); color: var(--accent); border-bottom: 2px solid var(--accent); }
+    .term-stab-close {
+      font-size: 10px; opacity: 0; line-height: 1;
+      padding: 1px 2px; border-radius: 2px;
+    }
+    .term-stab:hover .term-stab-close { opacity: 0.6; }
+    .term-stab-close:hover { opacity: 1 !important; background: var(--bg3); }
+
+    .term-new-btn {
+      background: none; border: none; color: var(--text2);
+      font-size: 16px; cursor: pointer; padding: 0 8px; height: 100%;
+      line-height: 1; display: flex; align-items: center;
+    }
+    .term-new-btn:hover { color: var(--text); background: var(--bg3); }
+
+    #terminal-viewport {
+      flex: 1; min-height: 0; position: relative;
+    }
+    .term-pane {
+      position: absolute; inset: 0;
+      padding: 4px 6px 16px;
+      display: none;
+      overflow: hidden;
+    }
+    .term-pane.active { display: block; }
+
+    /* ── Right panel: sim + topics ── */
+    #right-panel {
+      width: 420px;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .panel-tabs {
+      height: 36px;
+      display: flex; align-items: flex-end;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .ptab {
+      padding: 6px 14px; font-size: 12px; cursor: pointer;
+      color: var(--text2); border-right: 1px solid var(--border);
+      border-top: 2px solid transparent;
+      transition: all 0.1s;
+    }
+    .ptab.active {
+      color: var(--text); border-top-color: var(--ros);
+      background: var(--bg);
+    }
+    .ptab:hover:not(.active) { color: var(--text); background: var(--bg3); }
+
+    .panel-content { flex: 1; overflow: hidden; display: none; }
+    .panel-content.active { display: flex; flex-direction: column; }
+
+    /* Sim viewport — the resizable canvas area */
+    #sim-viewport {
+      height: 260px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    #sim-canvas    { width: 100%; height: 100%; display: block; background: #070a0f; }
+    #turtle-canvas { width: 100%; height: 100%; display: none; background: #2d4a6b; }
+
+    .sim-controls {
+      padding: 6px 10px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg2); flex-shrink: 0;
+    }
+
+    .sim-hint {
+      font-size: 11px; color: var(--text2); font-style: italic;
+    }
+
+    .sim-btn {
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text2); border-radius: 4px; padding: 3px 10px;
+      font-size: 11px; cursor: pointer; font-family: inherit;
+    }
+    .sim-btn:hover { color: var(--text); background: var(--border); }
+    .sim-btn.active { border-color: var(--ros); color: var(--ros); }
+
+    /* Topic monitor */
+    #topic-monitor {
+      flex: 0 1 auto; overflow-y: auto; padding: 8px; max-height: 50%;
+    }
+
+    .topic-row {
+      display: flex; align-items: center;
+      padding: 5px 8px; border-radius: 4px;
+      margin-bottom: 3px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      font-size: 12px; gap: 8px;
+      cursor: pointer;
+    }
+    .topic-row:hover { border-color: var(--accent); }
+    .topic-row.selected { border-color: var(--ros); background: var(--bg2); }
+    .topic-name { color: var(--accent); flex: 1; }
+    .topic-type { color: var(--text2); font-size: 10px; }
+    .topic-hz { color: var(--green); font-size: 11px; margin-left: auto; }
+
+    /* Topic inspector */
+    .inspector-divider {
+      height: 1px; background: var(--border); flex-shrink: 0;
+    }
+    #topic-inspector {
+      flex: 1; overflow-y: auto; min-height: 0;
+    }
+    .inspector-empty {
+      padding: 16px 12px; color: var(--text2); font-size: 12px;
+    }
+    .inspector-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-bottom: 1px solid var(--border);
+      background: var(--bg2); flex-shrink: 0;
+      font-size: 12px;
+    }
+    .inspector-topic { color: var(--accent); font-weight: 600; }
+    .inspector-type  { color: var(--text2); font-size: 10px; }
+    .inspector-body  {
+      margin: 0; padding: 10px 12px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 11px; line-height: 1.5;
+      color: var(--text); white-space: pre-wrap; word-break: break-all;
+    }
+
+    /* Node graph */
+    #node-graph {
+      flex: 1; padding: 12px;
+      overflow-y: auto;
+    }
+
+    .node-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .node-card-name { color: var(--ros); font-size: 13px; font-weight: 600; }
+    .node-pub { color: var(--green); font-size: 11px; }
+    .node-sub { color: var(--accent); font-size: 11px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+    /* File-tree hover action buttons (download, delete, launch) */
+    .tree-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+    .tree-item:hover .tree-actions { opacity: 1; }
+    .tree-act-btn {
+      font-size: 11px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: opacity 0.1s, background 0.1s;
+    }
+    .tree-act-btn:hover { opacity: 1 !important; background: var(--border); }
+    .tree-act-btn.danger:hover { background: rgba(248,81,73,0.15); color: #f85149; }
+    .tree-rename-input {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: 12px;
+      font-family: inherit;
+      min-width: 60px;
+      max-width: 150px;
+      outline: none;
+    }
+
+    /* Pkg launch picker dropdown */
+    .pkg-launch-picker {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 600;
+      overflow: hidden;
+      min-width: 220px;
+    }
+
+    /* Resizer */
+    .resizer {
+      background: var(--border);
+      cursor: col-resize;
+      width: 3px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .resizer:hover, .resizer.dragging { background: var(--accent); }
+    .resizer.h { height: 3px; width: 100%; cursor: row-resize; }
+
+    /* Welcome */
+    .welcome {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--text2); gap: 12px;
+      font-size: 13px;
+    }
+    .welcome h2 { color: var(--ros); font-size: 22px; }
+    .welcome code {
+      background: var(--bg3); padding: 4px 10px;
+      border-radius: 4px; color: var(--accent);
+      font-size: 12px;
+    }
+
+    /* Tooltip badge */
+    .badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 10px;
+      color: var(--text2);
+    }
+
+    /* Sim panel — no relative positioning needed here anymore */
+    #panel-sim { }
+
+    /* Topic visualizer panel */
+    #viz-panel {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      max-height: 150px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .viz-header {
+      padding: 4px 10px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .viz-row {
+      display: flex; align-items: center;
+      padding: 5px 10px; font-size: 12px;
+      border-bottom: 1px solid rgba(48,54,61,0.4);
+    }
+    .viz-row label { cursor: pointer; display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+    .viz-check { cursor: pointer; accent-color: var(--ros); width: 13px; height: 13px; flex-shrink: 0; }
+    .viz-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .viz-topic { color: var(--accent); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .viz-type {
+      color: var(--text2); font-size: 10px;
+      background: var(--bg3); padding: 1px 5px;
+      border-radius: 3px; border: 1px solid var(--border);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .viz-empty { padding: 8px 10px; color: var(--text2); font-size: 11px; font-style: italic; }
+
+    /* Launch menu dropdown */
+    #launch-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 260px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 500;
+      overflow: hidden;
+    }
+    #launch-menu.open { display: block; }
+    .launch-menu-header {
+      padding: 6px 12px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text2);
+      border-bottom: 1px solid var(--border);
+    }
+    .launch-item {
+      padding: 7px 12px; font-size: 12px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.1s;
+    }
+    .launch-item:hover { background: var(--bg3); }
+    .launch-item-pkg { color: var(--ros); font-weight: 600; }
+    .launch-item-file { color: var(--text2); }
+    .launch-menu-empty { padding: 10px 12px; color: var(--text2); font-size: 12px; }
+
+    /* Obstacle property editor */
+    #obs-props {
+      display: none;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+    .obs-props-header {
+      padding: 4px 10px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .obs-props-del {
+      background: none; border: none; cursor: pointer;
+      color: var(--red); font-size: 11px; padding: 2px 6px;
+      border-radius: 3px; font-family: inherit;
+    }
+    .obs-props-del:hover { background: rgba(248,81,73,0.12); }
+    .obs-props-body { padding: 6px 10px; display: flex; flex-direction: column; gap: 5px; }
+    .obs-prop-row { display: flex; align-items: center; gap: 8px; }
+    .obs-prop-lbl { font-size: 11px; color: var(--text2); width: 48px; flex-shrink: 0; }
+    .obs-prop-range { flex: 1; accent-color: var(--ros); cursor: pointer; height: 4px; }
+    .obs-prop-val { font-size: 11px; color: var(--text); width: 38px; text-align: right; flex-shrink: 0; }
+    #obs-color { width: 36px; height: 22px; cursor: pointer; border: 1px solid var(--border); border-radius: 3px; padding: 1px; background: var(--bg3); }
+
+    /* Image viz overlay — positioned inside #sim-viewport */
+    .img-viz-overlay {
+      position: absolute; bottom: 8px; right: 8px;
+      width: 160px; height: 120px;
+      border: 1px solid var(--border); border-radius: 4px;
+      z-index: 5; background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: var(--text2);
+    }
+
+    /* ── Auth overlay ── */
+    #auth-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #auth-box {
+      width: 340px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #auth-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .auth-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 16px; font-weight: 700; color: var(--ros);
+      margin-bottom: 4px;
+    }
+    .auth-logo-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--ros); box-shadow: 0 0 8px var(--ros);
+      animation: pulse 2s infinite;
+    }
+    .auth-subtitle { font-size: 11px; color: var(--text2); }
+    #auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .auth-tab {
+      flex: 1; padding: 10px; font-size: 12px; font-weight: 600;
+      text-align: center; cursor: pointer;
+      color: var(--text2); background: var(--bg2);
+      border: none; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .auth-tab.active { color: var(--accent); background: var(--bg); }
+    #auth-form { padding: 20px 24px; }
+    .auth-field { margin-bottom: 14px; }
+    .auth-field label {
+      display: block; font-size: 11px; color: var(--text2);
+      margin-bottom: 5px; letter-spacing: 0.04em;
+    }
+    .auth-field input {
+      width: 100%; padding: 8px 10px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 5px; color: var(--text);
+      font-family: inherit; font-size: 13px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .auth-field input:focus { border-color: var(--accent); }
+    #auth-error {
+      font-size: 11px; color: var(--red);
+      margin-bottom: 12px; min-height: 16px;
+    }
+    #auth-submit {
+      width: 100%; padding: 9px;
+      background: var(--ros); border: none; border-radius: 5px;
+      color: #fff; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    #auth-submit:hover { opacity: 0.88; }
+    #auth-submit:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── User badge in topbar ── */
+    #user-badge {
+      display: none; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text2);
+    }
+    #user-badge .username {
+      color: var(--ros); font-weight: 600;
+    }
+    #user-badge .username::before { content: '@'; opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth overlay ────────────────────────────────────────────────────────── -->
+<div id="auth-overlay">
+  <div id="auth-box">
+    <div id="auth-header">
+      <div class="auth-logo"><div class="auth-logo-dot"></div>ROSpad</div>
+      <div class="auth-subtitle">ROS2 IDE — IIT Madras</div>
+    </div>
+    <div id="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+    <div id="auth-form">
+      <div class="auth-field">
+        <label>USERNAME</label>
+        <input id="auth-username" type="text" placeholder="your_username" autocomplete="username" />
+      </div>
+      <div class="auth-field">
+        <label>PASSWORD</label>
+        <input id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div id="auth-error"></div>
+      <button id="auth-submit" onclick="submitAuth()">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Top bar ─────────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    ROSpad
+    <span class="badge">ROS2</span>
+  </div>
+
+  <button class="topbtn run" id="btn-run" onclick="runCurrentFile()" disabled title="Open a .py file to run">▶ Run</button>
+  <button class="topbtn run" id="btn-launch" onclick="runCurrentFile()" disabled title="Open a .launch.py file to launch">⚡ Launch</button>
+  <button class="topbtn stop" id="btn-stop" onclick="stopAll()" disabled>■ Stop</button>
+  <button class="topbtn" onclick="colconBuild()">⚙ Build</button>
+  <button class="topbtn" onclick="newFile()">+ File</button>
+
+  <div class="spacer"></div>
+
+  <div id="user-badge">
+    <span class="username" id="topbar-username"></span>
+    <a class="topbtn" href="/how_to_use_rospad.html" target="_blank">How to Use</a>
+    <a id="intro-link" class="topbtn" href="/ros2-intro.html" target="_blank" style="display:none">Intro to ROS2</a>
+    <a id="teaching-link" class="topbtn" href="/teaching-guide.html" target="_blank" style="display:none">Teaching Guide</a>
+    <a id="lecture-link" class="topbtn" href="/ros2-lecture.html" target="_blank" style="display:none">Lecture</a>
+    <a id="admin-link" class="topbtn" href="/admin.html" style="display:none">Users</a>
+    <button class="topbtn" onclick="authLogout()">Logout</button>
+  </div>
+  <div id="node-counter">0 nodes</div>
+  <div class="status-dot" id="status-dot" title="WebROS Bus"></div>
+  <button id="theme-toggle" title="Toggle light/dark theme" onclick="toggleTheme()">🌙</button>
+</div>
+
+<!-- ── Main layout ─────────────────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      Explorer
+      <div style="display:flex;gap:4px">
+        <button class="sidebar-icon-btn" onclick="newFile()" title="New file">+</button>
+        <button class="sidebar-icon-btn" onclick="refreshTree()" title="Refresh">↺</button>
+      </div>
+    </div>
+    <div id="file-tree">
+      <div style="padding:8px 12px;color:var(--text2);font-size:12px">
+        Loading workspace...
+      </div>
+    </div>
+  </div>
+
+  <div class="resizer" id="resizer-sidebar"></div>
+
+  <!-- Center: editor + terminal -->
+  <div id="center">
+    <div id="tabs">
+      <!-- tabs inserted here -->
+    </div>
+
+    <div id="editor-container">
+      <div class="welcome" id="welcome">
+        <h2>⬡ ROSpad</h2>
+        <p>ROS2 IDE — zero install, runs in your browser</p>
+        <p>Open a file from the explorer, or:</p>
+        <code>ros2 pkg create --build-type ament_python my_robot</code>
+        <p style="margin-top:4px">then</p>
+        <code>ros2 run my_robot my_node</code>
+      </div>
+    </div>
+
+    <div class="resizer h" id="resizer-terminal"></div>
+
+    <!-- Terminal -->
+    <div id="terminal-panel">
+      <div id="running-nodes-bar"></div>
+      <div class="terminal-header">
+        <div id="term-session-tabs">
+          <!-- session tabs injected here -->
+        </div>
+        <button class="term-new-btn" onclick="termManager.addSession()" title="New terminal">+</button>
+        <div class="spacer"></div>
+        <span style="font-size:10px;color:var(--text2)">Ctrl+C · Tab autocomplete</span>
+      </div>
+      <div id="terminal-viewport"></div>
+    </div>
+  </div>
+
+  <div class="resizer" id="resizer-right"></div>
+
+  <!-- Right panel -->
+  <div id="right-panel">
+    <div class="panel-tabs">
+      <div class="ptab active" onclick="switchPanel('sim')">Simulation</div>
+      <div class="ptab" onclick="switchPanel('topics')">Topics</div>
+      <div class="ptab" onclick="switchPanel('nodes')">Nodes</div>
+      <div class="ptab" onclick="switchPanel('graph')">Graph</div>
+    </div>
+
+    <!-- Sim panel -->
+    <div class="panel-content active" id="panel-sim">
+      <div id="sim-viewport">
+        <canvas id="sim-canvas"></canvas>
+        <canvas id="turtle-canvas"></canvas>
+      </div>
+      <div class="resizer h" id="resizer-sim-canvas"></div>
+
+      <div class="sim-controls">
+        <span class="sim-hint" id="sim-robot-label">No robot loaded — launch a package</span>
+        <span style="flex:1"></span>
+        <button class="sim-btn" onclick="addObstacle('box')">+ Box</button>
+        <button class="sim-btn" onclick="addObstacle('sphere')">+ Sphere</button>
+        <button class="sim-btn" onclick="addObstacle('cylinder')">+ Cyl</button>
+        <span style="width:1px;background:var(--border);align-self:stretch;margin:4px 2px"></span>
+        <button class="sim-btn" onclick="resetSim()">Reset Env</button>
+      </div>
+
+      <div id="viz-panel">
+        <div class="viz-header">Visualize</div>
+        <div id="viz-items"><div class="viz-empty">No visualizable topics — start simulation or launch a package</div></div>
+      </div>
+
+      <div id="obs-props">
+        <div class="obs-props-header">
+          <span>Selected: <span id="obs-props-title">—</span></span>
+          <button class="obs-props-del" onclick="deleteSelectedObs()">✕ Delete</button>
+        </div>
+        <div class="obs-props-body">
+          <div class="obs-prop-row">
+            <span class="obs-prop-lbl">Scale X</span>
+            <input type="range" class="obs-prop-range" id="obs-sx" min="0.2" max="4" step="0.05" value="1" oninput="applyObsScale()">
+            <span class="obs-prop-val" id="obs-sx-val">1.00×</span>
+          </div>
+          <div class="obs-prop-row">
+            <span class="obs-prop-lbl">Scale Y</span>
+            <input type="range" class="obs-prop-range" id="obs-sy" min="0.2" max="4" step="0.05" value="1" oninput="applyObsScale()">
+            <span class="obs-prop-val" id="obs-sy-val">1.00×</span>
+          </div>
+          <div class="obs-prop-row">
+            <span class="obs-prop-lbl">Scale Z</span>
+            <input type="range" class="obs-prop-range" id="obs-sz" min="0.2" max="4" step="0.05" value="1" oninput="applyObsScale()">
+            <span class="obs-prop-val" id="obs-sz-val">1.00×</span>
+          </div>
+          <div class="obs-prop-row">
+            <span class="obs-prop-lbl">Color</span>
+            <input type="color" id="obs-color" oninput="applyObsColor()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topics panel -->
+    <div class="panel-content" id="panel-topics">
+      <div style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)">
+        Live topic monitor — click a topic to inspect
+      </div>
+      <div id="topic-monitor"></div>
+      <div class="inspector-divider"></div>
+      <div id="topic-inspector"><div class="inspector-empty">Click a topic to inspect its last message</div></div>
+    </div>
+
+    <!-- Node graph panel -->
+    <div class="panel-content" id="panel-nodes">
+      <div style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)">
+        Running nodes
+      </div>
+      <div id="node-graph"></div>
+    </div>
+
+    <!-- rqt_graph panel -->
+    <div class="panel-content" id="panel-graph"></div>
+  </div>
+</div>
+
+<!-- ── Status bar ───────────────────────────────────────────────────────────── -->
+<div id="statusbar">
+  <span>ROSpad v0.1 &nbsp;·&nbsp; ROS2 WebIDE</span>
+  <span id="statusbar-nodes"></span>
+</div>
+
+<!-- Scripts: load order matters (rosbus → ros2cli → terminal → sim → editor → topics → ui → app) -->
+<script src="/rosbus.js"></script>
+<script src="/ros2cli/ros2cli.js"></script>
+<script src="/ros2cli/node_manager.js"></script>
+<script src="/js/terminal.js"></script>
+<script src="/js/sim.js"></script>
+<script src="/js/editor.js"></script>
+<script src="/js/topics.js"></script>
+<script src="/js/graph.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/app.js"></script>
+
+<script>
+// ── Theme ─────────────────────────────────────────────────────────────────────
+(function() {
+  const saved = localStorage.getItem('rospad-theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('theme-toggle').textContent = '☀';
+  }
+})();
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('theme-toggle').textContent = '🌙';
+    localStorage.setItem('rospad-theme', 'dark');
+    if (window.monacoReady) monaco.editor.setTheme('rospad');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('theme-toggle').textContent = '☀';
+    localStorage.setItem('rospad-theme', 'light');
+    if (window.monacoReady) monaco.editor.setTheme('vs');
+  }
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+let _authMode = 'login';
+
+function switchAuthTab(mode) {
+  _authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0) === (mode === 'login'));
+  });
+  document.getElementById('auth-submit').textContent = mode === 'login' ? 'Login' : 'Create Account';
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-password').autocomplete =
+    mode === 'login' ? 'current-password' : 'new-password';
+}
+
+function submitAuth() {
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const btn      = document.getElementById('auth-submit');
+  const errEl    = document.getElementById('auth-error');
+  if (!username || !password) { errEl.textContent = 'Please enter username and password.'; return; }
+  btn.disabled = true;
+  fetch(`/api/${_authMode}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      onAuthSuccess(data.username, data.role);
+    } else {
+      errEl.textContent = data.error || 'Something went wrong.';
+      btn.disabled = false;
+    }
+  })
+  .catch(() => { errEl.textContent = 'Server error — try again.'; btn.disabled = false; });
+}
+
+function onAuthSuccess(username, role) {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('topbar-username').textContent = username;
+  document.getElementById('user-badge').style.display = 'flex';
+  const isTeacherOrAdmin = role === 'admin' || role === 'teacher';
+  const introLink = document.getElementById('intro-link');
+  if (introLink) introLink.style.display = 'inline-flex';
+  const teachingLink = document.getElementById('teaching-link');
+  if (teachingLink) teachingLink.style.display = isTeacherOrAdmin ? 'inline-flex' : 'none';
+  const lectureLink = document.getElementById('lecture-link');
+  if (lectureLink) lectureLink.style.display = isTeacherOrAdmin ? 'inline-flex' : 'none';
+  const adminLink = document.getElementById('admin-link');
+  if (adminLink) adminLink.style.display = role === 'admin' ? 'inline-flex' : 'none';
+  refreshTree();
+}
+
+function authLogout() {
+  fetch('/api/logout', { method: 'POST' }).finally(() => {
+    document.getElementById('user-badge').style.display = 'none';
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('auth-error').textContent = '';
+    document.getElementById('auth-username').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-submit').disabled = false;
+  });
+}
+
+// Allow Enter key to submit
+document.getElementById('auth-username').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('auth-password').focus(); });
+document.getElementById('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
+
+// Check existing session on load
+fetch('/api/me')
+  .then(r => r.json())
+  .then(data => { if (data.username) onAuthSuccess(data.username, data.role); })
+  .catch(() => {});
+</script>
+</body>
+</html>

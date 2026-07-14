@@ -1,0 +1,989 @@
+<title>ROSpad — Getting Started Guide</title>
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #0d1117;
+  --surface:   #161b22;
+  --surface2:  #1c2128;
+  --border:    #30363d;
+  --text:      #e6edf3;
+  --muted:     #8b949e;
+  --accent:    #58a6ff;
+  --green:     #3fb950;
+  --orange:    #d29922;
+  --red:       #f85149;
+  --purple:    #bc8cff;
+  --code-bg:   #010409;
+  --prompt:    #3fb950;
+  --ros:       #e85d04;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:       #f6f8fa;
+    --surface:  #ffffff;
+    --surface2: #f0f3f6;
+    --border:   #d0d7de;
+    --text:     #1f2328;
+    --muted:    #57606a;
+    --accent:   #0969da;
+    --green:    #1a7f37;
+    --orange:   #9a6700;
+    --red:      #d1242f;
+    --purple:   #8250df;
+    --code-bg:  #161b22;
+    --prompt:   #1a7f37;
+    --ros:      #bc4a00;
+  }
+}
+:root[data-theme="dark"]  { /* keep dark tokens */ }
+:root[data-theme="light"] {
+  --bg:#f6f8fa; --surface:#ffffff; --surface2:#f0f3f6; --border:#d0d7de;
+  --text:#1f2328; --muted:#57606a; --accent:#0969da; --green:#1a7f37;
+  --orange:#9a6700; --red:#d1242f; --purple:#8250df;
+  --code-bg:#161b22; --prompt:#1a7f37; --ros:#bc4a00;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  line-height: 1.65; min-height: 100vh;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 56px;
+  display: flex; align-items: center; gap: 16px;
+}
+@media (prefers-color-scheme: light) {
+  header { background: rgba(246,248,250,0.92); }
+}
+.logo {
+  font-size: 17px; font-weight: 700; color: var(--accent);
+  letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
+}
+.logo-badge {
+  font-size: 10px; font-weight: 600; background: var(--ros);
+  color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;
+}
+.header-nav { display: flex; gap: 4px; margin-left: auto; }
+.nav-link {
+  font-size: 13px; color: var(--muted); text-decoration: none;
+  padding: 4px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s;
+}
+.nav-link:hover { color: var(--text); background: var(--surface2); }
+
+/* ── Main content ──────────────────────────────────────────────────────────── */
+main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+.hero {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); padding: 32px 36px; margin-bottom: 40px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--ros), var(--accent), var(--green));
+}
+.hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 10px; line-height: 1.3; }
+.hero h1 span { color: var(--accent); }
+.hero p { color: var(--muted); font-size: 15px; max-width: 600px; margin-bottom: 20px; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500;
+  border: 1px solid; display: flex; align-items: center; gap: 5px;
+}
+.pill-blue   { color: var(--accent); border-color: var(--accent); background: rgba(88,166,255,0.08); }
+.pill-green  { color: var(--green);  border-color: var(--green);  background: rgba(63,185,80,0.08);  }
+.pill-orange { color: var(--orange); border-color: var(--orange); background: rgba(210,153,34,0.08); }
+.pill-ros    { color: var(--ros);    border-color: var(--ros);    background: rgba(232,93,4,0.08);   }
+
+/* ── Section labels ────────────────────────────────────────────────────────── */
+.section-group-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--muted); margin: 36px 0 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-group-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Collapsible cards ─────────────────────────────────────────────────────── */
+details {
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); margin-bottom: 12px; overflow: hidden;
+}
+details + details { }
+details[open] { border-color: var(--accent); }
+summary {
+  padding: 16px 20px; cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 12px;
+  user-select: none; font-weight: 600; font-size: 15px;
+  transition: background 0.12s;
+}
+summary::-webkit-details-marker { display: none; }
+summary:hover { background: var(--surface2); }
+.sum-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.sum-num {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 2px 8px; margin-left: auto;
+}
+.sum-badge {
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 10px; margin-left: auto; white-space: nowrap;
+}
+.badge-beginner { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-medium   { background: rgba(88,166,255,0.15); color: var(--accent); }
+.badge-advanced { background: rgba(232,93,4,0.15);   color: var(--ros); }
+.chevron {
+  margin-left: 6px; color: var(--muted); transition: transform 0.2s; font-size: 12px;
+}
+details[open] .chevron { transform: rotate(90deg); }
+
+/* ── Card body ─────────────────────────────────────────────────────────────── */
+.card-body {
+  padding: 0 20px 20px; border-top: 1px solid var(--border);
+}
+
+/* ── Sub-details (steps inside a card) ────────────────────────────────────── */
+.step-details {
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface2); margin: 12px 0; overflow: hidden;
+}
+.step-details[open] { border-color: rgba(88,166,255,0.4); }
+.step-summary {
+  padding: 11px 16px; cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600; font-size: 13px; user-select: none;
+  transition: background 0.12s;
+}
+.step-summary::-webkit-details-marker { display: none; }
+.step-summary:hover { background: rgba(255,255,255,0.04); }
+.step-n {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-body { padding: 0 16px 16px; }
+
+/* ── Prose inside steps ────────────────────────────────────────────────────── */
+p { margin: 10px 0; color: var(--text); font-size: 14px; }
+ul, ol { margin: 8px 0 8px 20px; font-size: 14px; }
+li { margin-bottom: 4px; }
+strong { color: var(--text); }
+a { color: var(--accent); }
+
+/* ── Code blocks ────────────────────────────────────────────────────────────── */
+.code-block {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin: 12px 0;
+  font-family: 'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--muted);
+}
+.code-lang { font-weight: 600; }
+.copy-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--surface); color: var(--text); }
+.copy-btn.copied { border-color: var(--green); color: var(--green); }
+pre {
+  margin: 0; padding: 16px 14px;
+  font-size: 13px; line-height: 1.6;
+  overflow-x: auto; white-space: pre;
+  color: #c9d1d9;
+}
+code { font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 0.9em; }
+.inline-code {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px; font-size: 13px;
+  font-family: 'JetBrains Mono','Fira Code',monospace;
+  color: var(--purple);
+}
+/* Syntax highlight colours */
+.kw  { color: #ff7b72; }
+.st  { color: #a5d6ff; }
+.cm  { color: #6e7681; }
+.fn  { color: #d2a8ff; }
+.nm  { color: #ffa657; }
+.op  { color: #79c0ff; }
+.pr  { color: #56d364; }
+.pu  { color: #e6edf3; }
+
+/* ── Command prompt ─────────────────────────────────────────────────────────── */
+.cmd-block {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px; margin: 10px 0;
+  font-family: 'JetBrains Mono','Fira Code',monospace;
+  font-size: 13px; display: flex; align-items: flex-start; gap: 10px;
+}
+.cmd-prompt { color: var(--prompt); font-weight: 700; flex-shrink: 0; }
+.cmd-text   { color: #c9d1d9; }
+
+/* ── Info/note boxes ────────────────────────────────────────────────────────── */
+.note {
+  border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+  font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
+  border-left: 3px solid;
+}
+.note-info   { background: rgba(88,166,255,0.08);  border-color: var(--accent); }
+.note-tip    { background: rgba(63,185,80,0.08);   border-color: var(--green); }
+.note-warn   { background: rgba(210,153,34,0.08);  border-color: var(--orange); }
+.note-icon   { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── UI overview grid ─────────────────────────────────────────────────────── */
+.ui-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px; margin: 14px 0;
+}
+.ui-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px;
+}
+.ui-card-icon { font-size: 20px; margin-bottom: 6px; }
+.ui-card-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.ui-card-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* ── Button reference ────────────────────────────────────────────────────────── */
+.btn-ref {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 10px; font-size: 12px;
+  font-family: inherit; color: var(--text); margin: 2px;
+  white-space: nowrap;
+}
+.btn-ref.run    { border-color: #3fb950; color: #3fb950; background: rgba(63,185,80,0.1); }
+.btn-ref.launch { border-color: #58a6ff; color: #58a6ff; background: rgba(88,166,255,0.1); }
+.btn-ref.stop   { border-color: #f85149; color: #f85149; background: rgba(248,81,73,0.1); }
+
+/* ── File tree mockup ────────────────────────────────────────────────────────── */
+.file-tree {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+  font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 13px;
+  line-height: 1.8;
+}
+.ft-dir  { color: var(--text); }
+.ft-file { color: var(--muted); }
+.ft-new  { color: var(--green); font-weight: 600; }
+.ft-pkg  { color: var(--accent); font-weight: 700; }
+
+/* ── Topic table ─────────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+th { text-align: left; padding: 8px 12px; background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 12px; }
+td { padding: 8px 12px; border-top: 1px solid var(--border); }
+td:first-child { font-family: 'JetBrains Mono',monospace; color: var(--purple); font-size: 12px; }
+td:nth-child(2) { color: var(--muted); font-size: 12px; }
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+footer {
+  text-align: center; padding: 32px; color: var(--muted); font-size: 13px;
+  border-top: 1px solid var(--border); margin-top: 40px;
+}
+</style>
+
+<!-- ── Header ────────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <span>🤖</span> ROSpad
+    <span class="logo-badge">GUIDE</span>
+  </div>
+  <nav class="header-nav">
+    <a class="nav-link" href="#ui-tour">UI Tour</a>
+    <a class="nav-link" href="#tut-talker">Talker/Listener</a>
+    <a class="nav-link" href="#tut-turtle">Turtlesim</a>
+    <a class="nav-link" href="#tut-diffbot">DiffBot</a>
+    <a class="nav-link" href="#tut-ur5">UR5 Arm</a>
+    <a class="nav-link" href="/">← IDE</a>
+  </nav>
+</header>
+
+<!-- ── Main ─────────────────────────────────────────────────────────────────── -->
+<main>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Learn ROS2 in the <span>Browser</span></h1>
+  <p>ROSpad is a browser-based ROS2 IDE with a live 3D simulator. No installation required — write Python nodes, launch packages, and see your robot move, all from a browser tab.</p>
+  <div class="pill-row">
+    <span class="pill pill-blue">🐍 Python nodes</span>
+    <span class="pill pill-green">🤖 Live 3D sim</span>
+    <span class="pill pill-orange">📦 ROS2 packages</span>
+    <span class="pill pill-ros">⚡ Launch files</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label" id="ui-tour">Getting Started</div>
+
+<!-- Login -->
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(88,166,255,0.12)">🔐</div>
+    Logging In
+    <span class="sum-badge badge-beginner">Beginner</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>Open <strong>ROSpad</strong> in your browser. You will see a login screen.</p>
+    <ul>
+      <li>Enter the <strong>username</strong> and <strong>password</strong> given by your instructor.</li>
+      <li>New users can click <strong>Register</strong> to create an account.</li>
+      <li>Once logged in, you land on the main IDE.</li>
+    </ul>
+    <div class="note note-info">
+      <span class="note-icon">ℹ️</span>
+      <span>Each student has a private workspace. Your files and packages are isolated from other students.</span>
+    </div>
+  </div>
+</details>
+
+<!-- UI tour -->
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(232,93,4,0.12)">🗺️</div>
+    The IDE Layout
+    <span class="sum-badge badge-beginner">Beginner</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <div class="ui-grid">
+      <div class="ui-card">
+        <div class="ui-card-icon">📁</div>
+        <div class="ui-card-title">File Explorer (left)</div>
+        <div class="ui-card-desc">Your workspace packages. Click a folder to expand it. Click a file to open it in the editor. <em>System Packages</em> shows read-only ROS2 packages.</div>
+      </div>
+      <div class="ui-card">
+        <div class="ui-card-icon">📝</div>
+        <div class="ui-card-title">Editor (centre)</div>
+        <div class="ui-card-desc">Monaco editor (same as VS Code). Supports Python, XML, YAML. Files auto-save as you type.</div>
+      </div>
+      <div class="ui-card">
+        <div class="ui-card-icon">🖥️</div>
+        <div class="ui-card-title">Terminal (bottom)</div>
+        <div class="ui-card-desc">Type ROS2 commands: <code>ros2 topic list</code>, <code>ros2 launch …</code>, <code>colcon build</code>. Open multiple terminal sessions with +.</div>
+      </div>
+      <div class="ui-card">
+        <div class="ui-card-icon">🤖</div>
+        <div class="ui-card-title">3D Sim (right)</div>
+        <div class="ui-card-desc">Live 3D robot simulation. Loads the robot when you launch a package. Use mouse to orbit/zoom. Press WASD to drive the DiffBot.</div>
+      </div>
+      <div class="ui-card">
+        <div class="ui-card-icon">📡</div>
+        <div class="ui-card-title">Topics Panel</div>
+        <div class="ui-card-desc">Click the <em>Topics</em> tab (top of right panel) to see live topic data from running nodes.</div>
+      </div>
+      <div class="ui-card">
+        <div class="ui-card-icon">🎛️</div>
+        <div class="ui-card-title">Toolbar (top)</div>
+        <div class="ui-card-desc"><span class="btn-ref run">▶ Run</span> a .py file &nbsp; <span class="btn-ref launch">⚡ Launch</span> a launch file &nbsp; <span class="btn-ref stop">■ Stop</span> running nodes</div>
+      </div>
+    </div>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">!</span>Button state rules<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <ul>
+          <li><span class="btn-ref run">▶ Run</span> — enabled only when a <span class="inline-code">.py</span> file (non-launch) is open and no node is running.</li>
+          <li><span class="btn-ref launch">⚡ Launch</span> — enabled only when a <span class="inline-code">.launch.py</span> file is open and no node is running.</li>
+          <li><span class="btn-ref stop">■ Stop</span> — enabled only when a node is running. Stops all nodes across all terminal sessions.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label" id="tut-talker">Tutorial 1 — Talker / Listener</div>
+
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(63,185,80,0.12)">📢</div>
+    Hello ROS2: Publish &amp; Subscribe
+    <span class="sum-badge badge-beginner">Beginner</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>The classic ROS2 demo: one node publishes messages, another subscribes. You'll create a Python package with two nodes and run them in separate terminal sessions.</p>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">1</span>Create the package<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>In the terminal, type:</p>
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 pkg create my_talker</span></div>
+        <p>This creates the directory <span class="inline-code">src/my_talker/</span> with <span class="inline-code">package.xml</span>, <span class="inline-code">setup.py</span>, and a default node stub. You will see it appear in the file explorer.</p>
+        <div class="note note-tip"><span class="note-icon">💡</span><span>You can also click <strong>+ File</strong> in the toolbar and type the path manually, but using <code>ros2 pkg create</code> sets up all required files at once.</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">2</span>Write the talker node<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>In the file explorer, open <span class="inline-code">src/my_talker/my_talker/my_node.py</span>. Replace its contents with:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — talker.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+
+
+<span class="kw">class</span> <span class="fn">Talker</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'talker'</span>)
+        self.pub   = self.create_publisher(String, <span class="st">'/chatter'</span>, <span class="nm">10</span>)
+        self.timer = self.create_timer(<span class="nm">1.0</span>, self.publish_msg)
+        self.count = <span class="nm">0</span>
+        self.get_logger().info(<span class="st">'Talker started!'</span>)
+
+    <span class="kw">def</span> <span class="fn">publish_msg</span>(self):
+        msg = String()
+        msg.data = <span class="st">f'Hello ROS2! count=</span><span class="op">{</span>self.count<span class="op">}</span><span class="st">'</span>
+        self.pub.publish(msg)
+        self.get_logger().info(<span class="st">f'Publishing: </span><span class="op">{</span>msg.data<span class="op">}</span><span class="st">'</span>)
+        self.count += <span class="nm">1</span>
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(Talker())
+    rclpy.shutdown()</pre>
+        </div>
+        <p>Click <span class="btn-ref run">▶ Run</span>. You should see <em>"Talker started!"</em> in the terminal, followed by publish messages every second.</p>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">3</span>Write and run the listener<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Click <strong>+</strong> next to the terminal tabs to open a second terminal session. Then click <strong>+ File</strong> and create <span class="inline-code">src/my_talker/my_talker/listener.py</span>:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — listener.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+
+
+<span class="kw">class</span> <span class="fn">Listener</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'listener'</span>)
+        self.sub = self.create_subscription(
+            String, <span class="st">'/chatter'</span>, self.on_msg, <span class="nm">10</span>)
+        self.get_logger().info(<span class="st">'Listener ready — waiting for messages…'</span>)
+
+    <span class="kw">def</span> <span class="fn">on_msg</span>(self, msg):
+        self.get_logger().info(<span class="st">f'Heard: </span><span class="op">{</span>msg.data<span class="op">}</span><span class="st">'</span>)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(Listener())
+    rclpy.shutdown()</pre>
+        </div>
+        <p>Open <span class="inline-code">listener.py</span> in the editor, then click <span class="btn-ref run">▶ Run</span>. You will see the messages arriving from the talker.</p>
+        <div class="note note-tip"><span class="note-icon">💡</span><span>To stop, click <span class="btn-ref stop">■ Stop</span>. This stops <strong>all</strong> running nodes.</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">4</span>Inspect the topic in the terminal<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>While the talker is running, try these in the terminal:</p>
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 topic list</span></div>
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 topic echo /chatter</span></div>
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 topic hz /chatter</span></div>
+        <div class="note note-info"><span class="note-icon">ℹ️</span><span>You can also open the <strong>Topics</strong> tab in the right panel to see a live dashboard of all active topics.</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">5</span>Create a launch file (optional)<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Add both nodes to a launch file so they start together. Create <span class="inline-code">src/my_talker/launch/demo.launch.py</span>:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — demo.launch.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">from</span> launch <span class="kw">import</span> LaunchDescription
+<span class="kw">from</span> launch_ros.actions <span class="kw">import</span> Node
+
+
+<span class="kw">def</span> <span class="fn">generate_launch_description</span>():
+    <span class="kw">return</span> LaunchDescription([
+        Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'my_node'</span>, name=<span class="st">'talker'</span>),
+        Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'listener'</span>, name=<span class="st">'listener'</span>),
+    ])</pre>
+        </div>
+        <p>Also add the listener entry point to <span class="inline-code">setup.py</span>. Open it and add <span class="inline-code">'listener = my_talker.listener:main'</span> to <span class="inline-code">console_scripts</span>. Then open <span class="inline-code">demo.launch.py</span> and click <span class="btn-ref launch">⚡ Launch</span>.</p>
+      </div>
+    </details>
+
+    <p style="margin-top:16px; font-size:13px; color:var(--muted)">Topics used:</p>
+    <table>
+      <tr><th>Topic</th><th>Message Type</th><th>Direction</th></tr>
+      <tr><td>/chatter</td><td>std_msgs/String</td><td>Talker → Listener</td></tr>
+    </table>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label" id="tut-turtle">Tutorial 2 — Turtlesim</div>
+
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(188,140,255,0.12)">🐢</div>
+    Draw with a Turtle
+    <span class="sum-badge badge-beginner">Beginner</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>Write a node that moves a turtle through a 2D canvas by publishing its pose. The sim automatically switches to turtle view when messages arrive on <span class="inline-code">/turtle1/pose</span>.</p>
+    <div class="note note-info"><span class="note-icon">ℹ️</span><span>The turtle canvas is an 11×11 unit grid (0–11 on both axes). The turtle starts at (5.5, 5.5). Publish a sequence of poses to trace a path.</span></div>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">1</span>Create the package<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 pkg create turtle_demo</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">2</span>Write the circle drawer<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Open <span class="inline-code">src/turtle_demo/turtle_demo/my_node.py</span> and replace with:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — turtle_circle.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> math
+<span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+
+
+<span class="kw">class</span> <span class="fn">TurtleCircle</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'turtle_circle'</span>)
+        <span class="cm"># Use raw rosBus to publish turtlesim pose</span>
+        <span class="kw">import</span> js
+        self.bus = js.window.rosBus
+        self.t   = <span class="nm">0.0</span>
+        self.timer = self.create_timer(<span class="nm">0.05</span>, self.step)
+        self.get_logger().info(<span class="st">'Turtle circle started!'</span>)
+
+    <span class="kw">def</span> <span class="fn">step</span>(self):
+        self.t += <span class="nm">0.05</span>
+        x     = <span class="nm">5.5</span> + <span class="nm">3.0</span> * math.cos(self.t)
+        y     = <span class="nm">5.5</span> + <span class="nm">3.0</span> * math.sin(self.t)
+        theta = self.t + math.pi / <span class="nm">2</span>
+        self.bus.publish(
+            <span class="st">'/turtle1/pose'</span>, <span class="st">'turtlesim/Pose'</span>,
+            {<span class="st">'x'</span>: x, <span class="st">'y'</span>: y, <span class="st">'theta'</span>: theta,
+             <span class="st">'linear_velocity'</span>: <span class="nm">1.0</span>, <span class="st">'angular_velocity'</span>: <span class="nm">1.0</span>}
+        )
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleCircle())
+    rclpy.shutdown()</pre>
+        </div>
+        <p>Click <span class="btn-ref run">▶ Run</span>. The sim switches to the turtle canvas and draws a circle. Click <span class="btn-ref stop">■ Stop</span> when done.</p>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">3</span>Try a spiral or square<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Change the <span class="inline-code">step()</span> method to draw a square:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — square path</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre>    <span class="kw">def</span> <span class="fn">step</span>(self):
+        self.t += <span class="nm">0.05</span>
+        side   = <span class="nm">4.0</span>           <span class="cm"># square side length</span>
+        period = self.t % (<span class="nm">4</span> * side / <span class="nm">1.0</span>)
+        seg    = <span class="nm">int</span>(period / side)  <span class="cm"># which side 0–3</span>
+        s      = period % side         <span class="cm"># distance along side</span>
+        corners = [(<span class="nm">2</span>,<span class="nm">2</span>), (<span class="nm">9</span>,<span class="nm">2</span>), (<span class="nm">9</span>,<span class="nm">9</span>), (<span class="nm">2</span>,<span class="nm">9</span>)]
+        cx0, cy0 = corners[seg]
+        cx1, cy1 = corners[(seg+<span class="nm">1</span>) % <span class="nm">4</span>]
+        t = s / side
+        x = cx0 + t * (cx1 - cx0)
+        y = cy0 + t * (cy1 - cy0)
+        self.bus.publish(<span class="st">'/turtle1/pose'</span>, <span class="st">'turtlesim/Pose'</span>,
+                         {<span class="st">'x'</span>: x, <span class="st">'y'</span>: y, <span class="st">'theta'</span>: <span class="nm">0.0</span>})</pre>
+        </div>
+      </div>
+    </details>
+
+    <table>
+      <tr><th>Topic</th><th>Message Type</th><th>Purpose</th></tr>
+      <tr><td>/turtle1/pose</td><td>turtlesim/Pose</td><td>Sets turtle position + draws trail</td></tr>
+    </table>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label" id="tut-diffbot">Tutorial 3 — Differential Drive Robot</div>
+
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(210,153,34,0.12)">🚗</div>
+    Launch and Drive the DiffBot
+    <span class="sum-badge badge-medium">Intermediate</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>The DiffBot is a two-wheeled differential drive robot. Launch its package and the 3D sim loads the robot automatically. Then write a controller node to drive it.</p>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">1</span>Launch the DiffBot<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>In the <strong>System Packages</strong> section of the file explorer, expand <span class="inline-code">diffbot_description → launch</span> and click <span class="inline-code">diffbot_bringup.launch.py</span>. The file opens read-only. Click <span class="btn-ref launch">⚡ Launch</span>.</p>
+        <p>The 3D sim will show the DiffBot in a few seconds. The status bar at the bottom of the sim panel confirms: <em>DiffBot</em>.</p>
+        <div class="note note-tip"><span class="note-icon">💡</span><span>You can also type this in the terminal: <code>ros2 launch diffbot_description diffbot_bringup.launch.py</code></span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">2</span>Drive with keyboard (built-in)<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Click on the 3D viewport to give it focus, then use:</p>
+        <ul>
+          <li><strong>W</strong> — move forward</li>
+          <li><strong>S</strong> — move backward</li>
+          <li><strong>A</strong> — turn left</li>
+          <li><strong>D</strong> — turn right</li>
+        </ul>
+        <p>The robot publishes <span class="inline-code">/cmd_vel</span> and its odometry on <span class="inline-code">/odom</span>.</p>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">3</span>Create a controller package<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 pkg create my_diffbot_ctrl</span></div>
+        <p>Open <span class="inline-code">src/my_diffbot_ctrl/my_diffbot_ctrl/my_node.py</span> and replace with a simple forward-move controller:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — simple_drive.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist
+
+
+<span class="kw">class</span> <span class="fn">DriveForward</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'drive_forward'</span>)
+        self.pub   = self.create_publisher(Twist, <span class="st">'/cmd_vel'</span>, <span class="nm">10</span>)
+        self.timer = self.create_timer(<span class="nm">0.1</span>, self.drive)
+        self.get_logger().info(<span class="st">'Driving forward at 0.3 m/s'</span>)
+
+    <span class="kw">def</span> <span class="fn">drive</span>(self):
+        msg = Twist()
+        msg.linear.x  = <span class="nm">0.3</span>   <span class="cm"># m/s forward</span>
+        msg.angular.z = <span class="nm">0.0</span>   <span class="cm"># no turning</span>
+        self.pub.publish(msg)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(DriveForward())
+    rclpy.shutdown()</pre>
+        </div>
+        <p>Keep the launch file running. In a new terminal session, open the controller file and click <span class="btn-ref run">▶ Run</span>. The robot moves forward. Click <span class="btn-ref stop">■ Stop</span> to halt.</p>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">4</span>Read odometry<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Create <span class="inline-code">src/my_diffbot_ctrl/my_diffbot_ctrl/odom_reader.py</span>:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — odom_reader.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> nav_msgs.msg <span class="kw">import</span> Odometry
+
+
+<span class="kw">class</span> <span class="fn">OdomReader</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'odom_reader'</span>)
+        self.create_subscription(Odometry, <span class="st">'/odom'</span>, self.cb, <span class="nm">10</span>)
+
+    <span class="kw">def</span> <span class="fn">cb</span>(self, msg):
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        self.get_logger().info(<span class="st">f'Position: x=</span><span class="op">{</span>x:.3f<span class="op">}</span><span class="st">  y=</span><span class="op">{</span>y:.3f<span class="op">}</span><span class="st">'</span>)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(OdomReader())
+    rclpy.shutdown()</pre>
+        </div>
+      </div>
+    </details>
+
+    <table>
+      <tr><th>Topic</th><th>Message Type</th><th>Purpose</th></tr>
+      <tr><td>/cmd_vel</td><td>geometry_msgs/Twist</td><td>Drive commands (linear + angular)</td></tr>
+      <tr><td>/odom</td><td>nav_msgs/Odometry</td><td>Robot position &amp; velocity</td></tr>
+      <tr><td>/scan</td><td>sensor_msgs/LaserScan</td><td>Simulated LIDAR (360°)</td></tr>
+    </table>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label" id="tut-ur5">Tutorial 4 — UR5 Robot Arm</div>
+
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(232,93,4,0.12)">🦾</div>
+    Launch and Control the UR5 6-DOF Arm
+    <span class="sum-badge badge-advanced">Advanced</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>The UR5 is a 6-joint industrial robot arm. Launch the description package to load it in the sim, then publish joint states to move each joint.</p>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">1</span>Launch the UR5<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>In the file explorer, expand <strong>System Packages → ur5_description → launch</strong> and click <span class="inline-code">ur5_bringup.launch.py</span>. Click <span class="btn-ref launch">⚡ Launch</span>.</p>
+        <p>The 3D sim loads the UR5 arm in its home position.</p>
+        <div class="note note-info"><span class="note-icon">ℹ️</span><span>The arm starts in a bent-elbow home pose: <em>[0, −π/2, 0, −π/2, 0, 0]</em>. This keeps it upright and away from singularities.</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">2</span>Joint names and axes<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <table>
+          <tr><th>#</th><th>Joint Name</th><th>Axis</th><th>Range</th></tr>
+          <tr><td>0</td><td>shoulder_pan_joint</td><td>Z (rotation)</td><td>±360°</td></tr>
+          <tr><td>1</td><td>shoulder_lift_joint</td><td>Y (lift)</td><td>±360°</td></tr>
+          <tr><td>2</td><td>elbow_joint</td><td>Y (elbow bend)</td><td>±180°</td></tr>
+          <tr><td>3</td><td>wrist_1_joint</td><td>Y (wrist tilt)</td><td>±360°</td></tr>
+          <tr><td>4</td><td>wrist_2_joint</td><td>Z (wrist rotate)</td><td>±360°</td></tr>
+          <tr><td>5</td><td>wrist_3_joint</td><td>Y (tool spin)</td><td>±360°</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">3</span>Create a joint state publisher<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 pkg create my_ur5_ctrl</span></div>
+        <p>Open <span class="inline-code">src/my_ur5_ctrl/my_ur5_ctrl/my_node.py</span> and replace with:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — joint_publisher.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> math
+<span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState
+
+JOINTS = [
+    <span class="st">'shoulder_pan_joint'</span>, <span class="st">'shoulder_lift_joint'</span>, <span class="st">'elbow_joint'</span>,
+    <span class="st">'wrist_1_joint'</span>,      <span class="st">'wrist_2_joint'</span>,       <span class="st">'wrist_3_joint'</span>,
+]
+
+<span class="cm"># Edit these angles (radians) to move the arm</span>
+POSITIONS = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">0.0</span>]
+
+
+<span class="kw">class</span> <span class="fn">JointPublisher</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'joint_publisher'</span>)
+        self.pub   = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nm">10</span>)
+        self.timer = self.create_timer(<span class="nm">0.05</span>, self.publish)
+        self.get_logger().info(<span class="st">'Publishing joint states at 20 Hz'</span>)
+
+    <span class="kw">def</span> <span class="fn">publish</span>(self):
+        msg = JointState()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.name     = JOINTS
+        msg.position = <span class="fn">list</span>(POSITIONS)
+        msg.velocity = [<span class="nm">0.0</span>] * <span class="nm">6</span>
+        msg.effort   = [<span class="nm">0.0</span>] * <span class="nm">6</span>
+        self.pub.publish(msg)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(JointPublisher())
+    rclpy.shutdown()</pre>
+        </div>
+        <p>Edit <span class="inline-code">POSITIONS</span> to set joint angles, then click <span class="btn-ref run">▶ Run</span>.</p>
+        <div class="note note-tip"><span class="note-icon">💡</span><span>Joint values are in radians. <em>−1.57 ≈ −90°</em>, <em>1.57 ≈ 90°</em>. Positive elbow_joint bends the arm upward.</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">4</span>Animate the arm with a sine wave<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Create <span class="inline-code">src/my_ur5_ctrl/my_ur5_ctrl/sine_demo.py</span>:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — sine_demo.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">import</span> math, rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState
+
+JOINTS = [<span class="st">'shoulder_pan_joint'</span>, <span class="st">'shoulder_lift_joint'</span>,
+          <span class="st">'elbow_joint'</span>, <span class="st">'wrist_1_joint'</span>,
+          <span class="st">'wrist_2_joint'</span>, <span class="st">'wrist_3_joint'</span>]
+
+AMP  = [<span class="nm">0.8</span>, <span class="nm">0.4</span>, <span class="nm">0.6</span>, <span class="nm">0.4</span>, <span class="nm">0.5</span>, <span class="nm">0.3</span>]
+FREQ = [<span class="nm">0.3</span>, <span class="nm">0.5</span>, <span class="nm">0.4</span>, <span class="nm">0.7</span>, <span class="nm">0.6</span>, <span class="nm">0.9</span>]
+OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">0.0</span>]
+
+
+<span class="kw">class</span> <span class="fn">SineDemo</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super()</span>.__init__(<span class="st">'sine_demo'</span>)
+        self.pub   = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nm">10</span>)
+        self.timer = self.create_timer(<span class="nm">0.033</span>, self.step)
+        self.t = <span class="nm">0.0</span>
+
+    <span class="kw">def</span> <span class="fn">step</span>(self):
+        self.t += <span class="nm">0.033</span>
+        pos = [OFF[i] + AMP[i] * math.sin(<span class="nm">2</span>*math.pi*FREQ[i]*self.t)
+               <span class="kw">for</span> i <span class="kw">in</span> range(<span class="nm">6</span>)]
+        msg = JointState()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.name = JOINTS; msg.position = pos
+        msg.velocity = [<span class="nm">0.0</span>]*<span class="nm">6</span>; msg.effort = [<span class="nm">0.0</span>]*<span class="nm">6</span>
+        self.pub.publish(msg)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    rclpy.spin(SineDemo())
+    rclpy.shutdown()</pre>
+        </div>
+        <p>Open <span class="inline-code">sine_demo.py</span> and click <span class="btn-ref run">▶ Run</span>. The arm dances through smooth sine-wave motion across all 6 joints.</p>
+      </div>
+    </details>
+
+    <table>
+      <tr><th>Topic</th><th>Message Type</th><th>Purpose</th></tr>
+      <tr><td>/joint_states</td><td>sensor_msgs/JointState</td><td>Drive arm joints (position in radians)</td></tr>
+      <tr><td>/tf</td><td>tf2_msgs/TFMessage</td><td>Dynamic joint transforms (auto-published)</td></tr>
+      <tr><td>/tf_static</td><td>tf2_msgs/TFMessage</td><td>Fixed joint transforms (published on load)</td></tr>
+      <tr><td>/robot_description</td><td>std_msgs/String</td><td>URDF XML (published by launch)</td></tr>
+    </table>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label">Reference</div>
+
+<!-- Terminal commands -->
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(63,185,80,0.12)">⌨️</div>
+    Terminal Command Reference
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">📦</span>Package commands<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <table>
+          <tr><th>Command</th><th>What it does</th></tr>
+          <tr><td>ros2 pkg create &lt;name&gt;</td><td>Scaffold a new Python package in src/</td></tr>
+          <tr><td>colcon build</td><td>Build all packages in src/</td></tr>
+          <tr><td>ros2 pkg list</td><td>List all known packages</td></tr>
+        </table>
+      </div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">📡</span>Topic commands<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <table>
+          <tr><th>Command</th><th>What it does</th></tr>
+          <tr><td>ros2 topic list</td><td>List all active topics</td></tr>
+          <tr><td>ros2 topic echo /topic</td><td>Print messages on a topic</td></tr>
+          <tr><td>ros2 topic hz /topic</td><td>Measure publish rate</td></tr>
+          <tr><td>ros2 topic info /topic</td><td>Show type and subscriber count</td></tr>
+          <tr><td>ros2 topic pub /topic &lt;type&gt; &lt;msg&gt;</td><td>Publish a one-shot message</td></tr>
+        </table>
+      </div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">🚀</span>Run &amp; Launch<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <table>
+          <tr><th>Command</th><th>What it does</th></tr>
+          <tr><td>ros2 run &lt;pkg&gt; &lt;exec&gt;</td><td>Run a single executable from a package</td></tr>
+          <tr><td>ros2 launch &lt;pkg&gt; &lt;file.launch.py&gt;</td><td>Launch a group of nodes</td></tr>
+          <tr><td>ros2 node list</td><td>List running nodes</td></tr>
+          <tr><td>ros2 node info /node</td><td>Show topics published/subscribed</td></tr>
+        </table>
+      </div>
+    </details>
+  </div>
+</details>
+
+<!-- Tips -->
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(88,166,255,0.12)">💡</div>
+    Tips &amp; Troubleshooting
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>The sim panel is empty<span class="chevron">›</span></summary>
+      <div class="step-body"><p>The sim starts empty. <strong>Launch a package</strong> (e.g. <em>diffbot_bringup.launch.py</em> or <em>ur5_bringup.launch.py</em>) to load a robot. The robot loads automatically when the launch file publishes <span class="inline-code">/robot_description</span>.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>▶ Run is greyed out<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Run is enabled only for <span class="inline-code">.py</span> files (not launch files, not URDF). Open a Python node file in the editor. Also check that no node is currently running (Stop first if needed).</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>⚡ Launch is greyed out<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Launch is enabled only for <span class="inline-code">.launch.py</span> files. Open a launch file (from your workspace <em>or</em> from System Packages). Also stop any running nodes first.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>My node crashed / keeps restarting<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Click <span class="btn-ref stop">■ Stop</span> to terminate all nodes. Check the terminal for the error traceback. Python syntax errors and import errors are the most common causes.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>The arm/robot doesn't move after I run my node<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Make sure the launch file is still running (it must stay active to keep the robot in the sim). Check the terminal for errors. Verify your topic name matches exactly — ROS2 topic names are case-sensitive.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>I can't see a topic I just created<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Topics only appear when a node is publishing or subscribing. Run your node first, then check <span class="inline-code">ros2 topic list</span> in the terminal or look in the Topics panel.</p></div>
+    </details>
+  </div>
+</details>
+
+</main>
+
+<footer>ROSpad — Browser-based ROS2 IDE · IIT Madras Robotics</footer>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>

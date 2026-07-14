@@ -1,0 +1,1624 @@
+<title>ROSpad Teaching Guide — 6-Hour ROS2 Curriculum</title>
+<style>
+/* ─── Design tokens ────────────────────────────────────────────────────────── */
+:root {
+  --bg:           #F2F5F8;
+  --surface:      #FFFFFF;
+  --surface-2:    #EBF0F5;
+  --border:       #CED6E0;
+  --text:         #111827;
+  --text-muted:   #4F6070;
+  --text-faint:   #8A9BB0;
+  --accent:       #0A8A72;
+  --accent-faint: #DDF4EF;
+  --s1:           #1E7A48;
+  --s1-faint:     #E0F4EB;
+  --s2:           #B85C1A;
+  --s2-faint:     #FEF0E6;
+  --code-bg:      #111820;
+  --code-text:    #C8D8E8;
+  --code-prompt:  #39E5C5;
+  --code-comment: #5A7A8A;
+  --code-kw:      #79B8FF;
+  --code-str:     #85E89D;
+  --note-bg:      #FFFBF0;
+  --note-border:  #D49020;
+  --out-bg:       #F0FAF6;
+  --out-border:   #28A070;
+  --warn-bg:      #FFF4F4;
+  --warn-border:  #C04040;
+  --step-num:     #0A8A72;
+  --tl-intro:     #6B8CAA;
+  --tl-code:      #0A8A72;
+  --tl-demo:      #B85C1A;
+  --tl-qa:        #8A9BB0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:           #0D1117;
+    --surface:      #161C24;
+    --surface-2:    #1E2730;
+    --border:       #252E3A;
+    --text:         #E2EAF0;
+    --text-muted:   #8090A0;
+    --text-faint:   #4F6070;
+    --accent:       #39E5C5;
+    --accent-faint: #0A2520;
+    --s1:           #4CAF84;
+    --s1-faint:     #0A1E14;
+    --s2:           #E5813A;
+    --s2-faint:     #1E0E04;
+    --code-bg:      #080C12;
+    --code-text:    #C8D8E8;
+    --code-prompt:  #39E5C5;
+    --code-comment: #4A6A7A;
+    --code-kw:      #79B8FF;
+    --code-str:     #85E89D;
+    --note-bg:      #1A1204;
+    --note-border:  #C07820;
+    --out-bg:       #081410;
+    --out-border:   #208060;
+    --warn-bg:      #1A0808;
+    --warn-border:  #A04040;
+    --step-num:     #39E5C5;
+    --tl-intro:     #3A5A7A;
+    --tl-code:      #1A6A58;
+    --tl-demo:      #7A4020;
+    --tl-qa:        #303A48;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F2F5F8; --surface: #FFFFFF; --surface-2: #EBF0F5;
+  --border: #CED6E0; --text: #111827; --text-muted: #4F6070;
+  --text-faint: #8A9BB0; --accent: #0A8A72; --accent-faint: #DDF4EF;
+  --s1: #1E7A48; --s1-faint: #E0F4EB; --s2: #B85C1A; --s2-faint: #FEF0E6;
+  --code-bg: #111820; --code-text: #C8D8E8; --code-prompt: #39E5C5;
+  --code-comment: #5A7A8A; --code-kw: #79B8FF; --code-str: #85E89D;
+  --note-bg: #FFFBF0; --note-border: #D49020; --out-bg: #F0FAF6;
+  --out-border: #28A070; --warn-bg: #FFF4F4; --warn-border: #C04040;
+  --step-num: #0A8A72; --tl-intro: #6B8CAA; --tl-code: #0A8A72;
+  --tl-demo: #B85C1A; --tl-qa: #8A9BB0;
+}
+:root[data-theme="dark"] {
+  --bg: #0D1117; --surface: #161C24; --surface-2: #1E2730;
+  --border: #252E3A; --text: #E2EAF0; --text-muted: #8090A0;
+  --text-faint: #4F6070; --accent: #39E5C5; --accent-faint: #0A2520;
+  --s1: #4CAF84; --s1-faint: #0A1E14; --s2: #E5813A; --s2-faint: #1E0E04;
+  --code-bg: #080C12; --code-text: #C8D8E8; --code-prompt: #39E5C5;
+  --code-comment: #4A6A7A; --code-kw: #79B8FF; --code-str: #85E89D;
+  --note-bg: #1A1204; --note-border: #C07820; --out-bg: #081410;
+  --out-border: #208060; --warn-bg: #1A0808; --warn-border: #A04040;
+  --step-num: #39E5C5; --tl-intro: #3A5A7A; --tl-code: #1A6A58;
+  --tl-demo: #7A4020; --tl-qa: #303A48;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── Layout ────────────────────────────────────────────────────────────────── */
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* ─── Document header ────────────────────────────────────────────────────────── */
+.doc-header {
+  border-bottom: 2px solid var(--border);
+  padding: 40px 0 32px;
+  margin-bottom: 40px;
+}
+.doc-eyebrow {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.doc-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+}
+.doc-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text);
+  text-wrap: balance;
+  margin-bottom: 14px;
+}
+.doc-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin-bottom: 28px;
+}
+.doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.meta-chip {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: var(--surface);
+  letter-spacing: 0.04em;
+}
+.meta-chip.accent {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-faint);
+}
+
+/* ─── Overview grid ─────────────────────────────────────────────────────────── */
+.overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+@media (max-width: 600px) { .overview { grid-template-columns: 1fr; } }
+.session-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px;
+}
+.session-card-label {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.session-card.s1 .session-card-label { color: var(--s1); }
+.session-card.s2 .session-card-label { color: var(--s2); }
+.session-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.session-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.session-card li {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.session-card li::before {
+  content: '→';
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+/* ─── Prerequisites card ─────────────────────────────────────────────────────── */
+.prereqs {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px 24px;
+  margin-bottom: 48px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 20px;
+  align-items: start;
+}
+.prereqs-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+  margin-bottom: 6px;
+}
+.prereq-key {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap;
+  padding-top: 1px;
+}
+.prereq-val { font-size: 0.85rem; color: var(--text-muted); }
+
+/* ─── Session sections ───────────────────────────────────────────────────────── */
+.session {
+  margin-bottom: 64px;
+}
+.session-header {
+  margin-bottom: 28px;
+}
+.session-label {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.session.s1 .session-label { color: var(--s1); }
+.session.s2 .session-label { color: var(--s2); }
+.session-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.session-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 18px;
+}
+
+/* ─── Timeline strip ─────────────────────────────────────────────────────────── */
+.timeline-strip {
+  display: flex;
+  height: 28px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.tl-seg {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0.92;
+}
+.tl-seg.intro  { background: var(--tl-intro); }
+.tl-seg.code   { background: var(--tl-code);  }
+.tl-seg.demo   { background: var(--tl-demo);  }
+.tl-seg.qa     { background: var(--tl-qa);    }
+.timeline-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.tl-key {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  letter-spacing: 0.06em;
+}
+.tl-key-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+.tl-key-dot.intro  { background: var(--tl-intro); }
+.tl-key-dot.code   { background: var(--tl-code); }
+.tl-key-dot.demo   { background: var(--tl-demo); }
+.tl-key-dot.qa     { background: var(--tl-qa); }
+
+/* ─── Phases (collapsible details/summary) ───────────────────────────────────── */
+.phase {
+  margin-bottom: 24px;
+}
+/* Remove browser default disclosure triangle */
+.phase > summary { list-style: none; }
+.phase > summary::-webkit-details-marker { display: none; }
+
+.phase-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface);
+  transition: background 0.15s;
+  position: relative;
+}
+.phase-header:hover { background: var(--surface-2); }
+
+/* Chevron — right edge of the header */
+.phase-header::after {
+  content: '›';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size: 18px;
+  color: var(--text-faint);
+  transition: transform 0.2s;
+  line-height: 1;
+}
+.phase[open] > .phase-header::after {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+/* Body below the header when open */
+.phase[open] > .phase-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.phase-body {
+  border: 1px solid var(--border);
+  border-top: none;
+  padding: 20px 16px 16px;
+  margin-bottom: 4px;
+}
+.phase-time {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+.phase-tag {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid;
+}
+.phase-tag.intro  { color: var(--tl-intro); border-color: var(--tl-intro); }
+.phase-tag.code   { color: var(--accent);   border-color: var(--accent);   }
+.phase-tag.demo   { color: var(--s2);       border-color: var(--s2);       }
+.phase-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ─── Steps ──────────────────────────────────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; gap: 24px; }
+.step {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0 14px;
+}
+.step-num {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--step-num);
+  padding-top: 2px;
+  letter-spacing: 0.04em;
+}
+.step-body h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.step-body p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  line-height: 1.65;
+}
+.step-body p:last-child { margin-bottom: 0; }
+
+/* ─── Code blocks ────────────────────────────────────────────────────────────── */
+.code-block {
+  background: var(--code-bg);
+  margin: 12px 0;
+  border: 1px solid #1E2A38;
+}
+.code-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #1E2A38;
+  background: #0D151E;
+}
+.code-chrome-dots {
+  display: flex;
+  gap: 5px;
+}
+.code-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.code-dot.r { background: #FF5F56; }
+.code-dot.y { background: #FFBD2E; }
+.code-dot.g { background: #27C93F; }
+.code-chrome-label {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 10px;
+  color: #4A6A7A;
+  margin-left: 6px;
+  letter-spacing: 0.04em;
+}
+.copy-btn {
+  margin-left: auto;
+  padding: 2px 9px;
+  font-size: 10px;
+  background: transparent;
+  color: #4A6A7A;
+  border: 1px solid #1E2A38;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  letter-spacing: 0.04em;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+.copy-btn:hover { background: #1A2433; color: #e6edf3; }
+.copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+.code-body {
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--code-text);
+  white-space: pre;
+}
+.p  { color: var(--code-prompt); user-select: none; }  /* prompt */
+.kw { color: var(--code-kw); }        /* keyword */
+.st { color: var(--code-str); }       /* string */
+.cm { color: var(--code-comment); }   /* comment */
+.fn { color: #FFA657; }               /* function */
+.nu { color: #79C0FF; }               /* number */
+.cl { color: #FFA657; }               /* class */
+
+/* ─── Callouts ───────────────────────────────────────────────────────────────── */
+.callout {
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-left: 3px solid;
+  font-size: 0.865rem;
+  line-height: 1.65;
+}
+.callout-label {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.callout.note {
+  background: var(--note-bg);
+  border-color: var(--note-border);
+}
+.callout.note .callout-label { color: var(--note-border); }
+.callout.output {
+  background: var(--out-bg);
+  border-color: var(--out-border);
+}
+.callout.output .callout-label { color: var(--out-border); }
+.callout.warn {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+.callout.warn .callout-label { color: var(--warn-border); }
+.callout p { color: var(--text-muted); }
+.callout p + p { margin-top: 6px; }
+.callout code {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  color: var(--text);
+}
+
+/* ─── Concept block ──────────────────────────────────────────────────────────── */
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.concept-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.concept-term {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 5px;
+  letter-spacing: 0.02em;
+}
+.concept-def { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; }
+
+/* ─── Divider ─────────────────────────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+/* ─── Appendix ───────────────────────────────────────────────────────────────── */
+.appendix-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+}
+.cmd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+  overflow-x: auto;
+  display: block;
+}
+.cmd-table th {
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 6px 12px 6px 0;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.cmd-table td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--surface-2);
+  vertical-align: top;
+}
+.cmd-table td:first-child {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--code-prompt);
+  white-space: nowrap;
+  padding-right: 20px;
+}
+.cmd-table td:last-child { color: var(--text-muted); }
+.section-gap { margin-bottom: 32px; }
+</style>
+
+<div class="wrap">
+
+<!-- ─── Header ─────────────────────────────────────────────────────────────── -->
+<header class="doc-header">
+  <div class="doc-eyebrow">IIT Madras · Robotics Lab · ROSpad v0.1</div>
+  <h1 class="doc-title">6-Hour ROS2 Teaching Guide</h1>
+  <p class="doc-subtitle">A complete instructor walkthrough for two 3-hour sessions. Students use ROSpad — the browser-based ROS2 IDE — with no local installation required.</p>
+  <div class="doc-meta">
+    <span class="meta-chip accent">http://192.168.0.166:3000</span>
+    <span class="meta-chip">2 sessions · 3 hrs each</span>
+    <span class="meta-chip">3 projects</span>
+    <span class="meta-chip">No ROS install needed</span>
+  </div>
+</header>
+
+<!-- ─── Overview ───────────────────────────────────────────────────────────── -->
+<div class="overview">
+  <div class="session-card s1">
+    <div class="session-card-label">Session 1 — 3 hours</div>
+    <div class="session-card-title">Foundations + First Two Projects</div>
+    <ul>
+      <li>ROS2 concepts: nodes, topics, messages</li>
+      <li>ROSpad interface tour</li>
+      <li>Project 1: Talker &amp; Listener nodes</li>
+      <li>Project 2: DiffBot keyboard teleop</li>
+      <li>Driving the robot from the command line</li>
+    </ul>
+  </div>
+  <div class="session-card s2">
+    <div class="session-card-label">Session 2 — 3 hours</div>
+    <div class="session-card-title">Robot Arm Joint Space Control</div>
+    <ul>
+      <li>Recap &amp; arm robot concepts</li>
+      <li>Joint space vs. Cartesian space</li>
+      <li>Moving UR5 joints via CLI commands</li>
+      <li>Named pose library (home, reach, pick)</li>
+      <li>Python controller with smooth interpolation</li>
+    </ul>
+  </div>
+</div>
+
+<div class="prereqs">
+  <div class="prereqs-title">Prerequisites &amp; Setup</div>
+  <span class="prereq-key">Students need</span>
+  <span class="prereq-val">A modern browser (Chrome or Firefox recommended) and network access to the lab server at <strong>192.168.0.166:3000</strong>. No other software required.</span>
+  <span class="prereq-key">Instructor</span>
+  <span class="prereq-val">ROSpad server running on the lab machine (verify with <code style="font-family:monospace;font-size:11px;">curl http://192.168.0.166:3000</code>). Each student opens the URL — everything else happens in the browser.</span>
+  <span class="prereq-key">Prior knowledge</span>
+  <span class="prereq-val">Basic Python (functions, classes). No ROS, Linux, or robotics knowledge assumed.</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     SESSION 1
+════════════════════════════════════════════════════════════════════════════ -->
+<section class="session s1">
+
+  <div class="session-header">
+    <div class="session-label">Session 1 · 3 Hours</div>
+    <h2 class="session-title">ROS2 Foundations, Pub/Sub, and Differential Drive</h2>
+
+    <div class="timeline-strip" title="Session 1 time allocation">
+      <div class="tl-seg intro" style="width:16.7%">Intro (30m)</div>
+      <div class="tl-seg code"  style="width:33.3%">Project 1 — Talker &amp; Listener (60m)</div>
+      <div class="tl-seg demo"  style="width:37.5%">Project 2 — DiffBot (67m)</div>
+      <div class="tl-seg qa"    style="width:12.5%">Q&amp;A (23m)</div>
+    </div>
+    <div class="timeline-legend">
+      <span class="tl-key"><span class="tl-key-dot intro"></span>Concept / setup</span>
+      <span class="tl-key"><span class="tl-key-dot code"></span>Coding</span>
+      <span class="tl-key"><span class="tl-key-dot demo"></span>Live demo</span>
+      <span class="tl-key"><span class="tl-key-dot qa"></span>Buffer / Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ── Phase A ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">0:00 – 0:30</span>
+      <span class="phase-tag intro">Concepts</span>
+      <span class="phase-title">ROS2 Introduction &amp; ROSpad Tour</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      Cover the conceptual layer first, then show the interface. Students should understand <em>why</em> ROS2 exists before they write a single line of code.
+    </p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-term">Node</div>
+        <div class="concept-def">A single process that does one job. A robot is a collection of nodes — one for the camera, one for the motors, one for planning.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Topic</div>
+        <div class="concept-def">A named channel. Nodes send messages to topics (publish) or read from them (subscribe). No node knows who else is listening.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Message</div>
+        <div class="concept-def">A typed data packet sent over a topic. <code style="font-size:10px">std_msgs/String</code> carries a text field; <code style="font-size:10px">geometry_msgs/Twist</code> carries velocity vectors.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Publisher / Subscriber</div>
+        <div class="concept-def">Roles a node can take on a topic. One node can be both publisher on one topic and subscriber on another simultaneously.</div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Open ROSpad in the browser</h4>
+          <p>Have every student navigate to <strong>http://192.168.0.166:3000</strong>. The IDE loads fully in the browser — no install. Point out the four panels: file tree (left), Monaco editor (center), 3D simulator (right), terminal (bottom).</p>
+          <div class="callout note">
+            <div class="callout-label">Instructor note</div>
+            <p>ROSpad uses <strong>Pyodide</strong> (Python compiled to WebAssembly) to run Python code in the browser. There is no "real" ROS on a server — the pub/sub system is emulated via a JavaScript message bus. The API is identical to real rclpy, so all code they write here runs on a real robot without changes.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>First command in the terminal</h4>
+          <p>Click the terminal panel at the bottom. Type the help command to see all available ROS2 subcommands:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 --help</div>
+          </div>
+          <p>Then check what nodes are running (none yet) and what topics exist (none yet):</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 node list
+<span class="p">$ </span>ros2 topic list</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>Both commands print <code>(no nodes running)</code> / <code>(no topics active)</code> — that is correct. The system is empty. Nodes and topics only exist while code is running.</p>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+  </details>
+
+  <!-- ── Phase B ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">0:30 – 1:30</span>
+      <span class="phase-tag code">Coding</span>
+      <span class="phase-title">Project 1 — Talker &amp; Listener</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      The canonical ROS2 hello-world. One node publishes a text message every second; another node subscribes and prints whatever it receives. Students will also learn to send messages directly from the terminal.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Create the package</h4>
+          <p>In the terminal, use the standard ROS2 command to scaffold a new Python package:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 pkg create --build-type ament_python talker_listener</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The file tree updates to show <code>src/talker_listener/</code> with <code>package.xml</code>, <code>setup.py</code>, and an empty <code>talker_listener/</code> module folder. No source files are created yet — you will write them in the next step.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>Create the Talker node file</h4>
+          <p>The package is empty — create the node file yourself. In the terminal, run:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>touch talker_listener/talker_listener/my_node.py</div>
+          </div>
+          <p>The file appears in the tree. Click it to open it in the editor, then paste the code below. The file auto-saves when you click away.</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/talker_listener/talker_listener/my_node.py</span></div>
+            <div class="code-body"><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+
+
+<span class="kw">class</span> <span class="cl">Talker</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__(<span class="st">'talker'</span>)
+        self.pub   = self.create_publisher(String, <span class="st">'/chatter'</span>, <span class="nu">10</span>)
+        self.timer = self.create_timer(<span class="nu">1.0</span>, self.publish_msg)
+        self.count = <span class="nu">0</span>
+
+    <span class="kw">def</span> <span class="fn">publish_msg</span>(self):
+        msg      = String()
+        msg.data = <span class="st">f'Hello ROS2! count={self.count}'</span>
+        self.pub.publish(msg)
+        self.get_logger().info(<span class="st">f'Publishing: {msg.data}'</span>)
+        self.count += <span class="nu">1</span>
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    node = Talker()
+    rclpy.spin(node)
+    rclpy.shutdown()</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note</div>
+            <p>Walk through the structure: <code>super().__init__('talker')</code> registers the node name on the bus. <code>create_publisher</code> declares this node will write to <code>/chatter</code>. <code>create_timer</code> fires <code>publish_msg</code> every 1.0 second — this is the ROS2 way to avoid a blocking while loop.</p>
+          </div>
+
+          <h4>Register the node in setup.py</h4>
+          <p>Open <code>src/talker_listener/setup.py</code> in the editor. Find the <code>console_scripts</code> list and add one line to tell colcon what executable to create:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/talker_listener/setup.py — edit this section</span></div>
+            <div class="code-body">    entry_points={
+        <span class="st">'console_scripts'</span>: [
+            <span class="st">'my_node = talker_listener.my_node:main'</span>,  <span class="cm"># ← add this line</span>
+        ],
+    },</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">What this line means</div>
+            <p><code>my_node</code> is the name you will type in <code>ros2 run</code>. <code>talker_listener.my_node</code> is the Python module path (package folder → file). <code>:main</code> is the function colcon calls as the entry point. Changing any of these three parts changes how the node is launched.</p>
+          </div>
+
+          <h4>Build the package</h4>
+          <p>Now that setup.py is updated, colcon can index the node as an executable:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>colcon build</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p><code>colcon build</code> prints <em>1 package(s) finished</em>. The package is now indexed and <code>ros2 run</code> can find it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-body">
+          <h4>Run the Talker and watch the topic</h4>
+          <p>In the terminal, launch the talker. Because ROSpad runs nodes as background Web Workers, the terminal remains free after the node starts:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 run talker_listener my_node</div>
+          </div>
+          <p>Now subscribe to the topic to see the messages flowing:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 topic echo /chatter</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>You will see a new message printed every second:</p>
+            <p><code>--- { "data": "Hello ROS2! count=0" }</code><br><code>--- { "data": "Hello ROS2! count=1" }</code></p>
+            <p>Press <strong>Ctrl+C</strong> in the terminal to stop echoing. The talker continues running in the background.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-body">
+          <h4>Create and write the Listener node</h4>
+          <p>Create a second node file in the same package:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>touch talker_listener/talker_listener/listener.py</div>
+          </div>
+          <p>Open it in the editor and paste the subscriber code:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/talker_listener/talker_listener/listener.py</span></div>
+            <div class="code-body"><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+
+
+<span class="kw">class</span> <span class="cl">Listener</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__(<span class="st">'listener'</span>)
+        self.sub = self.create_subscription(
+            String, <span class="st">'/chatter'</span>, self.callback, <span class="nu">10</span>)
+        self.get_logger().info(<span class="st">'Listener started, waiting for messages...'</span>)
+
+    <span class="kw">def</span> <span class="fn">callback</span>(self, msg):
+        self.get_logger().info(<span class="st">f'Heard: {msg.data}'</span>)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    node = Listener()
+    rclpy.spin(node)
+    rclpy.shutdown()</div>
+          </div>
+          <p>Add the listener to <code>setup.py</code> — open <code>src/talker_listener/setup.py</code> and extend <code>console_scripts</code> with a second line:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/talker_listener/setup.py — add the second entry</span></div>
+            <div class="code-body">    entry_points={
+        <span class="st">'console_scripts'</span>: [
+            <span class="st">'my_node = talker_listener.my_node:main'</span>,
+            <span class="st">'listener = talker_listener.listener:main'</span>,  <span class="cm"># ← add this</span>
+        ],
+    },</div>
+          </div>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>colcon build
+<span class="p">$ </span>ros2 run talker_listener listener</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The terminal shows the listener receiving the talker's messages: <code>[INFO] [listener]: Heard: Hello ROS2! count=4</code> — arriving every second. Both nodes are now running simultaneously.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-body">
+          <h4>Publish from the command line</h4>
+          <p>Demonstrate that any program — or human — can inject a message into the system without writing a node. The listener should receive this too:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 topic pub /chatter std_msgs/String '{"data": "Hello from the CLI!"}'</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The listener prints: <code>[INFO] [listener]: Heard: Hello from the CLI!</code></p>
+            <p>This demonstrates topic decoupling — the listener does not know or care who published the message.</p>
+          </div>
+
+          <div class="callout note">
+            <div class="callout-label">Instructor note — discussion questions</div>
+            <p>Ask: "What happens if the talker crashes? Does the listener crash too?" (No — they are independent processes.) "What if two talkers publish to the same topic?" (Both messages arrive at the listener.) These questions build the mental model of decoupled pub/sub.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">06</span>
+        <div class="step-body">
+          <h4>Inspect the running system</h4>
+          <p>Before moving on, use the introspection commands to see what is active:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 node list        <span class="cm"># → /talker  /listener</span>
+<span class="p">$ </span>ros2 topic list       <span class="cm"># → /chatter</span>
+<span class="p">$ </span>ros2 topic info /chatter    <span class="cm"># → message type + count</span>
+<span class="p">$ </span>ros2 topic hz /chatter      <span class="cm"># → ~1.00 Hz</span></div>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+  </details>
+
+  <!-- ── Phase C ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">1:30 – 2:50</span>
+      <span class="phase-tag demo">Demo + Coding</span>
+      <span class="phase-title">Project 2 — Differential Drive Robot</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      The 3D simulation panel shows a differential-drive robot (DiffBot) by default. Students will first drive it with the keyboard, then from the command line, then write a Python node that makes it drive in a circle autonomously.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Drive with WASD keyboard</h4>
+          <p>The DiffBot is visible in the 3D panel on the right. Click once on the simulation canvas to give it focus, then use:</p>
+          <div class="concept-grid" style="margin:10px 0;">
+            <div class="concept-card" style="text-align:center;padding:10px;">
+              <div class="concept-term" style="text-align:center;">W / S</div>
+              <div class="concept-def">Forward / Backward</div>
+            </div>
+            <div class="concept-card" style="text-align:center;padding:10px;">
+              <div class="concept-term" style="text-align:center;">A / D</div>
+              <div class="concept-def">Turn Left / Right</div>
+            </div>
+          </div>
+          <p>While driving, open the topic echo to see the messages being published:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 topic echo /cmd_vel</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output — pressing W</div>
+            <p><code>{ "linear": {"x": 0.5, "y": 0, "z": 0}, "angular": {"x": 0, "y": 0, "z": 0} }</code></p>
+            <p>Point out the structure: <code>linear.x</code> is forward speed (m/s), <code>angular.z</code> is rotation (rad/s). This is the <strong>geometry_msgs/Twist</strong> message — the universal velocity command in ROS2.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>Drive from the command line</h4>
+          <p>Stop echoing (Ctrl+C). Now publish a velocity command directly to the robot — no Python code required. The simulation responds immediately:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="cm"># Drive forward at 0.5 m/s</span>
+<span class="p">$ </span>ros2 topic pub /cmd_vel geometry_msgs/Twist '{"linear": {"x": 0.5, "y": 0.0, "z": 0.0}, "angular": {"x": 0.0, "y": 0.0, "z": 0.0}}'
+
+<span class="cm"># Turn left (rotate in place)</span>
+<span class="p">$ </span>ros2 topic pub /cmd_vel geometry_msgs/Twist '{"linear": {"x": 0.0, "y": 0.0, "z": 0.0}, "angular": {"x": 0.0, "y": 0.0, "z": 1.0}}'
+
+<span class="cm"># Stop the robot</span>
+<span class="p">$ </span>ros2 topic pub /cmd_vel geometry_msgs/Twist '{"linear": {"x": 0.0, "y": 0.0, "z": 0.0}, "angular": {"x": 0.0, "y": 0.0, "z": 0.0}}'</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note</div>
+            <p>This is the key insight: the robot does not care <em>who</em> sent <code>/cmd_vel</code>. It could be a Python node, a joystick driver, a navigation stack, or a human typing at a terminal. The topic is the contract.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-body">
+          <h4>Run the existing obstacle-avoidance controller</h4>
+          <p>ROSpad ships a <code>demo_robot</code> package with a differential drive controller that uses LiDAR data to avoid obstacles. Run it to show what a complete node looks like in action:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>colcon build
+<span class="p">$ </span>ros2 run demo_robot diff_drive_controller</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The robot starts moving forward in the simulation. If you add obstacle boxes (use the sim panel controls), it will slow, detect them via the LiDAR rays (shown in the 3D view), and turn to avoid them. Terminal logs: <code>[INFO] [diff_drive_controller]: Obstacle at 0.58 m — turning left</code></p>
+          </div>
+          <p>Open the source file to study it: <code>src/demo_robot/demo_robot/diff_drive_controller.py</code>. Walk through its structure: publishers, subscribers, timer, and the <code>drive_loop</code> control callback.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-body">
+          <h4>Write your own Circle-Drive node</h4>
+          <p>Create a new package and write a node that drives the robot in a continuous circle. This consolidates everything from Project 1 in a motion context:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 pkg create --build-type ament_python my_teleop
+<span class="p">$ </span>touch my_teleop/my_teleop/my_node.py</div>
+          </div>
+          <p>Open <code>src/my_teleop/my_teleop/my_node.py</code> in the editor and paste the code:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/my_teleop/my_teleop/my_node.py</span></div>
+            <div class="code-body"><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist
+
+
+<span class="kw">class</span> <span class="cl">CircleDrive</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__(<span class="st">'circle_drive'</span>)
+        self.pub   = self.create_publisher(Twist, <span class="st">'/cmd_vel'</span>, <span class="nu">10</span>)
+        self.timer = self.create_timer(<span class="nu">0.1</span>, self.drive)  <span class="cm"># 10 Hz</span>
+        self.get_logger().info(<span class="st">'CircleDrive started — driving in a circle!'</span>)
+
+    <span class="kw">def</span> <span class="fn">drive</span>(self):
+        msg             = Twist()
+        msg.linear.x    = <span class="nu">0.3</span>   <span class="cm"># forward speed  (m/s)</span>
+        msg.angular.z   = <span class="nu">0.6</span>   <span class="cm"># rotation speed (rad/s)</span>
+        self.pub.publish(msg)
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    node = CircleDrive()
+    rclpy.spin(node)
+    rclpy.shutdown()</div>
+          </div>
+          <p>Update <code>src/my_teleop/setup.py</code> to register the node, then build and run:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/my_teleop/setup.py — console_scripts</span></div>
+            <div class="code-body">        <span class="st">'my_node = my_teleop.my_node:main'</span>,  <span class="cm"># ← add this</span></div>
+          </div>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>colcon build
+<span class="p">$ </span>ros2 run my_teleop my_node</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The DiffBot moves in a circle in the simulation. The radius of the circle = <code>linear.x / angular.z</code>. Challenge students: change <code>angular.z</code> to make tighter or wider circles.</p>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — extension challenge</div>
+            <p>For fast finishers: modify the node to subscribe to <code>/odom</code> and use the position data to drive a figure-8 by reversing the angular direction every 10 seconds. This introduces the subscriber + timer interaction pattern.</p>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+  </details>
+
+  <div class="callout note" style="margin-top:8px;">
+    <div class="callout-label">End of Session 1 — Wrap-up points</div>
+    <p>Recap: Every ROS2 system is a graph of nodes exchanging typed messages on named topics. A robot is just many nodes running in parallel, decoupled from each other. The same Python code they wrote runs on a real ROS2 robot without modification.</p>
+    <p>Assign for reflection: In a self-driving car, what nodes might exist? What topics would connect them? (Camera, lidar, GPS, path planner, speed controller...)</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     SESSION 2
+════════════════════════════════════════════════════════════════════════════ -->
+<section class="session s2">
+
+  <div class="session-header">
+    <div class="session-label">Session 2 · 3 Hours</div>
+    <h2 class="session-title">UR5 Robot Arm — Joint Space Control</h2>
+
+    <div class="timeline-strip" title="Session 2 time allocation">
+      <div class="tl-seg intro" style="width:16.7%">Recap (30m)</div>
+      <div class="tl-seg demo"  style="width:33.3%">CLI Joint Control (60m)</div>
+      <div class="tl-seg code"  style="width:40%">Python Controller (72m)</div>
+      <div class="tl-seg qa"    style="width:10%">Q&amp;A (18m)</div>
+    </div>
+    <div class="timeline-legend">
+      <span class="tl-key"><span class="tl-key-dot intro"></span>Concept / recap</span>
+      <span class="tl-key"><span class="tl-key-dot demo"></span>Live demo + CLI</span>
+      <span class="tl-key"><span class="tl-key-dot code"></span>Coding</span>
+      <span class="tl-key"><span class="tl-key-dot qa"></span>Buffer / Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ── Phase A ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">0:00 – 0:30</span>
+      <span class="phase-tag intro">Concepts</span>
+      <span class="phase-title">Recap + Robot Arm Fundamentals</span>
+    </summary>
+  <div class="phase-body">
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Quick recap of Session 1</h4>
+          <p>Start with a 5-minute verbal recap. Ask students: what is a node? What is a topic? How do you move the DiffBot from the terminal? Then revisit the core question: <em>what changes when we go from a wheeled robot to a robot arm?</em></p>
+          <div class="concept-grid">
+            <div class="concept-card">
+              <div class="concept-term">Joint Space</div>
+              <div class="concept-def">Describing a robot's pose as a list of joint angles (in radians). The UR5 has 6 joints → 6 numbers define any configuration.</div>
+            </div>
+            <div class="concept-card">
+              <div class="concept-term">Cartesian Space</div>
+              <div class="concept-def">Describing the end-effector position as (x, y, z) coordinates in the world. Harder — requires solving inverse kinematics. We use joint space today.</div>
+            </div>
+            <div class="concept-card">
+              <div class="concept-term">sensor_msgs/JointState</div>
+              <div class="concept-def">The standard ROS2 message for joint positions. Has three parallel arrays: <code>name</code>, <code>position</code> (radians), <code>velocity</code>, <code>effort</code>.</div>
+            </div>
+            <div class="concept-card">
+              <div class="concept-term">The /joint_states topic</div>
+              <div class="concept-def">Publishing to this topic moves the simulated arm. On a real UR5, the same topic commands the physical joints via the driver node.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>Switch the simulation to the arm robot</h4>
+          <p>The simulation panel has a robot selector. Click the <strong>Arm</strong> button (or use the sim toolbar) to swap from DiffBot to the 6-DOF arm. The 3D viewport updates immediately.</p>
+          <p>The arm has 6 revolute joints, labeled <strong>j0–j5</strong> from base to tip. Joint 0 is the base rotation; Joint 5 is the wrist. All angles are in radians. At startup all joints are at 0.0 — the arm is fully extended upward.</p>
+          <div class="callout note">
+            <div class="callout-label">Instructor note</div>
+            <p>Remind students: 1 radian ≈ 57.3°. So 1.57 rad ≈ 90°, 3.14 rad ≈ 180°. Have them keep a calculator handy for the CLI section. In real robotics you nearly always work in radians.</p>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+  </details>
+
+  <!-- ── Phase B ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">0:30 – 1:30</span>
+      <span class="phase-tag demo">Live Demo</span>
+      <span class="phase-title">Joint Space Control via CLI</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      Before writing any Python, students will directly publish joint positions from the terminal. This makes the relationship between the message, the topic, and the robot motion concrete and immediate.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Understand the JointState message structure</h4>
+          <p>The message has three parallel lists. The <code>position</code> array is what moves the robot — one angle (radians) per joint, in order j0 → j5:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">JointState message anatomy</span></div>
+            <div class="code-body"><span class="cm"># name: labels for each joint (must match the position array length)</span>
+<span class="cm"># position: joint angles in radians  [j0,  j1,  j2,  j3,  j4,  j5]</span>
+<span class="cm"># velocity: not used in this sim    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</span>
+<span class="cm"># effort:   not used in this sim    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>Send the arm to the Home pose (all zeros)</h4>
+          <p>Start with all joints at zero — the neutral reference pose:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}'</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The arm moves to the fully extended (home) configuration. Published to /joint_states confirmation appears in the terminal.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-body">
+          <h4>Move joints one at a time — feel the degrees of freedom</h4>
+          <p>Run each command, observe the motion, then return to home before the next one. This builds intuition for each joint's axis of rotation:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="cm"># j0: Rotate base 90° clockwise  (0.785 rad ≈ 45°, 1.57 rad ≈ 90°)</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [1.57, 0.0, 0.0, 0.0, 0.0, 0.0]}'
+
+<span class="cm"># j1: Tilt shoulder forward</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, -0.8, 0.0, 0.0, 0.0, 0.0]}'
+
+<span class="cm"># j2: Bend elbow</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, -0.8, 1.4, 0.0, 0.0, 0.0]}'
+
+<span class="cm"># Compound: shoulder + elbow reaching position</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, -0.5, 1.2, 0.3, 0.0, 0.0]}'</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note</div>
+            <p>Have the class call out which joint they think will move before each command. Builds spatial reasoning. After j2 (elbow), ask: "If I increase j1 (shoulder), which direction does the end effector move?" — this is the intuition behind forward kinematics.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-body">
+          <h4>Define and memorize named poses</h4>
+          <p>Real robot programs rarely hardcode positions inline — they use named poses. Introduce the three poses students will use in the Python project:</p>
+
+          <div class="concept-grid">
+            <div class="concept-card">
+              <div class="concept-term">home</div>
+              <div class="concept-def"><code>[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code><br>All joints at zero. Arm vertical.</div>
+            </div>
+            <div class="concept-card">
+              <div class="concept-term">reach</div>
+              <div class="concept-def"><code>[0.0, -0.5, 1.2, 0.3, 0.0, 0.0]</code><br>Arm extended forward, ready to approach an object.</div>
+            </div>
+            <div class="concept-card">
+              <div class="concept-term">pick</div>
+              <div class="concept-def"><code>[0.785, -0.8, 1.5, 0.5, 0.0, 0.0]</code><br>Base rotated 45°, arm lowered — simulates grasping.</div>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal — try each pose</span></div>
+            <div class="code-body"><span class="cm"># reach pose</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, -0.5, 1.2, 0.3, 0.0, 0.0]}'
+
+<span class="cm"># pick pose</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.785, -0.8, 1.5, 0.5, 0.0, 0.0]}'
+
+<span class="cm"># back to home</span>
+<span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}'</div>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+  </details>
+
+  <!-- ── Phase C ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">1:30 – 3:00</span>
+      <span class="phase-tag code">Coding</span>
+      <span class="phase-title">Project 3 — Python UR5 Controller</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      Students write a ROS2 node that commands the arm to smoothly interpolate between named poses. This introduces continuous control loops, smooth motion, and dictionary-based pose libraries.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Create the package</h4>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 pkg create --build-type ament_python ur5_controller
+<span class="p">$ </span>touch ur5_controller/ur5_controller/my_node.py</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>Write the UR5 controller node</h4>
+          <p>Open <code>src/ur5_controller/ur5_controller/my_node.py</code> (the file you just created) and paste the controller below. Read through it together as a class before running — pay attention to the <code>update</code> method's interpolation logic.</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/ur5_controller/ur5_controller/my_node.py</span></div>
+            <div class="code-body"><span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState
+
+JOINT_NAMES = [<span class="st">'j0'</span>, <span class="st">'j1'</span>, <span class="st">'j2'</span>, <span class="st">'j3'</span>, <span class="st">'j4'</span>, <span class="st">'j5'</span>]
+
+POSES = {
+    <span class="st">'home'</span>:  [<span class="nu">0.0</span>,   <span class="nu">0.0</span>,  <span class="nu">0.0</span>,  <span class="nu">0.0</span>, <span class="nu">0.0</span>, <span class="nu">0.0</span>],
+    <span class="st">'reach'</span>: [<span class="nu">0.0</span>,  -<span class="nu">0.5</span>,  <span class="nu">1.2</span>,  <span class="nu">0.3</span>, <span class="nu">0.0</span>, <span class="nu">0.0</span>],
+    <span class="st">'pick'</span>:  [<span class="nu">0.785</span>, -<span class="nu">0.8</span>,  <span class="nu">1.5</span>,  <span class="nu">0.5</span>, <span class="nu">0.0</span>, <span class="nu">0.0</span>],
+    <span class="st">'place'</span>: [-<span class="nu">0.785</span>, -<span class="nu">0.6</span>, <span class="nu">1.3</span>, <span class="nu">0.4</span>, <span class="nu">0.0</span>, <span class="nu">0.0</span>],
+}
+
+SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <span class="st">'pick'</span>, <span class="st">'home'</span>, <span class="st">'reach'</span>, <span class="st">'place'</span>, <span class="st">'home'</span>]
+
+
+<span class="kw">class</span> <span class="cl">UR5Controller</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__(<span class="st">'ur5_controller'</span>)
+        self.pub     = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nu">10</span>)
+        self.current = [<span class="nu">0.0</span>] * <span class="nu">6</span>
+        self.target  = [<span class="nu">0.0</span>] * <span class="nu">6</span>
+        self.seq_idx = <span class="nu">0</span>
+        self.steps_at_target = <span class="nu">0</span>
+
+        self.create_timer(<span class="nu">0.05</span>, self.update)   <span class="cm"># 20 Hz control loop</span>
+        self._move_to(SEQUENCE[<span class="nu">0</span>])
+        self.get_logger().info(<span class="st">'UR5 controller ready — starting sequence'</span>)
+
+    <span class="kw">def</span> <span class="fn">_move_to</span>(self, pose_name):
+        <span class="kw">if</span> pose_name <span class="kw">in</span> POSES:
+            self.target = POSES[pose_name][:]
+            self.get_logger().info(<span class="st">f'Moving to: {pose_name}'</span>)
+
+    <span class="kw">def</span> <span class="fn">update</span>(self):
+        <span class="cm"># Smooth interpolation: move 5% of remaining distance each tick</span>
+        at_target = <span class="kw">True</span>
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">6</span>):
+            diff = self.target[i] - self.current[i]
+            self.current[i] += diff * <span class="nu">0.08</span>
+            <span class="kw">if</span> <span class="fn">abs</span>(diff) > <span class="nu">0.005</span>:
+                at_target = <span class="kw">False</span>
+
+        <span class="cm"># Publish current joint positions</span>
+        msg          = JointState()
+        msg.name     = JOINT_NAMES
+        msg.position = self.current
+        self.pub.publish(msg)
+
+        <span class="cm"># Advance through the sequence after holding each pose briefly</span>
+        <span class="kw">if</span> at_target:
+            self.steps_at_target += <span class="nu">1</span>
+            <span class="kw">if</span> self.steps_at_target > <span class="nu">40</span>:   <span class="cm"># hold for ~2 s (40 × 0.05 s)</span>
+                self.steps_at_target = <span class="nu">0</span>
+                self.seq_idx = (self.seq_idx + <span class="nu">1</span>) % <span class="fn">len</span>(SEQUENCE)
+                self._move_to(SEQUENCE[self.seq_idx])
+
+
+<span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
+    rclpy.init(args=args)
+    node = UR5Controller()
+    rclpy.spin(node)
+    rclpy.shutdown()</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-body">
+          <h4>Register in setup.py, build, and run</h4>
+          <p>Open <code>src/ur5_controller/setup.py</code> and add the entry point to <code>console_scripts</code>:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/ur5_controller/setup.py — console_scripts</span></div>
+            <div class="code-body">        <span class="st">'my_node = ur5_controller.my_node:main'</span>,  <span class="cm"># ← add this</span></div>
+          </div>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>colcon build
+<span class="p">$ </span>ros2 run ur5_controller my_node</div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output</div>
+            <p>The arm begins moving smoothly through the SEQUENCE: home → reach → pick → home → reach → place → home → (repeat). Terminal logs each pose transition. The motion is visibly smooth because of the exponential interpolation in <code>update()</code>.</p>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — code walkthrough questions</div>
+            <p>Ask: "Why multiply by 0.08 instead of moving the full distance at once?" (Without interpolation, joints teleport — not physically realistic. Real motor controllers have velocity limits.)</p>
+            <p>Ask: "What does <code>steps_at_target > 40</code> do?" (Waits 2 seconds at each pose before advancing. In a pick-and-place task, this is where a gripper would actuate.)</p>
+            <p>Ask: "How would you add a fifth pose to the sequence?" (Add to POSES dict, add the name to SEQUENCE list.)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-body">
+          <h4>Override the sequence from the CLI</h4>
+          <p>While the Python controller is running, publish a <code>/joint_states</code> message from the terminal. The controller will jump to that position — a conflict that illustrates an important real-world issue:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 topic pub /joint_states sensor_msgs/JointState \
+  '{"name": ["j0","j1","j2","j3","j4","j5"], "position": [1.57, 0.0, 0.0, 0.0, 0.0, 0.0]}'</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — safety concept</div>
+            <p>On a real robot, two nodes publishing conflicting velocity commands is a serious safety issue. In production systems, only one "controller manager" is allowed to publish to the command topic at a time, and emergency stop authority is carefully managed. This is why ROS2 has priority and lifecycle node concepts.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-body">
+          <h4>Monitor the joint state topic</h4>
+          <p>Introspect the running system to see the arm's joint state being published at 20 Hz:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">ROSpad Terminal</span></div>
+            <div class="code-body"><span class="p">$ </span>ros2 topic hz /joint_states      <span class="cm"># → ~20.00 Hz</span>
+<span class="p">$ </span>ros2 topic echo /joint_states    <span class="cm"># see joint positions update in real time</span>
+<span class="p">$ </span>ros2 node list                    <span class="cm"># → /ur5_controller</span></div>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected output — topic echo</div>
+            <p><code>{ "name": ["j0","j1","j2","j3","j4","j5"], "position": [0.0, -0.18, 0.43, 0.11, 0.0, 0.0], "velocity": [], "effort": [] }</code></p>
+            <p>The position values change every 50ms, showing the interpolation in progress as the arm moves toward its target pose.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">06</span>
+        <div class="step-body">
+          <h4>Extension: Add subscriber feedback</h4>
+          <p>For advanced students: modify the controller to subscribe to its own <code>/joint_states</code> output and log when each joint is within 0.01 rad of its target — a rudimentary "goal reached" detection that mirrors real robot feedback loops.</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Add inside __init__</span></div>
+            <div class="code-body">self.sub = self.create_subscription(
+    JointState, <span class="st">'/joint_states'</span>, self.feedback_cb, <span class="nu">10</span>)
+
+<span class="kw">def</span> <span class="fn">feedback_cb</span>(self, msg):
+    errors = [<span class="fn">abs</span>(t - c) <span class="kw">for</span> t, c <span class="kw">in</span> <span class="fn">zip</span>(self.target, msg.position)]
+    max_err = <span class="fn">max</span>(errors) <span class="kw">if</span> errors <span class="kw">else</span> <span class="nu">0</span>
+    <span class="kw">if</span> max_err < <span class="nu">0.01</span>:
+        self.get_logger().info(<span class="st">f'At target! Max error: {max_err:.4f} rad'</span>)</div>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+  </details>
+
+  <div class="callout note" style="margin-top:8px;">
+    <div class="callout-label">End of Session 2 — Wrap-up points</div>
+    <p>You have now written a robot arm controller using real ROS2 patterns: publisher, subscriber, timer control loop, named pose library, smooth interpolation. Every pattern here appears verbatim in production robotics code.</p>
+    <p>The path forward: (1) learn inverse kinematics to control the end-effector in Cartesian space, (2) use <code>ros2 bag record -a</code> to record the joint sequence and play it back, (3) connect a real UR5 to a ROS2 driver — the same Python code works without changes.</p>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ─── Appendix ──────────────────────────────────────────────────────────── -->
+<section>
+  <div class="appendix-title">Quick Reference</div>
+
+  <div class="section-gap">
+    <p style="font-size:0.8rem;color:var(--text-faint);margin-bottom:12px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">CLI Commands</p>
+    <div style="overflow-x:auto;">
+    <table class="cmd-table">
+      <thead>
+        <tr><th>Command</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ros2 node list</td><td>List all currently running nodes</td></tr>
+        <tr><td>ros2 topic list</td><td>List all active topics</td></tr>
+        <tr><td>ros2 topic echo &lt;topic&gt;</td><td>Print messages arriving on a topic (Ctrl+C to stop)</td></tr>
+        <tr><td>ros2 topic hz &lt;topic&gt;</td><td>Measure message frequency on a topic</td></tr>
+        <tr><td>ros2 topic info &lt;topic&gt;</td><td>Show message type and publisher count</td></tr>
+        <tr><td>ros2 topic pub &lt;topic&gt; &lt;type&gt; '&lt;json&gt;'</td><td>Publish a single message from the terminal</td></tr>
+        <tr><td>ros2 pkg create --build-type ament_python &lt;name&gt;</td><td>Scaffold a new Python ROS2 package (meta-files only — no source files)</td></tr>
+        <tr><td>touch &lt;pkg&gt;/&lt;pkg&gt;/my_node.py</td><td>Create an empty node file inside the package</td></tr>
+        <tr><td>ros2 pkg list</td><td>List packages known to the workspace</td></tr>
+        <tr><td>ros2 run &lt;pkg&gt; &lt;executable&gt;</td><td>Run a registered node in the background</td></tr>
+        <tr><td>ros2 launch &lt;pkg&gt; &lt;file&gt;</td><td>Run a launch file (starts multiple nodes)</td></tr>
+        <tr><td>colcon build</td><td>Index workspace packages — required after pkg create or any setup.py change</td></tr>
+        <tr><td>ros2 bag record -a</td><td>Record all topics to a bag file</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="section-gap">
+    <p style="font-size:0.8rem;color:var(--text-faint);margin-bottom:12px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">Message Types Used</p>
+    <div style="overflow-x:auto;">
+    <table class="cmd-table">
+      <thead>
+        <tr><th>Type</th><th>Key fields</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>std_msgs/String</td><td>data (str)</td><td>Talker/Listener text messages</td></tr>
+        <tr><td>geometry_msgs/Twist</td><td>linear.x, angular.z</td><td>DiffBot velocity commands on /cmd_vel</td></tr>
+        <tr><td>sensor_msgs/JointState</td><td>name[], position[]</td><td>UR5 joint angles on /joint_states</td></tr>
+        <tr><td>nav_msgs/Odometry</td><td>pose.position.x/y</td><td>DiffBot position from /odom</td></tr>
+        <tr><td>sensor_msgs/LaserScan</td><td>ranges[]</td><td>LiDAR distances from /scan</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="section-gap">
+    <p style="font-size:0.8rem;color:var(--text-faint);margin-bottom:12px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">Common Issues</p>
+    <div class="callout warn" style="margin-bottom:10px;">
+      <div class="callout-label">ros2 run says "Package not found" or "Executable not found"</div>
+      <p>Two causes: (1) you haven't run <code>colcon build</code> yet — do that first. (2) the node is not in <code>setup.py</code> → <code>console_scripts</code> — add the entry <code>'my_node = pkg_name.my_node:main'</code> and rebuild. Both steps are required every time you add or rename a node.</p>
+    </div>
+    <div class="callout warn" style="margin-bottom:10px;">
+      <div class="callout-label">Node starts but arm / robot does not move</div>
+      <p>Make sure the correct robot is active in the simulation panel. DiffBot responds to <code>/cmd_vel</code>; the arm responds to <code>/joint_states</code>. Switching robots: use the sim panel toolbar button.</p>
+    </div>
+    <div class="callout warn" style="margin-bottom:10px;">
+      <div class="callout-label">Pyodide loading takes 10–20 seconds on first run</div>
+      <p>This is normal. Pyodide downloads and initialises Python+numpy in the browser the first time a node runs per session. Subsequent runs in the same session are instant.</p>
+    </div>
+    <div class="callout warn">
+      <div class="callout-label">ros2 topic pub JSON parse error</div>
+      <p>The JSON argument must use double quotes for keys and string values, wrapped in single quotes on the command line. Example: <code>'{"data": "hello"}'</code> — not <code>"{'data': 'hello'}"</code>.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+// Add copy buttons to every code block
+document.querySelectorAll('.code-block').forEach(block => {
+  const chrome = block.querySelector('.code-chrome');
+  const body   = block.querySelector('.code-body');
+  if (!chrome || !body) return;
+
+  const btn = document.createElement('button');
+  btn.className   = 'copy-btn';
+  btn.textContent = 'Copy';
+  chrome.appendChild(btn);
+
+  btn.onclick = async () => {
+    const text = (body.innerText || body.textContent)
+      .split('\n')
+      .map(l => l.replace(/^\$\s/, ''))
+      .join('\n')
+      .trim();
+
+    function execCopy(t) {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    let ok = false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (_) {}
+    }
+    if (!ok) ok = execCopy(text);
+
+    btn.textContent = ok ? 'Copied!' : 'Selected ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+  };
+});
+</script>
