@@ -349,7 +349,8 @@ class NodeManager {
 
   _buildWorkerCode(userCode, pkgModules, pkgName, prefix = '') {
     const modulesJson = JSON.stringify(pkgModules);
-    const baseUrl = window.location.origin;
+    // Include pathname base so this works on GitHub Pages (/ROSPad/) and localhost (/)
+    const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
     const pfxJson = JSON.stringify(prefix); // safe to embed in JS string literal
     return `
 const _BASE = ${JSON.stringify(baseUrl)};

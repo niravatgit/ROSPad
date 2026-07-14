@@ -6,7 +6,7 @@
   <title>ROSpad — ROS2 IDE in Browser</title>
 
   <!-- SharedArrayBuffer isolation for Pyodide (needed on GitHub Pages) -->
-  <script src="/coi-serviceworker.js"></script>
+  <script src="coi-serviceworker.js"></script>
 
   <!-- xterm.js — must load BEFORE Monaco's AMD loader or window.Terminal won't be set -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"/>
@@ -15,7 +15,7 @@
   <!-- Three.js — likewise before AMD loader -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <!-- URDFLoader — builds kinematic chain from URDF using window.THREE (no cross-instance issues) -->
-  <script src="/js/URDFLoader.js"></script>
+  <script src="js/URDFLoader.js"></script>
   <!-- ammo.js — Bullet physics compiled to JS/WASM -->
   <script src="https://cdn.jsdelivr.net/npm/ammo.js/builds/ammo.js"></script>
   <!-- Cytoscape.js — must load BEFORE Monaco's AMD loader (same reason as xterm/Three) -->
@@ -941,17 +941,17 @@
 </div>
 
 <!-- Scripts: load order matters (rosbus → github-api → ros2cli → terminal → sim → editor → topics → ui → app) -->
-<script src="/rosbus.js"></script>
-<script src="/js/github-api.js"></script>
-<script src="/ros2cli/ros2cli.js"></script>
-<script src="/ros2cli/node_manager.js"></script>
-<script src="/js/terminal.js"></script>
-<script src="/js/sim.js"></script>
-<script src="/js/editor.js"></script>
-<script src="/js/topics.js"></script>
-<script src="/js/graph.js"></script>
-<script src="/js/ui.js"></script>
-<script src="/js/app.js"></script>
+<script src="rosbus.js"></script>
+<script src="js/github-api.js"></script>
+<script src="ros2cli/ros2cli.js"></script>
+<script src="ros2cli/node_manager.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/topics.js"></script>
+<script src="js/graph.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 
 <script>
 // ── Theme ─────────────────────────────────────────────────────────────────────
