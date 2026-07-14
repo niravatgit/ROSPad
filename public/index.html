@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ROSpad — ROS2 IDE in Browser</title>
 
+  <!-- SharedArrayBuffer isolation for Pyodide (needed on GitHub Pages) -->
+  <script src="/coi-serviceworker.js"></script>
+
   <!-- xterm.js — must load BEFORE Monaco's AMD loader or window.Terminal won't be set -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"/>
   <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
@@ -744,23 +747,19 @@
   <div id="auth-box">
     <div id="auth-header">
       <div class="auth-logo"><div class="auth-logo-dot"></div>ROSpad</div>
-      <div class="auth-subtitle">ROS2 IDE — IIT Madras</div>
+      <div class="auth-subtitle">ROS2 IDE — runs entirely in your browser</div>
     </div>
-    <div id="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
-    </div>
-    <div id="auth-form">
-      <div class="auth-field">
-        <label>USERNAME</label>
-        <input id="auth-username" type="text" placeholder="your_username" autocomplete="username" />
-      </div>
-      <div class="auth-field">
-        <label>PASSWORD</label>
-        <input id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" />
-      </div>
-      <div id="auth-error"></div>
-      <button id="auth-submit" onclick="submitAuth()">Login</button>
+    <div id="auth-form" style="padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:14px">
+      <p style="font-size:12px;color:var(--text2);text-align:center;margin:0">
+        Your workspace is stored in a private GitHub repo.<br>No server, no sign-up — just GitHub.
+      </p>
+      <button id="auth-submit" onclick="startGitHubOAuth()" style="display:flex;align-items:center;gap:8px;font-size:13px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        Login with GitHub
+      </button>
+      <div id="auth-error" style="font-size:11px;color:#f85149;min-height:16px;text-align:center"></div>
     </div>
   </div>
 </div>
@@ -941,8 +940,9 @@
   <span id="statusbar-nodes"></span>
 </div>
 
-<!-- Scripts: load order matters (rosbus → ros2cli → terminal → sim → editor → topics → ui → app) -->
+<!-- Scripts: load order matters (rosbus → github-api → ros2cli → terminal → sim → editor → topics → ui → app) -->
 <script src="/rosbus.js"></script>
+<script src="/js/github-api.js"></script>
 <script src="/ros2cli/ros2cli.js"></script>
 <script src="/ros2cli/node_manager.js"></script>
 <script src="/js/terminal.js"></script>
@@ -982,80 +982,77 @@ function toggleTheme() {
   }
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
-let _authMode = 'login';
+// ── GitHub OAuth Auth ─────────────────────────────────────────────────────────
 
-function switchAuthTab(mode) {
-  _authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0) === (mode === 'login'));
-  });
-  document.getElementById('auth-submit').textContent = mode === 'login' ? 'Login' : 'Create Account';
+function startGitHubOAuth() {
   document.getElementById('auth-error').textContent = '';
-  document.getElementById('auth-password').autocomplete =
-    mode === 'login' ? 'current-password' : 'new-password';
+  document.getElementById('auth-submit').disabled = true;
+  githubAPI.startOAuth();
 }
 
-function submitAuth() {
-  const username = document.getElementById('auth-username').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const btn      = document.getElementById('auth-submit');
-  const errEl    = document.getElementById('auth-error');
-  if (!username || !password) { errEl.textContent = 'Please enter username and password.'; return; }
-  btn.disabled = true;
-  fetch(`/api/${_authMode}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) {
-      onAuthSuccess(data.username, data.role);
-    } else {
-      errEl.textContent = data.error || 'Something went wrong.';
-      btn.disabled = false;
-    }
-  })
-  .catch(() => { errEl.textContent = 'Server error — try again.'; btn.disabled = false; });
+async function _handleOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  if (!code) return false;
+
+  // Remove ?code= from URL without reload
+  const clean = window.location.pathname;
+  window.history.replaceState({}, document.title, clean);
+
+  const errEl = document.getElementById('auth-error');
+  try {
+    const token = await githubAPI.exchangeCode(code);
+    const user  = await githubAPI.fetchUser(token);
+    localStorage.setItem('gh_token',    token);
+    localStorage.setItem('gh_username', user.login);
+    githubAPI.init(token, user.login);
+    await githubAPI.ensureWorkspaceRepo();
+    onAuthSuccess(user.login);
+    return true;
+  } catch (e) {
+    errEl.textContent = e.message || 'GitHub login failed — please try again.';
+    document.getElementById('auth-submit').disabled = false;
+    return false;
+  }
 }
 
-function onAuthSuccess(username, role) {
+function onAuthSuccess(username) {
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('topbar-username').textContent = username;
   document.getElementById('user-badge').style.display = 'flex';
-  const isTeacherOrAdmin = role === 'admin' || role === 'teacher';
   const introLink = document.getElementById('intro-link');
   if (introLink) introLink.style.display = 'inline-flex';
-  const teachingLink = document.getElementById('teaching-link');
-  if (teachingLink) teachingLink.style.display = isTeacherOrAdmin ? 'inline-flex' : 'none';
-  const lectureLink = document.getElementById('lecture-link');
-  if (lectureLink) lectureLink.style.display = isTeacherOrAdmin ? 'inline-flex' : 'none';
-  const adminLink = document.getElementById('admin-link');
-  if (adminLink) adminLink.style.display = role === 'admin' ? 'inline-flex' : 'none';
   refreshTree();
 }
 
 function authLogout() {
-  fetch('/api/logout', { method: 'POST' }).finally(() => {
-    document.getElementById('user-badge').style.display = 'none';
-    document.getElementById('auth-overlay').style.display = 'flex';
-    document.getElementById('auth-error').textContent = '';
-    document.getElementById('auth-username').value = '';
-    document.getElementById('auth-password').value = '';
-    document.getElementById('auth-submit').disabled = false;
-  });
+  localStorage.removeItem('gh_token');
+  localStorage.removeItem('gh_username');
+  githubAPI.init(null, null);
+  document.getElementById('user-badge').style.display = 'none';
+  document.getElementById('auth-overlay').style.display = 'flex';
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-submit').disabled = false;
 }
 
-// Allow Enter key to submit
-document.getElementById('auth-username').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('auth-password').focus(); });
-document.getElementById('auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
+// On load: restore session from localStorage or handle OAuth callback
+(async () => {
+  // Handle GitHub OAuth redirect first
+  if (await _handleOAuthCallback()) return;
 
-// Check existing session on load
-fetch('/api/me')
-  .then(r => r.json())
-  .then(data => { if (data.username) onAuthSuccess(data.username, data.role); })
-  .catch(() => {});
+  // Restore existing session
+  const token    = localStorage.getItem('gh_token');
+  const username = localStorage.getItem('gh_username');
+  if (token && username) {
+    githubAPI.init(token, username);
+    try {
+      await githubAPI.fetchUser(token); // validates token is still good
+      onAuthSuccess(username);
+    } catch {
+      authLogout(); // token expired — show login again
+    }
+  }
+})();
 </script>
 </body>
 </html>

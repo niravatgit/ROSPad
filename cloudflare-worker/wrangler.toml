@@ -1,0 +1,8 @@
+name            = "rospad-oauth-proxy"
+main            = "oauth-proxy.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# GH_CLIENT_ID and GH_CLIENT_SECRET are set as secrets via:
+#   wrangler secret put GH_CLIENT_ID
+#   wrangler secret put GH_CLIENT_SECRET

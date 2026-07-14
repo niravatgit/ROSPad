@@ -21,8 +21,7 @@ class NodeManager {
 
   async indexWorkspace() {
     try {
-      const resp = await fetch('/api/files?path=src');
-      const pkgs = await resp.json();
+      const pkgs = await githubAPI.listDir('src');
       for (const pkg of pkgs.filter(e => e.type === 'dir')) {
         await this._indexPackage(pkg.name, pkg.path);
       }
@@ -33,10 +32,7 @@ class NodeManager {
 
   async _indexPackage(name, pkgPath) {
     try {
-      // Read setup.py to find entry points
-      const resp = await fetch(`/api/file?path=${pkgPath}/setup.py`);
-      if (!resp.ok) return;
-      const { content } = await resp.json();
+      const content = await githubAPI.readFile(`${pkgPath}/setup.py`);
 
       // Parse entry_points from setup.py
       const matches = [...content.matchAll(/['"](\w+)\s*=\s*([\w.]+):(\w+)['"]/g)];
@@ -90,12 +86,9 @@ class NodeManager {
     const modulePath = entry.module.replace(/\./g, '/');
     const srcPath = `${pkgInfo.path}/${modulePath}.py`;
 
-    const resp = await fetch(`/api/file?path=${srcPath}`);
-    if (!resp.ok) {
-      this.term.writeln(`\x1b[31mCould not read ${srcPath}\x1b[0m`);
-      return;
-    }
-    const { content } = await resp.json();
+    let content;
+    try { content = await githubAPI.readFile(srcPath); }
+    catch { this.term.writeln(`\x1b[31mCould not read ${srcPath}\x1b[0m`); return; }
 
     // Append entrypoint call — ROS2 convention defines main() but doesn't call it
     const runCode = content + `\n\n${entry.fn}()\n`;
@@ -125,16 +118,14 @@ class NodeManager {
     let pkgBase = `src/${pkg}`;  // for URDF resolution
     let isSys   = false;
 
-    const userResp = await fetch(`/api/file?path=${userPath}`);
-    if (userResp.ok) {
-      ({ content } = await userResp.json());
-    } else {
-      const sysResp = await fetch(`/api/ros2/file?path=${sysApiPath}`);
-      if (sysResp.ok) {
-        ({ content } = await sysResp.json());
+    try {
+      content = await githubAPI.readFile(userPath);
+    } catch {
+      try {
+        content = await githubAPI.readRosFile(sysApiPath);
         isSys   = true;
-        pkgBase = pkg; // relative to ros2_ws/src/<pkg>
-      } else {
+        pkgBase = pkg;
+      } catch {
         this.term.writeln(`\x1b[31mLaunch file not found: ${launchFileName} in package ${pkg}\x1b[0m`);
         return;
       }
@@ -215,10 +206,13 @@ class NodeManager {
 
     // Try each candidate
     for (const rel of candidates) {
-      const path = `${pkg}/${rel}`;
-      const url  = isSys ? `/api/ros2/file?path=${path}` : `/api/file?path=src/${path}`;
-      const r    = await fetch(url);
-      if (r.ok) { ({ content: urdfXml } = await r.json()); break; }
+      const relPath = `${pkg}/${rel}`;
+      try {
+        urdfXml = isSys
+          ? await githubAPI.readRosFile(relPath)
+          : await githubAPI.readFile(`src/${relPath}`);
+        break;
+      } catch { /* try next candidate */ }
     }
 
     if (urdfXml) {
@@ -523,12 +517,9 @@ main();
   async _readPackageModules(pkg, pkgPath) {
     const modules = {};
     try {
-      const resp = await fetch(`/api/files?path=${pkgPath}/${pkg}`);
-      const files = await resp.json();
+      const files = await githubAPI.listDir(`${pkgPath}/${pkg}`);
       for (const f of files.filter(f => f.name.endsWith('.py') && f.name !== '__init__.py')) {
-        const fr = await fetch(`/api/file?path=${f.path}`);
-        const { content } = await fr.json();
-        modules[f.name.replace('.py', '')] = content;
+        modules[f.name.replace('.py', '')] = await githubAPI.readFile(f.path);
       }
     } catch(e) {}
     return modules;

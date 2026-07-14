@@ -101,11 +101,9 @@ async function refreshTree() {
   frag.appendChild(_sectionLabel('Workspace'));
 
   async function renderDir(dirPath, indent = 0) {
-    const resp = await fetch(`/api/files?path=${encodeURIComponent(dirPath)}`);
+    const entries = await githubAPI.listDir(dirPath).catch(() => null);
     if (gen !== _treeGen) return; // superseded — abort
-    if (!resp.ok) return;
-    const entries = await resp.json();
-    if (gen !== _treeGen) return;
+    if (!entries) return;
 
     for (const e of entries) {
       const item = document.createElement('div');
@@ -179,11 +177,9 @@ async function refreshTree() {
   frag.appendChild(_sectionLabel('System Packages', true));
 
   async function renderRosDir(rosPath, indent = 0) {
-    const resp = await fetch(`/api/ros2/files?path=${encodeURIComponent(rosPath)}`);
+    const entries = await githubAPI.listRosDir(rosPath).catch(() => null);
     if (gen !== _treeGen) return;
-    if (!resp.ok) return;
-    const entries = await resp.json();
-    if (gen !== _treeGen) return;
+    if (!entries) return;
 
     const BINARY_EXT = /\.(glb|dae|stl|obj|png|jpg|jpeg|bin|svg)$/i;
 
@@ -281,9 +277,9 @@ async function openFile(path) {
   if (!monacoReady) { alert('Editor still loading...'); return; }
   if (openTabs.has(path)) { switchTab(path); return; }
 
-  const resp = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
-  if (!resp.ok) { term.writeln(`\x1b[31mCannot open ${path}\x1b[0m`); return; }
-  const { content } = await resp.json();
+  let content;
+  try { content = await githubAPI.readFile(path); }
+  catch { term.writeln(`\x1b[31mCannot open ${path}\x1b[0m`); return; }
 
   const readOnly = isReadOnly(path);
   const model = monaco.editor.createModel(content, _detectLang(path));
@@ -298,9 +294,9 @@ async function openRos2File(rosPath) {
   const key = 'ros2:' + rosPath;
   if (openTabs.has(key)) { switchTab(key); return; }
 
-  const resp = await fetch(`/api/ros2/file?path=${encodeURIComponent(rosPath)}`);
-  if (!resp.ok) { term.writeln(`\x1b[31mCannot open system file ${rosPath}\x1b[0m`); return; }
-  const { content } = await resp.json();
+  let content;
+  try { content = await githubAPI.readRosFile(rosPath); }
+  catch { term.writeln(`\x1b[31mCannot open system file ${rosPath}\x1b[0m`); return; }
 
   const model = monaco.editor.createModel(content, _detectLang(rosPath));
   openTabs.set(key, { content, model, dirty: false, readOnly: true });
@@ -365,27 +361,28 @@ function updateTabLabel(path, dirty) {
 }
 
 async function saveFile(path, content) {
-  await fetch('/api/file', {
-    method:  'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ path, content }),
-  });
+  await githubAPI.writeFile(path, content);
   const tab = openTabs.get(path);
   if (tab) { tab.dirty = false; updateTabLabel(path, false); }
 }
 
 // ── File-tree actions: download and delete ────────────────────────────────────
 
-function _treeDownload(e) {
-  const url = e.type === 'dir'
-    ? `/api/zip?path=${encodeURIComponent(e.path)}`
-    : `/api/download?path=${encodeURIComponent(e.path)}`;
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+async function _treeDownload(e) {
+  if (e.type === 'dir') {
+    window.term?.writeln('\x1b[33m[ROSpad] Directory download not supported in GitHub Pages mode\x1b[0m');
+    return;
+  }
+  try {
+    const content = await githubAPI.readFile(e.path);
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = e.name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch { window.term?.writeln(`\x1b[31m[ROSpad] Download failed: ${e.path}\x1b[0m`); }
 }
 
 async function _treeDelete(e) {
@@ -394,10 +391,10 @@ async function _treeDelete(e) {
     : `file "${e.name}"`;
   if (!window.confirm(`Delete ${what}?\n\nThis cannot be undone.`)) return;
 
-  const r = await fetch(`/api/file?path=${encodeURIComponent(e.path)}`, { method: 'DELETE' });
-  if (!r.ok) {
-    const j = await r.json().catch(() => ({}));
-    window.term?.writeln(`\x1b[31m[ROSpad] Delete failed: ${j.error || r.statusText}\x1b[0m`);
+  try {
+    await githubAPI.deleteEntry(e.path);
+  } catch (err) {
+    window.term?.writeln(`\x1b[31m[ROSpad] Delete failed: ${err.message}\x1b[0m`);
     return;
   }
 
@@ -432,17 +429,13 @@ async function _treeRename(e, nameEl) {
     inp.replaceWith(nameEl);
     if (!newName || newName === orig) return;
 
-    const r = await fetch('/api/rename', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: e.path, newName }),
-    });
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      window.term?.writeln(`\x1b[31m[ROSpad] Rename failed: ${j.error || r.statusText}\x1b[0m`);
+    let newPath;
+    try {
+      newPath = await githubAPI.rename(e.path, newName);
+    } catch (err) {
+      window.term?.writeln(`\x1b[31m[ROSpad] Rename failed: ${err.message}\x1b[0m`);
       return;
     }
-    const { newPath } = await r.json();
     window.term?.writeln(`\x1b[33m[ROSpad] Renamed ${orig} → ${newName}\x1b[0m`);
 
     // Update open tabs: close old paths, reopen file at new path
@@ -519,12 +512,7 @@ async function newFile() {
     if (!p) { showErr('Please enter a folder path.'); return; }
     dirBtn.disabled = true; dirBtn.textContent = 'Creating…';
     try {
-      const r = await fetch('/api/mkdir', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: p }),
-      });
-      const json = await r.json();
-      if (!r.ok) { showErr(json.error || r.statusText); dirBtn.disabled = false; dirBtn.textContent = '📁 Folder'; return; }
+      await githubAPI.mkdir(p);
     } catch (e) { showErr(e.message); dirBtn.disabled = false; dirBtn.textContent = '📁 Folder'; return; }
     window.term?.writeln(`\x1b[32m[ROSpad] Created folder ${p}\x1b[0m`);
     _expandPath(p, true);
@@ -537,12 +525,7 @@ async function newFile() {
     if (!p) { showErr('Please enter a file path.'); return; }
     fileBtn.disabled = true; fileBtn.textContent = 'Creating…';
     try {
-      const r = await fetch('/api/file', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: p, content: defaultPyContent(p) }),
-      });
-      const json = await r.json();
-      if (!r.ok) { showErr(json.error || r.statusText); fileBtn.disabled = false; fileBtn.textContent = '📝 File'; return; }
+      await githubAPI.writeFile(p, defaultPyContent(p));
     } catch (e) { showErr(e.message); fileBtn.disabled = false; fileBtn.textContent = '📝 File'; return; }
     window.term?.writeln(`\x1b[32m[ROSpad] Created ${p}\x1b[0m`);
     _expandPath(p, false);
@@ -571,14 +554,11 @@ function _expandPath(p, isDir) {
 
 // ── Per-package launch file picker ────────────────────────────────────────────
 async function _showPkgLaunchPicker(pkgName, isSys, anchor) {
-  const url = isSys
-    ? `/api/ros2/files?path=${encodeURIComponent(pkgName + '/launch')}`
-    : `/api/files?path=${encodeURIComponent('src/' + pkgName + '/launch')}`;
   let launchFiles;
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) return;
-    const files = await resp.json();
+    const files = isSys
+      ? await githubAPI.listRosDir(`${pkgName}/launch`)
+      : await githubAPI.listDir(`src/${pkgName}/launch`);
     launchFiles = files.filter(f => f.name.endsWith('.launch.py'));
   } catch (_) { return; }
   if (!launchFiles.length) return;
@@ -740,10 +720,10 @@ async function toggleLaunchMenu() {
   // Walk src/ packages and find all *.launch.py files
   const items = [];
   try {
-    const pkgs = await fetch('/api/files?path=src').then(r => r.json());
+    const pkgs = await githubAPI.listDir('src');
     for (const pkg of pkgs.filter(e => e.type === 'dir')) {
       try {
-        const files = await fetch(`/api/files?path=${pkg.path}/launch`).then(r => r.json());
+        const files = await githubAPI.listDir(`${pkg.path}/launch`);
         for (const f of files.filter(f => f.name.endsWith('.launch.py'))) {
           items.push({ pkg: pkg.name, file: f.name });
         }

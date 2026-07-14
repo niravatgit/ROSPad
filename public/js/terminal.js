@@ -530,21 +530,11 @@ class TerminalSession {
     if (cmd === 'clear')                { this.xterm.clear(); return; }
     if (cmd === 'help')                 { this.ros2cli._help(); return; }
 
-    // Route file/directory commands to the server-side restricted shell.
-    // The server whitelists safe FS commands and blocks script execution.
-    const resp = await fetch('/api/shell', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cmd }),
-    });
-    if (!resp.ok) {
-      this.xterm.writeln('\x1b[31mShell error\x1b[0m');
-      return;
-    }
-    const { output } = await resp.json();
+    // Route file/directory commands to the browser-side GitHub API shell.
+    const output = await githubAPI.shell(cmd);
     if (output) {
       this.xterm.write(output);
-      if (!output.endsWith('\n')) this.xterm.write('\r\n');
+      if (!output.endsWith('\n') && !output.endsWith('\r\n')) this.xterm.write('\r\n');
     }
   }
 }

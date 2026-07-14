@@ -186,13 +186,9 @@ class ROS2CLI {
         const name = args[nameIdx] || args[args.length - 1];
         if (!name) { this.term.writeln('Usage: ros2 pkg create <name>'); return; }
         this.term.writeln(`Creating package \x1b[36m${name}\x1b[0m...`);
-        const resp = await fetch('/api/create-package', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name })
-        });
-        const data = await resp.json();
-        if (data.ok) {
+        const pkgPath = await githubAPI.createPackage(name);
+        {
+          const data = { path: pkgPath };
           this.term.writeln(`\x1b[32mPackage created: ${data.path}\x1b[0m`);
           this.term.writeln(`  ${data.path}/package.xml`);
           this.term.writeln(`  ${data.path}/setup.py`);
@@ -214,8 +210,7 @@ class ROS2CLI {
         break;
       }
       case 'list': {
-        const resp = await fetch('/api/files?path=src');
-        const entries = await resp.json();
+        const entries = await githubAPI.listDir('src').catch(() => []);
         entries.filter(e => e.type === 'dir')
           .forEach(e => this.term.writeln(`\x1b[36m${e.name}\x1b[0m`));
         break;
@@ -259,9 +254,7 @@ class ROS2CLI {
 
   async colconBuild() {
     this.term.writeln('\x1b[33mStarting >>> workspace\x1b[0m');
-    // In browser: "build" just indexes available packages
-    const resp = await fetch('/api/files?path=src');
-    const pkgs = await resp.json();
+    const pkgs = await githubAPI.listDir('src').catch(() => []);
     for (const pkg of pkgs.filter(e => e.type === 'dir')) {
       this.term.writeln(`Starting >>> \x1b[36m${pkg.name}\x1b[0m`);
       await new Promise(r => setTimeout(r, 200));

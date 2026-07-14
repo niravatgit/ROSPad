@@ -598,11 +598,11 @@ function make6DOFFallback() {
   return g;
 }
 
-// Minimal GLB loader using only the GLOBAL THREE instance.
-// Resolve package:// URLs used in URDF mesh filenames to the ROSpad package
-// serving route: package://pkg/path → /ros2/packages/pkg/path
+// Resolve package:// URLs used in URDF mesh filenames.
+// Prefer /ros2_ws/src/ (served statically by GitHub Pages / Express static).
+// Falls back to /ros2/packages/ if the static path 404s (Express server mode).
 function _resolveRosUrl(url) {
-  return url.replace(/^package:\/\/([^/]+)\/(.*)$/, '/ros2/packages/$1/$2');
+  return url.replace(/^package:\/\/([^/]+)\/(.*)$/, '/ros2_ws/src/$1/$2');
 }
 
 // Custom minimal GLB parser — all objects built with global THREE so

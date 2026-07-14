@@ -66,6 +66,8 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
+// Also serve ros2_ws at /ros2/packages for backwards compat with any old links
+app.use('/ros2/packages', express.static(ROS2_WS_SRC, { dotfiles: 'ignore' }));
 
 // ─── ROS2 system workspace (shared packages: ur5_description, etc.) ──────────
 // Resolves package:// URLs → GET /ros2/packages/:pkg/...
