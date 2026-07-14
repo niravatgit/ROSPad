@@ -126,7 +126,14 @@ class ROSBus {
   getGraph() {
     const activeNodes = new Set(this.nodes.keys());
     const nodes = [...activeNodes].map(n => ({ id: 'node:' + n, name: n, kind: 'node' }));
-    const topics = [...this.topicRegistry.keys()].map(t => ({
+    // Union of all three maps so topics declared via create_publisher (but not yet
+    // published) still appear as nodes, preventing dangling edges.
+    const allTopicNames = new Set([
+      ...this.topicRegistry.keys(),
+      ...this.topicPublishers.keys(),
+      ...this.topicSubscribers.keys(),
+    ]);
+    const topics = [...allTopicNames].map(t => ({
       id: 'topic:' + t, name: t, kind: 'topic',
       msgType: this.topicRegistry.get(t)?.msgType
     }));
