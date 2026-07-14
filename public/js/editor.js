@@ -88,21 +88,24 @@ function _indentClass(n) { return INDENT_CLASSES[Math.min(n, 3)]; }
 
 let _treeGen = 0;
 async function refreshTree() {
-  // Debounce: if another call starts within 30 ms, let that one win.
+  // Increment generation; after debounce, only the latest call proceeds.
   const gen = ++_treeGen;
   await new Promise(r => setTimeout(r, 30));
   if (gen !== _treeGen) return;
 
-  const tree = document.getElementById('file-tree');
-  tree.innerHTML = '';
+  // Build entirely into a DocumentFragment — never touch the live tree until
+  // all fetches are complete, so concurrent calls can never interleave DOM nodes.
+  const frag = document.createDocumentFragment();
 
   // ── Section 1: User workspace ────────────────────────────────────────────
-  tree.appendChild(_sectionLabel('Workspace'));
+  frag.appendChild(_sectionLabel('Workspace'));
 
   async function renderDir(dirPath, indent = 0) {
     const resp = await fetch(`/api/files?path=${encodeURIComponent(dirPath)}`);
+    if (gen !== _treeGen) return; // superseded — abort
     if (!resp.ok) return;
     const entries = await resp.json();
+    if (gen !== _treeGen) return;
 
     for (const e of entries) {
       const item = document.createElement('div');
@@ -117,7 +120,6 @@ async function refreshTree() {
       nameEl.textContent = e.name;
       item.appendChild(nameEl);
 
-      // Hover action buttons: download, delete, and (top-level dirs) launch
       const acts = document.createElement('span');
       acts.className = 'tree-actions';
 
@@ -150,7 +152,6 @@ async function refreshTree() {
         lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, false, lb); };
         acts.appendChild(lb);
       }
-
       item.appendChild(acts);
 
       if (e.type === 'file') {
@@ -159,29 +160,30 @@ async function refreshTree() {
           openFile(e.path);
         };
       } else {
-        item.onclick = () => {
-          selectedTreeDir = e.path;
-          toggleDir(e.path);
-        };
+        item.onclick = () => { selectedTreeDir = e.path; toggleDir(e.path); };
         item._path = e.path;
       }
-      tree.appendChild(item);
+      frag.appendChild(item);
 
       if (e.type === 'dir' && expandedDirs.has(e.path)) {
         await renderDir(e.path, indent + 1);
+        if (gen !== _treeGen) return;
       }
     }
   }
 
   await renderDir('src');
+  if (gen !== _treeGen) return;
 
   // ── Section 2: System packages (ros2_ws/src) — read-only ────────────────
-  tree.appendChild(_sectionLabel('System Packages', true));
+  frag.appendChild(_sectionLabel('System Packages', true));
 
   async function renderRosDir(rosPath, indent = 0) {
     const resp = await fetch(`/api/ros2/files?path=${encodeURIComponent(rosPath)}`);
+    if (gen !== _treeGen) return;
     if (!resp.ok) return;
     const entries = await resp.json();
+    if (gen !== _treeGen) return;
 
     const BINARY_EXT = /\.(glb|dae|stl|obj|png|jpg|jpeg|bin|svg)$/i;
 
@@ -201,25 +203,31 @@ async function refreshTree() {
       } else {
         item.onclick = () => toggleRosDir(e.path);
         item._path = e.path;
-        // Add launch picker icon to top-level system packages
         if (indent === 0) {
           const lb = document.createElement('span');
           lb.className = 'tree-launch-icon';
           lb.title = 'Pick & launch a launch file';
           lb.textContent = '⚡';
-          lb.onclick = async (ev) => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, true, lb); };
+          lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, true, lb); };
           item.appendChild(lb);
         }
       }
-      tree.appendChild(item);
+      frag.appendChild(item);
 
       if (e.type === 'dir' && expandedRosDirs.has(e.path)) {
         await renderRosDir(e.path, indent + 1);
+        if (gen !== _treeGen) return;
       }
     }
   }
 
   await renderRosDir('');
+  if (gen !== _treeGen) return;
+
+  // All data collected — swap the live tree atomically in one synchronous step
+  const tree = document.getElementById('file-tree');
+  tree.innerHTML = '';
+  tree.appendChild(frag);
 
   await nodeManager.indexWorkspace();
 }
