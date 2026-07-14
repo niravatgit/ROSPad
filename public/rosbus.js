@@ -155,8 +155,15 @@ class ROSBus {
 
   // ── Introspection (ros2 topic list, ros2 node list) ─────────────────────────
   getTopics() {
-    return Array.from(this.topicRegistry.entries()).map(([topic, info]) => ({
-      topic, ...info
+    const allNames = new Set([
+      ...this.topicRegistry.keys(),
+      ...this.topicPublishers.keys(),
+      ...this.topicSubscribers.keys(),
+    ]);
+    return [...allNames].map(topic => ({
+      topic,
+      msgType: this.topicRegistry.get(topic)?.msgType,
+      count:   this.topicRegistry.get(topic)?.count ?? 0,
     }));
   }
 
