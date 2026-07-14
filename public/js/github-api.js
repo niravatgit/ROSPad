@@ -13,8 +13,8 @@
 // ── Config (set these to your own values after forking) ──────────────────────
 window.ROSPAD_CONFIG = window.ROSPAD_CONFIG || {};
 const CFG = window.ROSPAD_CONFIG;
-CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.YOUR_SUBDOMAIN.workers.dev';
-CFG.githubClientId = CFG.githubClientId || 'YOUR_GITHUB_CLIENT_ID';
+CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-robotics.workers.dev';
+CFG.githubClientId = CFG.githubClientId || 'Ov23li6KCjXX9aBL6n5v';
 CFG.rospadRepo     = CFG.rospadRepo     || 'niravatgit/ROSPad';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
 
