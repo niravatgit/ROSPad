@@ -8,7 +8,7 @@ tags:
   - WebAssembly
 authors:
   - name: Nirav Patel
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-8113-6078
     affiliation: 1
 affiliations:
   - name: Indian Institute of Technology Madras, Chennai, India
