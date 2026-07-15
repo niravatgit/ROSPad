@@ -1026,8 +1026,9 @@ async function _handleOAuthCallback() {
     localStorage.setItem('gh_token',    token);
     localStorage.setItem('gh_username', user.login);
     githubAPI.init(token, user.login);
-    await githubAPI.ensureWorkspaceRepo();
+    await githubAPI.ensureWorkspaceRepo();   // fast: just checks repo exists
     onAuthSuccess(user.login);
+    githubAPI.seedIfNeeded().catch(e => console.warn('Seed failed:', e)); // background
     return true;
   } catch (e) {
     errEl.textContent = e.message || 'GitHub login failed — please try again.';
@@ -1046,7 +1047,8 @@ function onAuthSuccess(username) {
 function authLogout() {
   localStorage.removeItem('gh_token');
   localStorage.removeItem('gh_username');
-  localStorage.removeItem('gh_app_installed');
+  // gh_app_installed is intentionally kept — the GitHub App installation
+  // persists on GitHub's side and doesn't need reinstalling on every logout
   githubAPI.init(null, null);
   document.getElementById('user-badge').style.display = 'none';
   document.getElementById('auth-overlay').style.display = 'flex';

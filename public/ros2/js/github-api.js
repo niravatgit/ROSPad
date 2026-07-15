@@ -112,6 +112,7 @@ class GitHubAPI {
 
   // ── Workspace repo bootstrap ───────────────────────────────────────────────
 
+  // Fast — just verifies access and ensures src/ exists. Called in auth path.
   async ensureWorkspaceRepo() {
     try {
       await this._get(`/repos/${this.username}/${CFG.workspaceRepo}`);
@@ -130,33 +131,32 @@ class GitHubAPI {
       }
       throw e;
     }
-    // Ensure src/ exists for user's own packages
     try {
       await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src`);
     } catch {
       await this.mkdir('src');
     }
-
-    // Seed entire src/ (sys_packages + demos) once for every new user
-    let seeded = true;
-    try {
-      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/demos`);
-    } catch {
-      seeded = false;
-    }
-    if (!seeded) await this._seedWorkspace();
   }
 
-  async _seedWorkspace() {
+  // Slow — seeds demos & sys_packages into workspace. Runs in background after login.
+  async seedIfNeeded() {
+    try {
+      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/demos`);
+      return; // already seeded
+    } catch { /* not seeded yet */ }
+
     const base = this._pagesBase();
     const r = await fetch(`${base}/rospad-workspace/src-index.json`);
     if (!r.ok) return;
     const tree = await r.json();
 
+    const BINARY = /\.(glb|dae|stl|obj|bin|png|jpg|jpeg|svg)$/i;
+
     const writeAll = async (nodes) => {
       for (const node of nodes) {
         const dest = `src/${node.path}`;
         if (node.type === 'file') {
+          if (BINARY.test(node.name)) continue; // skip binary files
           const fr = await fetch(`${base}/rospad-workspace/src/${node.path}`);
           if (fr.ok) await this.writeFile(dest, await fr.text());
         } else if (node.children?.length) {
@@ -167,6 +167,7 @@ class GitHubAPI {
       }
     };
     await writeAll(tree);
+    window.refreshTree?.(); // refresh tree once seeding completes
   }
 
   // ── User workspace (paths relative to repo root, e.g. "src/my_pkg/node.py") ─

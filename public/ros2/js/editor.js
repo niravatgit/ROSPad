@@ -331,9 +331,10 @@ async function openRos2File(rosPath) {
   try { content = await githubAPI.readRosFile(rosPath); }
   catch { term.writeln(`\x1b[31mCannot open system file ${rosPath}\x1b[0m`); return; }
 
+  _showSysPackageWarning();
   const model = monaco.editor.createModel(content, _detectLang(rosPath));
-  openTabs.set(key, { content, model, dirty: false, readOnly: true });
-  addTab(key, true);
+  openTabs.set(key, { content, model, dirty: false, readOnly: false });
+  addTab(key, false);
   switchTab(key);
   document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
 }
