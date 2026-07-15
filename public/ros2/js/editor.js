@@ -151,15 +151,24 @@ async function refreshTree() {
       delBtn.onclick = ev => { ev.stopPropagation(); _treeDelete(e); };
       acts.appendChild(delBtn);
 
-      if (e.type === 'dir') {
-        const lb = document.createElement('span');
-        lb.className = 'tree-act-btn';
-        lb.title = 'Pick & launch a launch file';
-        lb.textContent = '⚡';
-        lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, e.path, false, lb); };
-        acts.appendChild(lb);
-      }
       item.appendChild(acts);
+
+      // Show ⚡ always-visible for package-level dirs (not container folders or sub-dirs)
+      // Heuristic: depth-3 paths (src/demos/pkg, src/sys_packages/pkg) or
+      //            depth-2 paths that are not known containers (user-created top-level packages)
+      if (e.type === 'dir') {
+        const parts = e.path.split('/');
+        const isLikelyPkg = parts.length === 3 ||
+          (parts.length === 2 && !['demos', 'sys_packages'].includes(e.name));
+        if (isLikelyPkg) {
+          const lb = document.createElement('span');
+          lb.className = 'tree-launch-icon';
+          lb.title = 'Pick & launch a launch file';
+          lb.textContent = '⚡';
+          lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, e.path, false, lb); };
+          item.appendChild(lb);
+        }
+      }
 
       if (e.type === 'file') {
         item.onclick = () => {

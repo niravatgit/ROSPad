@@ -21,15 +21,26 @@ class NodeManager {
 
   async indexWorkspace() {
     try {
-      const pkgs = await githubAPI.listDir('src');
-      for (const pkg of pkgs.filter(e => e.type === 'dir')) {
-        await this._indexPackage(pkg.name, pkg.path);
-      }
+      await this._scanForPackages('src');
     } catch (e) {
       console.warn('[NodeManager] Could not index workspace:', e);
     }
   }
 
+  // Recursively scan a directory, indexing any subdirectory that has a setup.py.
+  // Directories without setup.py are treated as containers (demos/, sys_packages/)
+  // and recursed into one level deeper.
+  async _scanForPackages(dirPath) {
+    let entries;
+    try { entries = await githubAPI.listDir(dirPath); }
+    catch { return; }
+    for (const e of entries.filter(e => e.type === 'dir')) {
+      const isPackage = await this._indexPackage(e.name, e.path);
+      if (!isPackage) await this._scanForPackages(e.path);
+    }
+  }
+
+  // Returns true if the directory was successfully indexed as a package.
   async _indexPackage(name, pkgPath) {
     try {
       const content = await githubAPI.readFile(`${pkgPath}/setup.py`);
@@ -43,8 +54,9 @@ class NodeManager {
       }));
 
       this.packages.set(name, { path: pkgPath, executables });
-    } catch (e) {
-      // package might not have setup.py yet
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -67,7 +79,7 @@ class NodeManager {
     }
 
     if (!this.packages.has(pkg)) {
-      await this._indexPackage(pkg, `src/${pkg}`);
+      await this.indexWorkspace();
     }
 
     const pkgInfo = this.packages.get(pkg);
@@ -110,12 +122,20 @@ class NodeManager {
   // ── Launch file support ───────────────────────────────────────────────────
 
   async launchFile(pkg, launchFileName) {
-    // Try user workspace first, then system packages
-    const userPath   = `src/${pkg}/launch/${launchFileName}`;
+    // Resolve the package's root path from the index (supports src/demos/, src/sys_packages/ etc.)
+    let pkgInfo = this.packages.get(pkg);
+    if (!pkgInfo) {
+      await this.indexWorkspace();
+      pkgInfo = this.packages.get(pkg);
+    }
+
+    const userPath   = pkgInfo
+      ? `${pkgInfo.path}/launch/${launchFileName}`
+      : `src/${pkg}/launch/${launchFileName}`;
     const sysApiPath = `${pkg}/launch/${launchFileName}`;
 
     let content = null;
-    let pkgBase = `src/${pkg}`;  // for URDF resolution
+    let pkgBase = pkgInfo ? pkgInfo.path : `src/${pkg}`;  // for URDF resolution
     let isSys   = false;
 
     try {
