@@ -9,9 +9,8 @@ setup(
     install_requires=['setuptools'],
     entry_points={
         'console_scripts': [
-            'server       = service_demo.add_two_ints_server:main',
-            'client       = service_demo.add_two_ints_client:main',
-            'ur5_client   = service_demo.ur5_pose_client:main',
+            'server = service_demo.add_two_ints_server:main',
+            'client = service_demo.add_two_ints_client:main',
         ],
     },
 )

@@ -164,11 +164,6 @@
                 "name": "add_two_ints_server.py",
                 "path": "demos/service_demo/service_demo/add_two_ints_server.py",
                 "type": "file"
-              },
-              {
-                "name": "ur5_pose_client.py",
-                "path": "demos/service_demo/service_demo/ur5_pose_client.py",
-                "type": "file"
               }
             ]
           },
@@ -336,6 +331,11 @@
               {
                 "name": "joint_state_server.py",
                 "path": "demos/ur5_control/ur5_control/joint_state_server.py",
+                "type": "file"
+              },
+              {
+                "name": "ur5_pose_client.py",
+                "path": "demos/ur5_control/ur5_control/ur5_pose_client.py",
                 "type": "file"
               }
             ]

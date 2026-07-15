@@ -292,13 +292,17 @@ def _dict_to_msg(msg_type, d):
                     # Nested message object (e.g. Twist.linear is Vector3): recurse
                     v = _dict_to_msg(type(current), v)
                 elif isinstance(v, (list, tuple)) and v and isinstance(current, list):
-                    # Numeric arrays: ensure plain Python floats
                     cleaned = []
                     for item in v:
-                        try:
+                        if isinstance(item, str):
+                            cleaned.append(item)
+                        elif isinstance(item, (int, float)):
                             cleaned.append(float(item))
-                        except (TypeError, ValueError):
-                            cleaned.append(0.0)
+                        else:
+                            try:
+                                cleaned.append(float(item))
+                            except (TypeError, ValueError):
+                                cleaned.append(item)
                     v = cleaned
                 setattr(msg, k, v)
     return msg
