@@ -139,24 +139,22 @@ class GitHubAPI {
   }
 
   // Slow — seeds demos & sys_packages into workspace. Runs in background after login.
+  // Checks each package individually so new packages are seeded for existing users
+  // without touching packages they've already modified.
   async seedIfNeeded() {
-    try {
-      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/demos`);
-      return; // already seeded
-    } catch { /* not seeded yet */ }
-
     const base = this._pagesBase();
     const r = await fetch(`${base}/rospad-workspace/src-index.json`);
     if (!r.ok) return;
     const tree = await r.json();
 
     const BINARY = /\.(glb|dae|stl|obj|bin|png|jpg|jpeg|svg)$/i;
+    let anythingSeeded = false;
 
     const writeAll = async (nodes) => {
       for (const node of nodes) {
         const dest = `src/${node.path}`;
         if (node.type === 'file') {
-          if (BINARY.test(node.name)) continue; // skip binary files
+          if (BINARY.test(node.name)) continue;
           const fr = await fetch(`${base}/rospad-workspace/src/${node.path}`);
           if (fr.ok) await this.writeFile(dest, await fr.text());
         } else if (node.children?.length) {
@@ -166,8 +164,23 @@ class GitHubAPI {
         }
       }
     };
-    await writeAll(tree);
-    window.refreshTree?.(); // refresh tree once seeding completes
+
+    // Check each package individually — only seed the ones that are missing.
+    // This lets us add new packages without forcing existing users to delete anything.
+    for (const container of tree) {
+      for (const pkg of (container.children || [])) {
+        try {
+          await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/${pkg.path}`);
+          // package already exists — skip it
+        } catch {
+          // package missing — seed it
+          await writeAll([pkg]);
+          anythingSeeded = true;
+        }
+      }
+    }
+
+    if (anythingSeeded) window.refreshTree?.();
   }
 
   // ── User workspace (paths relative to repo root, e.g. "src/my_pkg/node.py") ─
