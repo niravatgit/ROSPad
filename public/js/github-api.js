@@ -17,6 +17,7 @@ CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-rob
 CFG.githubClientId = CFG.githubClientId || 'Iv23livCT8rM3eALvX0N';
 CFG.githubAppSlug  = CFG.githubAppSlug  || 'rospad-ws';
 CFG.rospadRepo     = CFG.rospadRepo     || 'niravatgit/ROSPad';
+CFG.rospadBranch   = CFG.rospadBranch   || 'deploy/github-pages';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
 
 // ── GitHubAPI ─────────────────────────────────────────────────────────────────
@@ -45,6 +46,18 @@ class GitHubAPI {
 
   async _get(path) {
     const r = await this._gh(path);
+    if (!r.ok) throw Object.assign(new Error(`GitHub ${r.status}`), { status: r.status });
+    return r.json();
+  }
+
+  // Unauthenticated GET for public repos — avoids GitHub App token scope restrictions
+  async _getPublic(path) {
+    const r = await fetch(`https://api.github.com${path}`, {
+      headers: {
+        'Accept':               'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
     if (!r.ok) throw Object.assign(new Error(`GitHub ${r.status}`), { status: r.status });
     return r.json();
   }
@@ -226,8 +239,10 @@ class GitHubAPI {
   // ── System packages — ROSpad's ros2_ws/src/ (read via static Pages URLs) ──
 
   async listRosDir(relPath) {
-    const apiPath = relPath ? `ros2_ws/src/${relPath}` : 'ros2_ws/src';
-    const entries = await this._get(`/repos/${CFG.rospadRepo}/contents/${apiPath}`);
+    const apiPath = relPath ? `public/ros2_ws/src/${relPath}` : 'public/ros2_ws/src';
+    const entries = await this._getPublic(
+      `/repos/${CFG.rospadRepo}/contents/${apiPath}?ref=${CFG.rospadBranch}`
+    );
     return entries
       .filter(e => !e.name.startsWith('.'))
       .map(e => ({
@@ -238,7 +253,9 @@ class GitHubAPI {
   }
 
   async readRosFile(relPath) {
-    const data = await this._get(`/repos/${CFG.rospadRepo}/contents/ros2_ws/src/${relPath}`);
+    const data = await this._getPublic(
+      `/repos/${CFG.rospadRepo}/contents/public/ros2_ws/src/${relPath}?ref=${CFG.rospadBranch}`
+    );
     return _b64decode(data.content);
   }
 
