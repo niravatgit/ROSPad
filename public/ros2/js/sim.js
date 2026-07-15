@@ -153,7 +153,9 @@ function stopSim() {
 
 function clearRobot() {
   if (simRobot) { simScene.remove(simRobot); simRobot = null; }
-  if (_simTurtle) { simScene.remove(_simTurtle); _simTurtle = null; }
+  // Turtle is created once at init and stays in the scene — just hide it and
+  // reset state so the next cmd_vel can make it reappear (don't null/remove it)
+  if (_simTurtle) { _simTurtle.visible = false; _simTurtle.position.set(0, 0, 0); }
   Object.assign(_simTurtleState, { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false });
   _setSimLabel('');
 }
