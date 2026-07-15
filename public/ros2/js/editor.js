@@ -151,12 +151,12 @@ async function refreshTree() {
       delBtn.onclick = ev => { ev.stopPropagation(); _treeDelete(e); };
       acts.appendChild(delBtn);
 
-      if (e.type === 'dir' && indent === 0) {
+      if (e.type === 'dir') {
         const lb = document.createElement('span');
         lb.className = 'tree-act-btn';
         lb.title = 'Pick & launch a launch file';
         lb.textContent = '⚡';
-        lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, false, lb); };
+        lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, e.path, false, lb); };
         acts.appendChild(lb);
       }
       item.appendChild(acts);
@@ -535,12 +535,12 @@ function _expandPath(p, isDir) {
 }
 
 // ── Per-package launch file picker ────────────────────────────────────────────
-async function _showPkgLaunchPicker(pkgName, isSys, anchor) {
+async function _showPkgLaunchPicker(pkgName, dirPath, isSys, anchor) {
   let launchFiles;
   try {
     const files = isSys
-      ? await githubAPI.listRosDir(`${pkgName}/launch`)
-      : await githubAPI.listDir(`src/${pkgName}/launch`);
+      ? await githubAPI.listRosDir(`${dirPath}/launch`)
+      : await githubAPI.listDir(`${dirPath}/launch`);
     launchFiles = files.filter(f => f.name.endsWith('.launch.py'));
   } catch (_) { return; }
   if (!launchFiles.length) return;
@@ -699,19 +699,25 @@ async function toggleLaunchMenu() {
   menu.innerHTML = '<div class="launch-menu-empty">Loading…</div>';
   menu.classList.add('open');
 
-  // Walk src/ packages and find all *.launch.py files
+  // Walk src/ recursively to find all packages with launch files
   const items = [];
-  try {
-    const pkgs = await githubAPI.listDir('src');
-    for (const pkg of pkgs.filter(e => e.type === 'dir')) {
-      try {
-        const files = await githubAPI.listDir(`${pkg.path}/launch`);
-        for (const f of files.filter(f => f.name.endsWith('.launch.py'))) {
-          items.push({ pkg: pkg.name, file: f.name });
+  const scanDir = async (dirPath) => {
+    try {
+      const entries = await githubAPI.listDir(dirPath);
+      for (const e of entries.filter(e => e.type === 'dir')) {
+        try {
+          const launchFiles = await githubAPI.listDir(`${e.path}/launch`);
+          for (const f of launchFiles.filter(f => f.name.endsWith('.launch.py'))) {
+            items.push({ pkg: e.name, file: f.name });
+          }
+        } catch (_) {
+          // No launch dir — recurse into sub-containers like src/demos/
+          await scanDir(e.path);
         }
-      } catch (_) {}
-    }
-  } catch (_) {}
+      }
+    } catch (_) {}
+  };
+  await scanDir('src');
 
   if (items.length === 0) {
     menu.innerHTML = '<div class="launch-menu-empty">No launch files found in workspace</div>';
