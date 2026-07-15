@@ -6,7 +6,7 @@
  *
  * Configure before use:
  *   ROSPAD_CONFIG.oauthProxyUrl  — Cloudflare Worker URL for code→token exchange
- *   ROSPAD_CONFIG.githubClientId — GitHub OAuth App client_id
+ *   ROSPAD_CONFIG.githubClientId — GitHub App client_id
  *   ROSPAD_CONFIG.rospadRepo     — "owner/repo" of the ROSpad source repo
  */
 
@@ -14,7 +14,7 @@
 window.ROSPAD_CONFIG = window.ROSPAD_CONFIG || {};
 const CFG = window.ROSPAD_CONFIG;
 CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-robotics.workers.dev';
-CFG.githubClientId = CFG.githubClientId || 'Ov23li6KCjXX9aBL6n5v';
+CFG.githubClientId = CFG.githubClientId || 'Iv23livCT8rM3eALvX0N';
 CFG.rospadRepo     = CFG.rospadRepo     || 'niravatgit/ROSPad';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
 
@@ -70,9 +70,10 @@ class GitHubAPI {
   // ── OAuth ──────────────────────────────────────────────────────────────────
 
   startOAuth() {
+    // GitHub App: no scope param — permissions are defined at app level.
+    // GitHub will prompt the user to select which repos to grant access to.
     const params = new URLSearchParams({
       client_id:    CFG.githubClientId,
-      scope:        'repo',
       redirect_uri: window.location.href.split('?')[0],
     });
     window.location.href = `https://github.com/login/oauth/authorize?${params}`;
@@ -106,21 +107,19 @@ class GitHubAPI {
     try {
       await this._get(`/repos/${this.username}/${CFG.workspaceRepo}`);
     } catch (e) {
-      if (e.status !== 404) throw e;
-      // Create private repo
-      const r = await this._gh('/user/repos', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:        CFG.workspaceRepo,
-          private:     true,
-          auto_init:   true,
-          description: 'ROSpad workspace — managed automatically',
-        }),
-      });
-      if (!r.ok) throw new Error('Failed to create workspace repo');
-      // Give GitHub a moment to initialise the default branch
-      await new Promise(res => setTimeout(res, 2500));
+      if (e.status === 404) {
+        throw new Error(
+          `Repo "${CFG.workspaceRepo}" not found in your account. ` +
+          `Create it on GitHub (public or private), then re-authorize and grant ROSpad access to it.`
+        );
+      }
+      if (e.status === 403) {
+        throw new Error(
+          `ROSpad doesn't have access to "${CFG.workspaceRepo}". ` +
+          `Re-authorize and make sure you select that repo when GitHub asks.`
+        );
+      }
+      throw e;
     }
     // Ensure src/ directory exists
     try {
