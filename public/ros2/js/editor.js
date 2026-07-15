@@ -182,62 +182,6 @@ async function refreshTree() {
   await renderDir('src');
   if (gen !== _treeGen) return;
 
-  // ── Section 2: System packages (ros2_ws/src) — read-only ────────────────
-  frag.appendChild(_sectionLabel('System Packages', true));
-
-  async function renderRosDir(rosPath, indent = 0) {
-    let entries;
-    try { entries = await githubAPI.listRosDir(rosPath); }
-    catch (err) {
-      if (gen !== _treeGen) return;
-      const el = document.createElement('div');
-      el.className = 'tree-item'; el.style.cssText = 'color:#f85149;font-size:11px;padding:4px 12px';
-      el.textContent = `Error loading system packages: ${err.message}`;
-      frag.appendChild(el);
-      return;
-    }
-    if (gen !== _treeGen) return;
-    if (!entries) return;
-
-    const BINARY_EXT = /\.(glb|dae|stl|obj|png|jpg|jpeg|bin|svg)$/i;
-
-    for (const e of entries) {
-      const item = document.createElement('div');
-      item.className = `tree-item ros2-sys ${e.type === 'dir' ? 'dir' : ''} ${_indentClass(indent)}`;
-      const icon = e.type === 'dir' ? '📁' : getFileIcon(e.name);
-      item.innerHTML = `<span class="tree-icon">${icon}</span>${e.name}`;
-
-      if (e.type === 'file') {
-        if (BINARY_EXT.test(e.name)) {
-          item.classList.add('ros2-binary');
-          item.title = 'Binary file — cannot display in editor';
-        } else {
-          item.onclick = () => openRos2File(e.path);
-        }
-      } else {
-        item.onclick = () => toggleRosDir(e.path);
-        item._path = e.path;
-        if (indent === 0) {
-          const lb = document.createElement('span');
-          lb.className = 'tree-launch-icon';
-          lb.title = 'Pick & launch a launch file';
-          lb.textContent = '⚡';
-          lb.onclick = async ev => { ev.stopPropagation(); await _showPkgLaunchPicker(e.name, true, lb); };
-          item.appendChild(lb);
-        }
-      }
-      frag.appendChild(item);
-
-      if (e.type === 'dir' && expandedRosDirs.has(e.path)) {
-        await renderRosDir(e.path, indent + 1);
-        if (gen !== _treeGen) return;
-      }
-    }
-  }
-
-  await renderRosDir('');
-  if (gen !== _treeGen) return;
-
   // All data collected — swap the live tree atomically in one synchronous step
   const tree = document.getElementById('file-tree');
   tree.innerHTML = '';
@@ -246,17 +190,20 @@ async function refreshTree() {
   await nodeManager.indexWorkspace();
 }
 
-let _sysWarnDismissed = false;
-function _showSysPackageWarning() {
-  if (_sysWarnDismissed) return;
-  let banner = document.getElementById('sys-pkg-warning');
-  if (banner) return;
-  banner = document.createElement('div');
-  banner.id = 'sys-pkg-warning';
-  banner.style.cssText = 'position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:9999;background:#6e4c00;color:#f0c843;border:1px solid #d29922;border-radius:6px;padding:8px 16px;font-size:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
-  banner.innerHTML = '⚠ You\'re editing a system package — changes here may break ROS2 behaviour. <button onclick="document.getElementById(\'sys-pkg-warning\').remove();window._sysWarnDismissed=true" style="background:none;border:none;color:#f0c843;cursor:pointer;font-size:14px;padding:0 4px">✕</button>';
-  document.body.appendChild(banner);
-  setTimeout(() => banner?.remove(), 6000);
+function _updateSysBanner(path) {
+  let banner = document.getElementById('sys-pkg-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'sys-pkg-banner';
+    banner.style.cssText = 'background:#6e4c00;color:#f0c843;border-bottom:1px solid #d29922;padding:5px 14px;font-size:12px;display:none;flex-shrink:0';
+    banner.textContent = '⚠ System package — editing may break ROS2 behaviour';
+    const center = document.getElementById('center');
+    const editorEl = document.getElementById('editor-container');
+    if (center && editorEl) center.insertBefore(banner, editorEl);
+    else document.body.appendChild(banner);
+  }
+  const isSys = path && (path.startsWith('src/sys_packages/') || path.startsWith('ros2:'));
+  banner.style.display = isSys ? 'block' : 'none';
 }
 
 function _sectionLabel(text, dimmed = false) {
@@ -308,8 +255,6 @@ async function openFile(path) {
   if (!monacoReady) { alert('Editor still loading...'); return; }
   if (openTabs.has(path)) { switchTab(path); return; }
 
-  if (path.startsWith('src/sys_packages/')) _showSysPackageWarning();
-
   let content;
   try { content = await githubAPI.readFile(path); }
   catch { term.writeln(`\x1b[31mCannot open ${path}\x1b[0m`); return; }
@@ -331,7 +276,6 @@ async function openRos2File(rosPath) {
   try { content = await githubAPI.readRosFile(rosPath); }
   catch { term.writeln(`\x1b[31mCannot open system file ${rosPath}\x1b[0m`); return; }
 
-  _showSysPackageWarning();
   const model = monaco.editor.createModel(content, _detectLang(rosPath));
   openTabs.set(key, { content, model, dirty: false, readOnly: false });
   addTab(key, false);
@@ -358,6 +302,7 @@ function switchTab(path) {
     const parts = path.split('/');
     selectedTreeDir = parts.slice(0, -1).join('/') || 'src';
   }
+  _updateSysBanner(path);
   // Always update button state when active tab changes, even before editor is ready
   _updateRunState();
 
@@ -382,7 +327,10 @@ function closeTab(path, e) {
   if (activeTab === path) {
     window.activeTab = openTabs.size > 0 ? [...openTabs.keys()].pop() : null;
     if (activeTab) switchTab(activeTab);
-    else document.getElementById('welcome').style.display = 'flex';
+    else {
+      _updateSysBanner(null);
+      document.getElementById('welcome').style.display = 'flex';
+    }
   }
 }
 
