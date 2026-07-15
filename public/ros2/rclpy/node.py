@@ -178,7 +178,7 @@ class Service:
         self._srv_name = srv_name
 
         def _handler(request_js):
-            req = _from_js(request_js)
+            req = _dict_to_msg(srv_type.Request, _from_js(request_js))
             resp = callback(req, srv_type.Response())
             return _to_js(_msg_to_dict(resp))
 

@@ -342,7 +342,7 @@ code { font-family: "JetBrains Mono","Fira Code",monospace; font-size: .85em; ba
 
     <div class="callout note">
       <div class="callout-title">ROSpad note</div>
-      <p>ROSpad replaces DDS with a <strong>BroadcastChannel</strong>-based message bus running in the browser. The API (topics, services, pub/sub) is identical — DDS discovery and transport are simulated. QoS settings are accepted but not enforced.</p>
+      <p>ROSpad replaces DDS with a <strong>BroadcastChannel</strong>-based message bus running in the browser. The API (topics, services, pub/sub) is identical — DDS discovery and transport are simulated. QoS settings are accepted but not enforced. Services are fully implemented: <code>create_service</code> / <code>create_client</code> / <code>call_async</code> all work as in real rclpy. Try the <code>service_demo</code> package for a hands-on example.</p>
     </div>
 
     <!-- ── Getting Started ── -->
@@ -419,8 +419,8 @@ code { font-family: "JetBrains Mono","Fira Code",monospace; font-size: .85em; ba
         <tr>
           <td>Services</td>
           <td>Full synchronous RPC</td>
-          <td>Stub (API accepted, not dispatched)</td>
-          <td class="diff">Partial</td>
+          <td>Fully implemented via BroadcastChannel routing</td>
+          <td class="match">Supported</td>
         </tr>
         <tr>
           <td>Actions</td>

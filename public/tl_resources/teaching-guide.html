@@ -1498,10 +1498,158 @@ SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <sp
     </div>  </div>
   </details>
 
+  <!-- ── Phase D ──────────────────────────────────────────────────────────── -->
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">3:00 – 3:45</span>
+      <span class="phase-tag code">Coding</span>
+      <span class="phase-title">Project 4 — ROS2 Services</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      Students learn the <em>request–response</em> communication pattern and see why it is used for one-shot queries instead of continuous topics. Two exercises: the classic AddTwoInts demo, then querying the live UR5 joint state via a service.
+    </p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-term">Topic vs Service</div>
+        <div class="concept-def">Topics stream data continuously — good for sensor readings. Services answer a single question and return — good for "what is the arm position right now?" or "execute this action."</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Server / Client</div>
+        <div class="concept-def">The <strong>server</strong> advertises a service and handles requests. The <strong>client</strong> calls the service and awaits the response. Unlike pub/sub, a service call is synchronous from the caller's perspective.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Request &amp; Response types</div>
+        <div class="concept-def">Each service has two halves: a <code>Request</code> struct (what the caller sends) and a <code>Response</code> struct (what the server returns). Both are defined in a <code>.srv</code> file.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">call_async</div>
+        <div class="concept-def"><code>await client.call_async(req)</code> — the async pattern is used because a service call can take time. The caller's node keeps running while waiting; the response arrives as a future.</div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <h4>Seed and explore the service_demo package</h4>
+          <p>Click <strong>Reset Workspace</strong> (⊘ icon in the sidebar) to ensure the latest packages are seeded. Then expand <code>src/demos/service_demo/</code> in the file tree. Point out the key files:</p>
+          <ul style="margin:8px 0 0 16px;font-size:0.875rem;color:var(--text-muted);">
+            <li><code>service_demo/add_two_ints_server.py</code> — advertises <code>/add_two_ints</code></li>
+            <li><code>service_demo/add_two_ints_client.py</code> — calls the service with A=3, B=4</li>
+            <li><code>launch/service_demo.launch.py</code> — starts the server only</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <h4>Launch the server, then run the client</h4>
+          <p>In the file tree, click <strong>⚡ Launch</strong> next to <code>service_demo.launch.py</code>. Wait for the "ready" log, then open <code>add_two_ints_client.py</code> and click <strong>▶ Run</strong>.</p>
+          <div class="callout output">
+            <div class="callout-label">Expected server output</div>
+            <p><code>[INFO] [add_two_ints_server]: Service /add_two_ints is ready</code><br>
+            <code>[INFO] [add_two_ints_server]: Request: 3 + 4</code></p>
+          </div>
+          <div class="callout output">
+            <div class="callout-label">Expected client output</div>
+            <p><code>[INFO] [add_two_ints_client]: Result: 3 + 4 = 7</code></p>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — key contrast</div>
+            <p>The client prints its result exactly once and stops. Compare to the talker from Session 1 which printed forever. Ask: "When would you use a service instead of a topic?" (When you need an answer, not a stream — checking battery level, commanding a discrete action, reading a configuration value.)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-body">
+          <h4>Walk through the server code</h4>
+          <p>Open <code>add_two_ints_server.py</code>. The pattern mirrors a subscriber but returns a value:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">service_demo/add_two_ints_server.py — key section</span></div>
+            <div class="code-body"><span class="kw">from</span> example_interfaces.srv <span class="kw">import</span> AddTwoInts
+
+<span class="kw">class</span> <span class="cl">AddTwoIntsServer</span>(Node):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__(<span class="st">'add_two_ints_server'</span>)
+        self.create_service(AddTwoInts, <span class="st">'/add_two_ints'</span>, self.handle_request)
+
+    <span class="kw">def</span> <span class="fn">handle_request</span>(self, request, response):
+        response.sum = request.a + request.b
+        self.get_logger().info(<span class="st">f'Request: {request.a} + {request.b}'</span>)
+        <span class="kw">return</span> response</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — code walkthrough questions</div>
+            <p>Ask: "What does <code>create_service</code> return?" (A Service object, but we don't store it — we only care that it's registered.) Ask: "Why does <code>handle_request</code> take a <code>response</code> parameter instead of creating one?" (The framework pre-allocates the response with default values; you fill in the fields you care about and return it.)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-body">
+          <h4>Walk through the client code (async pattern)</h4>
+          <p>Open <code>add_two_ints_client.py</code>. The async call pattern is slightly different from a subscription callback:</p>
+          <div class="code-block">
+            <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">service_demo/add_two_ints_client.py — key section</span></div>
+            <div class="code-body">self.client = self.create_client(AddTwoInts, <span class="st">'/add_two_ints'</span>)
+self.create_timer(<span class="nu">1.0</span>, self._call_once)
+
+<span class="kw">def</span> <span class="fn">_call_once</span>(self):
+    <span class="kw">if</span> self._done: <span class="kw">return</span>
+    self._done = <span class="kw">True</span>
+    asyncio.ensure_future(self._do_call())
+
+<span class="kw">async def</span> <span class="fn">_do_call</span>(self):
+    req = AddTwoInts.Request()
+    req.a, req.b = A, B
+    resp = <span class="kw">await</span> self.client.call_async(req)
+    self.get_logger().info(<span class="st">f'Result: {A} + {B} = {resp.sum}'</span>)</div>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — why asyncio.ensure_future?</div>
+            <p>Timer callbacks are called from a synchronous JavaScript event — you cannot <code>await</code> inside them directly. <code>asyncio.ensure_future()</code> schedules the coroutine on the event loop and returns immediately, letting the timer callback exit. The actual service call then runs asynchronously. This is a common Pyodide pattern.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-body">
+          <h4>Extension — Query UR5 joint state via service</h4>
+          <p>For advanced students or a follow-up demo. This shows a service that queries live robot state:</p>
+          <ol style="margin:8px 0 0 16px;font-size:0.875rem;color:var(--text-muted);line-height:1.8;">
+            <li>Click ⚡ Launch on <code>src/demos/ur5_control/launch/ur5_control.launch.py</code> — arm appears in sim</li>
+            <li>Run <code>ur5_control joint_state_server</code> — subscribes to <code>/joint_states</code>, advertises <code>/get_ur5_joints</code></li>
+            <li>Run <code>service_demo ur5_pose_client</code> — calls the service once, prints joint angles in radians and degrees</li>
+          </ol>
+          <div class="callout output">
+            <div class="callout-label">Expected ur5_pose_client output</div>
+            <p><code>[INFO] [ur5_pose_client]: UR5 Joint Positions:</code><br>
+            <code>  shoulder_pan_joint  :  0.000 rad   (  0.0°)</code><br>
+            <code>  shoulder_lift_joint : -0.180 rad   ( -10.3°)</code><br>
+            <code>  elbow_joint         :  0.430 rad   ( 24.6°)</code><br>
+            <code>  ...</code></p>
+          </div>
+          <div class="callout note">
+            <div class="callout-label">Instructor note — real-world analogy</div>
+            <p>This exact pattern — a joint state server that caches topic data and exposes it as a service — is used in production robotics. It decouples the "continuous sensor stream" from the "on-demand query," letting planning nodes request state only when they need it without subscribing to a high-frequency topic.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  </details>
+
   <div class="callout note" style="margin-top:8px;">
     <div class="callout-label">End of Session 2 — Wrap-up points</div>
-    <p>You have now written a robot arm controller using real ROS2 patterns: publisher, subscriber, timer control loop, named pose library, smooth interpolation. Every pattern here appears verbatim in production robotics code.</p>
-    <p>The path forward: (1) learn inverse kinematics to control the end-effector in Cartesian space, (2) use <code>ros2 bag record -a</code> to record the joint sequence and play it back, (3) connect a real UR5 to a ROS2 driver — the same Python code works without changes.</p>
+    <p>You have now covered all three core ROS2 communication patterns: <strong>topics</strong> (streaming data), <strong>publishers/subscribers</strong> (continuous control loops), and <strong>services</strong> (on-demand request–response). Every pattern appears verbatim in production robotics code.</p>
+    <p>The path forward: (1) learn actions for long-running goals with feedback and cancellation, (2) use <code>ros2 bag record -a</code> to record joint sequences and play them back, (3) connect a real UR5 to a ROS2 driver — the same Python code works without changes.</p>
   </div>
 
 </section>
@@ -1532,6 +1680,7 @@ SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <sp
         <tr><td>ros2 run &lt;pkg&gt; &lt;executable&gt;</td><td>Run a registered node in the background</td></tr>
         <tr><td>ros2 launch &lt;pkg&gt; &lt;file&gt;</td><td>Run a launch file (starts multiple nodes)</td></tr>
         <tr><td>colcon build</td><td>Index workspace packages — required after pkg create or any setup.py change</td></tr>
+        <tr><td>ros2 service list</td><td>List all active services</td></tr>
         <tr><td>ros2 bag record -a</td><td>Record all topics to a bag file</td></tr>
       </tbody>
     </table>
@@ -1570,9 +1719,13 @@ SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <sp
       <div class="callout-label">Pyodide loading takes 10–20 seconds on first run</div>
       <p>This is normal. Pyodide downloads and initialises Python+numpy in the browser the first time a node runs per session. Subsequent runs in the same session are instant.</p>
     </div>
-    <div class="callout warn">
+    <div class="callout warn" style="margin-bottom:10px;">
       <div class="callout-label">ros2 topic pub JSON parse error</div>
       <p>The JSON argument must use double quotes for keys and string values, wrapped in single quotes on the command line. Example: <code>'{"data": "hello"}'</code> — not <code>"{'data': 'hello'}"</code>.</p>
+    </div>
+    <div class="callout warn">
+      <div class="callout-label">Service client prints default value (e.g. sum = 0)</div>
+      <p>This usually means the server has not started yet. Make sure the server node is running (check <code>ros2 service list</code>) before running the client. The server must be launched first; the client waits one second via timer then calls once.</p>
     </div>
   </div>
 </section>
