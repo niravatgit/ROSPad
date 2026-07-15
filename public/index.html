@@ -798,11 +798,10 @@
 
   <div id="user-badge">
     <span class="username" id="topbar-username"></span>
-    <a class="topbtn" href="/how_to_use_rospad.html" target="_blank">How to Use</a>
-    <a id="intro-link" class="topbtn" href="/ros2-intro.html" target="_blank" style="display:none">Intro to ROS2</a>
-    <a id="teaching-link" class="topbtn" href="/teaching-guide.html" target="_blank" style="display:none">Teaching Guide</a>
-    <a id="lecture-link" class="topbtn" href="/ros2-lecture.html" target="_blank" style="display:none">Lecture</a>
-    <a id="admin-link" class="topbtn" href="/admin.html" style="display:none">Users</a>
+    <a class="topbtn" href="how_to_use_rospad.html" target="_blank">How to Use</a>
+    <a class="topbtn" href="ros2-intro.html" target="_blank">Intro to ROS2</a>
+    <a class="topbtn" href="teaching-guide.html" target="_blank">Teaching Guide</a>
+    <a class="topbtn" href="ros2-lecture.html" target="_blank">Lecture</a>
     <button class="topbtn" onclick="authLogout()">Logout</button>
   </div>
   <div id="node-counter">0 nodes</div>
@@ -1041,8 +1040,6 @@ function onAuthSuccess(username) {
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('topbar-username').textContent = username;
   document.getElementById('user-badge').style.display = 'flex';
-  const introLink = document.getElementById('intro-link');
-  if (introLink) introLink.style.display = 'inline-flex';
   refreshTree();
 }
 
