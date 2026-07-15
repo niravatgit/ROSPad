@@ -66,15 +66,13 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
-// Also serve ros2_ws at /ros2/packages for backwards compat with any old links
-app.use('/ros2/packages', express.static(ROS2_WS_SRC, { dotfiles: 'ignore' }));
 
-// ─── ROS2 system workspace (shared packages: ur5_description, etc.) ──────────
+// ─── ROS2 system packages (ur5_description, diffbot_description, etc.) ───────
 // Resolves package:// URLs → GET /ros2/packages/:pkg/...
 // e.g. package://ur5_description/meshes/visual/base.glb
 //    → /ros2/packages/ur5_description/meshes/visual/base.glb
-//    → /home/user/rospad/ros2_ws/src/ur5_description/meshes/visual/base.glb
-const ROS2_WS_SRC = path.join(__dirname, '../ros2_ws/src');
+//    → public/rospad-workspace/src/sys_packages/ur5_description/meshes/visual/base.glb
+const ROS2_WS_SRC = path.join(__dirname, '../public/rospad-workspace/src/sys_packages');
 app.use('/ros2/packages', express.static(ROS2_WS_SRC, { dotfiles: 'ignore' }));
 
 // ─── Session middleware ───────────────────────────────────────────────────────
@@ -347,8 +345,8 @@ app.get('/api/zip', async (req, res) => {
   }
 });
 
-// ─── ROS2 system workspace file browser (read-only) ──────────────────────────
-// Lists / reads files under ros2_ws/src/ for the sidebar System Packages tree.
+// ─── ROS2 system packages file browser (read-only) ───────────────────────────
+// Lists / reads files under rospad-workspace/src/sys_packages/ for the sidebar.
 
 app.get('/api/ros2/files', async (req, res) => {
   const rel = req.query.path || '';

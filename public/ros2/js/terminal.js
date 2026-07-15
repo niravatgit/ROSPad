@@ -39,7 +39,7 @@ const XTERM_OPTIONS = {
   convertEol: true,
 };
 
-const CWD            = '/ros2_ws';
+const CWD            = '/rospad-workspace';
 const PROMPT_ANSI    = `\x1b[32mstudent@rospad\x1b[0m:\x1b[34m${CWD}\x1b[0m$ `;
 const PROMPT_PLAIN   = `student@rospad:${CWD}$ `;
 
