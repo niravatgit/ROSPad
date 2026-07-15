@@ -15,6 +15,7 @@ window.ROSPAD_CONFIG = window.ROSPAD_CONFIG || {};
 const CFG = window.ROSPAD_CONFIG;
 CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-robotics.workers.dev';
 CFG.githubClientId = CFG.githubClientId || 'Iv23livCT8rM3eALvX0N';
+CFG.githubAppSlug  = CFG.githubAppSlug  || 'rospad-ws';
 CFG.rospadRepo     = CFG.rospadRepo     || 'niravatgit/ROSPad';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
 
@@ -70,13 +71,17 @@ class GitHubAPI {
   // ── OAuth ──────────────────────────────────────────────────────────────────
 
   startOAuth() {
-    // GitHub App: no scope param — permissions are defined at app level.
-    // GitHub will prompt the user to select which repos to grant access to.
-    const params = new URLSearchParams({
-      client_id:    CFG.githubClientId,
-      redirect_uri: window.location.href.split('?')[0],
-    });
-    window.location.href = `https://github.com/login/oauth/authorize?${params}`;
+    const redirectUri = window.location.href.split('?')[0];
+    if (localStorage.getItem('gh_app_installed')) {
+      // Already installed — re-authorize only (no repo picker needed)
+      const params = new URLSearchParams({ client_id: CFG.githubClientId, redirect_uri: redirectUri });
+      window.location.href = `https://github.com/login/oauth/authorize?${params}`;
+    } else {
+      // First time — installation flow shows the repo picker.
+      // "Request user authorization during installation" must be ON in GitHub App settings
+      // so that GitHub issues an OAuth code after installation.
+      window.location.href = `https://github.com/apps/${CFG.githubAppSlug}/installations/new`;
+    }
   }
 
   async exchangeCode(code) {

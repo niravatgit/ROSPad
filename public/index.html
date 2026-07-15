@@ -1011,9 +1011,14 @@ async function _handleOAuthCallback() {
   const code   = params.get('code');
   if (!code) return false;
 
-  // Remove ?code= from URL without reload
-  const clean = window.location.pathname;
-  window.history.replaceState({}, document.title, clean);
+  // If this came from the installation flow, mark app as installed
+  // so future logins skip the repo picker and go straight to OAuth
+  if (params.get('installation_id')) {
+    localStorage.setItem('gh_app_installed', '1');
+  }
+
+  // Remove query params from URL without reload
+  window.history.replaceState({}, document.title, window.location.pathname);
 
   const errEl = document.getElementById('auth-error');
   try {
@@ -1044,6 +1049,7 @@ function onAuthSuccess(username) {
 function authLogout() {
   localStorage.removeItem('gh_token');
   localStorage.removeItem('gh_username');
+  localStorage.removeItem('gh_app_installed');
   githubAPI.init(null, null);
   document.getElementById('user-badge').style.display = 'none';
   document.getElementById('auth-overlay').style.display = 'flex';
