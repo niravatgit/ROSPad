@@ -17,6 +17,7 @@ CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-rob
 CFG.githubClientId = CFG.githubClientId || 'Iv23livCT8rM3eALvX0N';
 CFG.githubAppSlug  = CFG.githubAppSlug  || 'rospad-ws';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
+CFG.ownerUsername  = CFG.ownerUsername  || 'niravatgit';
 
 // ── GitHubAPI ─────────────────────────────────────────────────────────────────
 
@@ -130,12 +131,45 @@ class GitHubAPI {
       }
       throw e;
     }
-    // Ensure src/ directory exists
+    // Check if src/ exists
+    let srcExists = true;
     try {
-      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src`);
+      const src = await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src`);
+      srcExists = Array.isArray(src) && src.filter(e => e.name !== '.gitkeep').length > 0;
     } catch {
-      await this.mkdir('src');
+      srcExists = false;
     }
+
+    if (!srcExists) {
+      if (this.username === CFG.ownerUsername) {
+        // Owner gets demo packages pre-seeded
+        await this._seedDemos();
+      } else {
+        await this.mkdir('src');
+      }
+    }
+  }
+
+  async _seedDemos() {
+    const base = this._pagesBase();
+    const r = await fetch(`${base}/workspace-demos/index.json`);
+    if (!r.ok) { await this.mkdir('src'); return; }
+    const tree = await r.json();
+
+    const writeAll = async (nodes) => {
+      for (const node of nodes) {
+        const dest = `src/${node.path}`;
+        if (node.type === 'file') {
+          const fr = await fetch(`${base}/workspace-demos/${node.path}`);
+          if (fr.ok) await this.writeFile(dest, await fr.text());
+        } else if (node.children?.length) {
+          await writeAll(node.children);
+        } else {
+          await this.mkdir(dest);
+        }
+      }
+    };
+    await writeAll(tree);
   }
 
   // ── User workspace (paths relative to repo root, e.g. "src/my_pkg/node.py") ─
