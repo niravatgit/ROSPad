@@ -137,10 +137,10 @@ class GitHubAPI {
       await this.mkdir('src');
     }
 
-    // Seed demos/ once for every new user
+    // Seed src/demos/ once for every new user
     let demosExist = true;
     try {
-      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/demos`);
+      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/demos`);
     } catch {
       demosExist = false;
     }
@@ -155,7 +155,7 @@ class GitHubAPI {
 
     const writeAll = async (nodes) => {
       for (const node of nodes) {
-        const dest = `demos/${node.path}`;
+        const dest = `src/demos/${node.path}`;
         if (node.type === 'file') {
           const fr = await fetch(`${base}/workspace-demos/${node.path}`);
           if (fr.ok) await this.writeFile(dest, await fr.text());
