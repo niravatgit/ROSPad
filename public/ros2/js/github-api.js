@@ -309,6 +309,49 @@ class GitHubAPI {
     return `src/${name}`;
   }
 
+  // ── Reset workspace ────────────────────────────────────────────────────────
+
+  // Deletes everything under src/ and re-seeds all packages from the static index.
+  // onProgress(msg) is called before each major step so the UI can show status.
+  async resetWorkspace(onProgress) {
+    const entries = await this.listDir('src');
+    for (const e of entries) {
+      onProgress?.(`Deleting ${e.name}…`);
+      await this.deleteEntry(e.path);
+    }
+
+    const base = this._pagesBase();
+    const r = await fetch(`${base}/rospad-workspace/src-index.json`);
+    if (!r.ok) throw new Error('Could not load src-index.json');
+    const tree = await r.json();
+
+    const BINARY = /\.(glb|dae|stl|obj|bin|png|jpg|jpeg|svg)$/i;
+    const writeAll = async (nodes) => {
+      for (const node of nodes) {
+        const dest = `src/${node.path}`;
+        if (node.type === 'file') {
+          if (BINARY.test(node.name)) continue;
+          const fr = await fetch(`${base}/rospad-workspace/src/${node.path}`);
+          if (fr.ok) await this.writeFile(dest, await fr.text());
+        } else if (node.children?.length) {
+          await writeAll(node.children);
+        } else {
+          await this.mkdir(dest);
+        }
+      }
+    };
+
+    let count = 0;
+    for (const container of tree) {
+      for (const pkg of (container.children || [])) {
+        onProgress?.(`Seeding ${pkg.name}…`);
+        await writeAll([pkg]);
+        count++;
+      }
+    }
+    return count;
+  }
+
   // ── Browser-side "shell" (ls / cat / pwd) for terminal.js ─────────────────
 
   async shell(cmd, cwd = 'src') {

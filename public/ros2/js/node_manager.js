@@ -154,7 +154,7 @@ class NodeManager {
     // ── Handle robot_state_publisher → publish /robot_description to sim ────
     let urdfPublished = false;
     if (/robot_state_publisher/.test(content)) {
-      urdfPublished = await this._publishRobotDescription(pkg, content, isSys);
+      urdfPublished = await this._publishRobotDescription(pkg, pkgBase, content, isSys);
     }
 
     // Parse launch file — extract each Node(...) block and read its arguments.
@@ -199,7 +199,8 @@ class NodeManager {
 
   // Reads the URDF referenced by a launch file and publishes it to /robot_description.
   // Returns true if URDF was found and published.
-  async _publishRobotDescription(pkg, launchContent, isSys) {
+  // pkgPath: the resolved package root path (e.g. "src/sys_packages/ur5_description")
+  async _publishRobotDescription(pkg, pkgPath, launchContent, isSys) {
     let urdfXml = null;
 
     // Pattern 1: collect all quoted .urdf filenames from the launch content
@@ -226,11 +227,10 @@ class NodeManager {
 
     // Try each candidate
     for (const rel of candidates) {
-      const relPath = `${pkg}/${rel}`;
       try {
         urdfXml = isSys
-          ? await githubAPI.readRosFile(relPath)
-          : await githubAPI.readFile(`src/${relPath}`);
+          ? await githubAPI.readRosFile(`${pkg}/${rel}`)
+          : await githubAPI.readFile(`${pkgPath}/${rel}`);
         break;
       } catch { /* try next candidate */ }
     }
@@ -262,12 +262,16 @@ class NodeManager {
     // If the file defines main() (ROS2 convention), call it automatically
     const runCode = /^\s*def\s+main\s*\(/m.test(code) ? code + '\n\nmain()\n' : code;
 
-    // Load sibling modules if file is inside a known package (src/<pkg>/<pkg>/file.py)
+    // Load sibling modules if file is inside a known package.
+    // Uses the package index so nested paths (src/demos/<pkg>/, src/sys_packages/<pkg>/)
+    // are resolved correctly instead of the broken flat-only regex.
     let pkgModules = {};
-    const m = nodeKey.match(/^src\/([^/]+)\/\1\//);
-    if (m) {
-      const pkg = m[1];
-      pkgModules = await this._readPackageModules(pkg, `src/${pkg}`);
+    if (this.packages.size === 0) await this.indexWorkspace();
+    for (const [pkgName, pkgInfo] of this.packages) {
+      if (nodeKey.startsWith(pkgInfo.path + '/')) {
+        pkgModules = await this._readPackageModules(pkgName, pkgInfo.path);
+        break;
+      }
     }
     this._spawnWorker(nodeKey, runCode, pkgModules, 'editor');
   }

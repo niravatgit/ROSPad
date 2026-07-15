@@ -125,6 +125,28 @@
 
     .spacer { flex: 1; }
 
+    /* ── Reset workspace overlay ── */
+    #reset-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .reset-modal {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 32px 44px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      min-width: 260px;
+    }
+    .reset-modal-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .reset-modal-status { font-size: 12px; color: var(--text2); }
+    .reset-spinner {
+      width: 26px; height: 26px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: ws-spin 0.75s linear infinite;
+    }
+    @keyframes ws-spin { to { transform: rotate(360deg); } }
+    .sidebar-icon-btn.reset-btn:hover { color: var(--red); background: rgba(248,81,73,0.12); }
+
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: var(--text2);
@@ -824,6 +846,7 @@
       <div style="display:flex;gap:4px">
         <button class="sidebar-icon-btn" onclick="newFile()" title="New file">+</button>
         <button class="sidebar-icon-btn" onclick="refreshTree()" title="Refresh">↺</button>
+        <button class="sidebar-icon-btn reset-btn" onclick="resetWorkspace()" title="Reset workspace — deletes src/ and re-seeds demo packages">⊘</button>
       </div>
     </div>
     <div id="file-tree">
@@ -1055,6 +1078,41 @@ function onAuthSuccess(username) {
   document.getElementById('topbar-username').textContent = username;
   document.getElementById('user-badge').style.display = 'flex';
   refreshTree();
+}
+
+async function resetWorkspace() {
+  if (!confirm(
+    'Reset workspace?\n\n' +
+    'This will delete ALL files in your rospad-workspace/src/ and re-seed the latest demo packages.\n\n' +
+    'Any custom code you have written will be permanently lost.'
+  )) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'reset-overlay';
+  overlay.innerHTML =
+    '<div class="reset-modal">' +
+      '<div class="reset-spinner"></div>' +
+      '<div class="reset-modal-title">Resetting workspace…</div>' +
+      '<div class="reset-modal-status" id="reset-status">Preparing…</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  try {
+    const count = await githubAPI.resetWorkspace(msg => {
+      const el = document.getElementById('reset-status');
+      if (el) el.textContent = msg;
+    });
+    document.getElementById('reset-status').textContent = `Done — ${count} packages seeded`;
+    window.term?.writeln(`\x1b[32m[workspace] Reset complete — ${count} packages seeded\x1b[0m`);
+    await new Promise(r => setTimeout(r, 1200));
+    refreshTree();
+  } catch (e) {
+    document.getElementById('reset-status').textContent = `Error: ${e.message}`;
+    window.term?.writeln(`\x1b[31m[workspace] Reset failed: ${e.message}\x1b[0m`);
+    await new Promise(r => setTimeout(r, 3000));
+  } finally {
+    overlay.remove();
+  }
 }
 
 function authLogout() {
