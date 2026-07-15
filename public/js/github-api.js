@@ -16,8 +16,6 @@ const CFG = window.ROSPAD_CONFIG;
 CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-robotics.workers.dev';
 CFG.githubClientId = CFG.githubClientId || 'Iv23livCT8rM3eALvX0N';
 CFG.githubAppSlug  = CFG.githubAppSlug  || 'rospad-ws';
-CFG.rospadRepo     = CFG.rospadRepo     || 'niravatgit/ROSPad';
-CFG.rospadBranch   = CFG.rospadBranch   || 'deploy/github-pages';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
 
 // ── GitHubAPI ─────────────────────────────────────────────────────────────────
@@ -50,16 +48,9 @@ class GitHubAPI {
     return r.json();
   }
 
-  // Unauthenticated GET for public repos — avoids GitHub App token scope restrictions
-  async _getPublic(path) {
-    const r = await fetch(`https://api.github.com${path}`, {
-      headers: {
-        'Accept':               'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-    if (!r.ok) throw Object.assign(new Error(`GitHub ${r.status}`), { status: r.status });
-    return r.json();
+  // Base URL for static assets served by GitHub Pages (same origin as this page)
+  _pagesBase() {
+    return window.location.pathname.split('/').slice(0, -1).join('/');
   }
 
   async _put(path, body) {
@@ -239,24 +230,27 @@ class GitHubAPI {
   // ── System packages — ROSpad's ros2_ws/src/ (read via static Pages URLs) ──
 
   async listRosDir(relPath) {
-    const apiPath = relPath ? `public/ros2_ws/src/${relPath}` : 'public/ros2_ws/src';
-    const entries = await this._getPublic(
-      `/repos/${CFG.rospadRepo}/contents/${apiPath}?ref=${CFG.rospadBranch}`
-    );
-    return entries
-      .filter(e => !e.name.startsWith('.'))
-      .map(e => ({
-        name: e.name,
-        type: e.type === 'dir' ? 'dir' : 'file',
-        path: relPath ? `${relPath}/${e.name}` : e.name,
-      }));
+    // Load the static index once and cache it
+    if (!this._pkgIndex) {
+      const r = await fetch(`${this._pagesBase()}/ros2_ws/packages-index.json`);
+      if (!r.ok) throw new Error(`Failed to load package index: ${r.status}`);
+      this._pkgIndex = await r.json();
+    }
+    // Walk the cached tree to find the requested path
+    const find = (nodes, parts) => {
+      if (!parts.length) return nodes;
+      const node = nodes.find(n => n.name === parts[0]);
+      if (!node || !node.children) return [];
+      return find(node.children, parts.slice(1));
+    };
+    const parts = relPath ? relPath.split('/') : [];
+    return find(this._pkgIndex, parts);
   }
 
   async readRosFile(relPath) {
-    const data = await this._getPublic(
-      `/repos/${CFG.rospadRepo}/contents/public/ros2_ws/src/${relPath}?ref=${CFG.rospadBranch}`
-    );
-    return _b64decode(data.content);
+    const r = await fetch(`${this._pagesBase()}/ros2_ws/src/${relPath}`);
+    if (!r.ok) throw new Error(`GitHub ${r.status}`);
+    return r.text();
   }
 
   // ── Package scaffolding ────────────────────────────────────────────────────
