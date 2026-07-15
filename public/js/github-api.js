@@ -227,16 +227,14 @@ class GitHubAPI {
 
   async listRosDir(relPath) {
     const apiPath = relPath ? `ros2_ws/src/${relPath}` : 'ros2_ws/src';
-    try {
-      const entries = await this._get(`/repos/${CFG.rospadRepo}/contents/${apiPath}`);
-      return entries
-        .filter(e => !e.name.startsWith('.'))
-        .map(e => ({
-          name: e.name,
-          type: e.type === 'dir' ? 'dir' : 'file',
-          path: relPath ? `${relPath}/${e.name}` : e.name,
-        }));
-    } catch { return []; }
+    const entries = await this._get(`/repos/${CFG.rospadRepo}/contents/${apiPath}`);
+    return entries
+      .filter(e => !e.name.startsWith('.'))
+      .map(e => ({
+        name: e.name,
+        type: e.type === 'dir' ? 'dir' : 'file',
+        path: relPath ? `${relPath}/${e.name}` : e.name,
+      }));
   }
 
   async readRosFile(relPath) {

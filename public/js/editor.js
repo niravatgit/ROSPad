@@ -101,8 +101,17 @@ async function refreshTree() {
   frag.appendChild(_sectionLabel('Workspace'));
 
   async function renderDir(dirPath, indent = 0) {
-    const entries = await githubAPI.listDir(dirPath).catch(() => null);
-    if (gen !== _treeGen) return; // superseded — abort
+    let entries;
+    try { entries = await githubAPI.listDir(dirPath); }
+    catch (err) {
+      if (gen !== _treeGen) return;
+      const el = document.createElement('div');
+      el.className = 'tree-item'; el.style.cssText = 'color:#f85149;font-size:11px;padding:4px 12px';
+      el.textContent = `Error loading workspace: ${err.message}`;
+      frag.appendChild(el);
+      return;
+    }
+    if (gen !== _treeGen) return;
     if (!entries) return;
 
     for (const e of entries) {
@@ -177,7 +186,16 @@ async function refreshTree() {
   frag.appendChild(_sectionLabel('System Packages', true));
 
   async function renderRosDir(rosPath, indent = 0) {
-    const entries = await githubAPI.listRosDir(rosPath).catch(() => null);
+    let entries;
+    try { entries = await githubAPI.listRosDir(rosPath); }
+    catch (err) {
+      if (gen !== _treeGen) return;
+      const el = document.createElement('div');
+      el.className = 'tree-item'; el.style.cssText = 'color:#f85149;font-size:11px;padding:4px 12px';
+      el.textContent = `Error loading system packages: ${err.message}`;
+      frag.appendChild(el);
+      return;
+    }
     if (gen !== _treeGen) return;
     if (!entries) return;
 
