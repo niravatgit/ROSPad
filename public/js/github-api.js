@@ -17,7 +17,6 @@ CFG.oauthProxyUrl  = CFG.oauthProxyUrl  || 'https://rospad-oauth-proxy.nirav-rob
 CFG.githubClientId = CFG.githubClientId || 'Iv23livCT8rM3eALvX0N';
 CFG.githubAppSlug  = CFG.githubAppSlug  || 'rospad-ws';
 CFG.workspaceRepo  = CFG.workspaceRepo  || 'rospad-workspace';
-CFG.ownerUsername  = CFG.ownerUsername  || 'niravatgit';
 
 // ── GitHubAPI ─────────────────────────────────────────────────────────────────
 
@@ -131,34 +130,32 @@ class GitHubAPI {
       }
       throw e;
     }
-    // Check if src/ exists
-    let srcExists = true;
+    // Ensure src/ exists for user's own packages
     try {
-      const src = await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src`);
-      srcExists = Array.isArray(src) && src.filter(e => e.name !== '.gitkeep').length > 0;
+      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src`);
     } catch {
-      srcExists = false;
+      await this.mkdir('src');
     }
 
-    if (!srcExists) {
-      if (this.username === CFG.ownerUsername) {
-        // Owner gets demo packages pre-seeded
-        await this._seedDemos();
-      } else {
-        await this.mkdir('src');
-      }
+    // Seed demos/ once for every new user
+    let demosExist = true;
+    try {
+      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/demos`);
+    } catch {
+      demosExist = false;
     }
+    if (!demosExist) await this._seedDemos();
   }
 
   async _seedDemos() {
     const base = this._pagesBase();
     const r = await fetch(`${base}/workspace-demos/index.json`);
-    if (!r.ok) { await this.mkdir('src'); return; }
+    if (!r.ok) return;
     const tree = await r.json();
 
     const writeAll = async (nodes) => {
       for (const node of nodes) {
-        const dest = `src/${node.path}`;
+        const dest = `demos/${node.path}`;
         if (node.type === 'file') {
           const fr = await fetch(`${base}/workspace-demos/${node.path}`);
           if (fr.ok) await this.writeFile(dest, await fr.text());
