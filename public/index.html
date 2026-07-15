@@ -121,6 +121,10 @@
     .topbtn.run:hover { background: #1f5c1f; }
     .topbtn.stop { background: #4d1a1a; border-color: var(--red); color: var(--red); }
     .topbtn.stop:hover { background: #5c1f1f; }
+    .topbtn.reset-all { border-color: var(--yellow); color: var(--yellow); }
+    .topbtn.reset-all:hover { background: rgba(210,153,34,0.15); }
+    [data-theme="light"] .topbtn.reset-all { background: #fff8e1; border-color: #9a6700; color: #7a5000; }
+    [data-theme="light"] .topbtn.reset-all:hover { background: #ffeeba; }
     .topbtn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
     .spacer { flex: 1; }
@@ -818,6 +822,7 @@
   <button class="topbtn run" id="btn-run" onclick="runCurrentFile()" disabled title="Open a .py file to run">▶ Run</button>
   <button class="topbtn run" id="btn-launch" onclick="runCurrentFile()" disabled title="Open a .launch.py file to launch">⚡ Launch</button>
   <button class="topbtn stop" id="btn-stop" onclick="stopAll()" disabled>■ Stop</button>
+  <button class="topbtn reset-all" onclick="resetROSpad()" title="Stop all nodes, clear terminal, remove robot from sim">↺ Reset</button>
   <button class="topbtn" onclick="colconBuild()">⚙ Build</button>
   <button class="topbtn" onclick="newFile()">+ File</button>
 
@@ -1078,6 +1083,11 @@ function onAuthSuccess(username) {
   document.getElementById('topbar-username').textContent = username;
   document.getElementById('user-badge').style.display = 'flex';
   refreshTree();
+}
+
+function resetROSpad() {
+  stopAll();                                                    // stops workers + sim (which now clears robot)
+  termManager?.sessions?.forEach(s => s.xterm?.clear());       // wipe terminal output
 }
 
 async function resetWorkspace() {

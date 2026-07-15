@@ -146,13 +146,21 @@ function startSim() {
 
 function stopSim() {
   simRunning = false;
-  if (simRobot?.userData) { simRobot.userData.vx = 0; simRobot.userData.wz = 0; }
   ['w','a','s','d'].forEach(k => { keysDown[k] = false; });
+  clearRobot();
   rosBus.unregisterNode('sim_bridge');
+}
+
+function clearRobot() {
+  if (simRobot) { simScene.remove(simRobot); simRobot = null; }
+  if (_simTurtle) { simScene.remove(_simTurtle); _simTurtle = null; }
+  Object.assign(_simTurtleState, { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false });
+  _setSimLabel('');
 }
 
 window.startSim    = startSim;
 window.stopSim     = stopSim;
+window.clearRobot  = clearRobot;
 window.addObstacle = addObstacle;
 window.resetSim    = resetSim;
 Object.defineProperty(window, 'simRunning', { get: () => simRunning });
