@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>service_demo</name>
+  <version>0.0.1</version>
+  <description>ROS2 service demo: AddTwoInts server/client and UR5 joint-state query</description>
+  <maintainer email="student@github.com">Student</maintainer>
+  <license>Apache-2.0</license>
+  <depend>rclpy</depend>
+  <depend>example_interfaces</depend>
+  <depend>rospad_interfaces</depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

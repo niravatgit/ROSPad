@@ -390,6 +390,11 @@ const _subs = new Map();
 const _topicReg = {};
 let _registeredNodeName = null;
 
+// Service state — supports both server and client roles in the same worker
+const _svcHandlers = new Map();   // service_name → handler (for servers)
+const _pendingCalls = new Map();  // callId → {resolve, reject, timer} (for clients)
+let _svcCallCounter = 0;
+
 function _deepPlain(v) {
   if (v instanceof Map) {
     const o = {};
@@ -433,14 +438,40 @@ self.rosBus = {
   getTopics() {
     return Object.entries(_topicReg).map(([topic, msgType]) => ({ topic, msgType }));
   },
-  advertiseService(name, handler) {},
-  callService(name, request) { return Promise.resolve({}); }
+  // Register a service handler (server side)
+  advertiseService(name, handler) {
+    _svcHandlers.set(name, handler);
+  },
+  // Call a service and return a Promise (client side)
+  callService(name, request) {
+    return new Promise((resolve, reject) => {
+      const callId = (++_svcCallCounter) + '_w_' + Math.random();
+      const timer = setTimeout(() => {
+        _pendingCalls.delete(callId);
+        reject(new Error('Service ' + name + ' timed out'));
+      }, 5000);
+      _pendingCalls.set(callId, { resolve, reject, timer });
+      _bc.postMessage({ _type: 'service_call', name, request: _deepPlain(request), callId });
+    });
+  }
 };
 
 _bc.onmessage = (e) => {
   const env = e.data;
+  // Topic delivery
   if (env && env._type === 'topic') {
     (_subs.get(env.topic) || []).forEach(s => { try { s.cb(env.data); } catch(e) {} });
+  }
+  // Service request — dispatch to local handler if we own this service
+  if (env && env._type === 'service_call' && _svcHandlers.has(env.name)) {
+    Promise.resolve(_svcHandlers.get(env.name)(env.request))
+      .then(resp => _bc.postMessage({ _type: 'service_response', callId: env.callId, response: _deepPlain(resp) }))
+      .catch(()  => _bc.postMessage({ _type: 'service_response', callId: env.callId, response: null }));
+  }
+  // Service response — resolve a pending client call
+  if (env && env._type === 'service_response') {
+    const p = _pendingCalls.get(env.callId);
+    if (p) { clearTimeout(p.timer); _pendingCalls.delete(env.callId); p.resolve(env.response); }
   }
 };
 

@@ -187,6 +187,37 @@ class trajectory_msgs:
                 self.time_from_start = {'sec': 0, 'nanosec': 0}
 
 
+# ── example_interfaces (standard service types) ──────────────────────────────
+
+class example_interfaces:
+    class srv:
+        class AddTwoInts:
+            class Request:
+                def __init__(self): self.a = 0; self.b = 0
+            class Response:
+                def __init__(self): self.sum = 0
+
+        class SetBool:
+            class Request:
+                def __init__(self): self.data = False
+            class Response:
+                def __init__(self): self.success = False; self.message = ''
+
+
+# ── rospad_interfaces (ROSpad custom service types) ───────────────────────────
+
+class rospad_interfaces:
+    class srv:
+        class GetJointStates:
+            class Request:
+                def __init__(self): pass
+            class Response:
+                def __init__(self):
+                    self.joint_names = []
+                    self.positions    = []
+                    self.success      = False
+
+
 # ── Convenience imports matching real ROS2 style ──────────────────────────────
 # from std_msgs.msg import String → works after this bootstrap
 
@@ -212,4 +243,17 @@ sys.modules['trajectory_msgs'] = _PkgModule(trajectory_msgs)
 sys.modules['trajectory_msgs.msg'] = trajectory_msgs.msg
 sys.modules['turtlesim'] = _PkgModule(turtlesim)
 sys.modules['turtlesim.msg'] = turtlesim.msg
-sys.modules['turtlesim.msg'] = turtlesim.msg
+
+# Service package modules need a slightly different wrapper (srv instead of msg)
+class _SrvModule:
+    def __init__(self, cls): self._cls = cls
+    def __getattr__(self, name): return getattr(self._cls, name)
+
+class _SrvPkgModule:
+    def __init__(self, pkg_class):
+        self.srv = _SrvModule(pkg_class.srv)
+
+sys.modules['example_interfaces'] = _SrvPkgModule(example_interfaces)
+sys.modules['example_interfaces.srv'] = example_interfaces.srv
+sys.modules['rospad_interfaces'] = _SrvPkgModule(rospad_interfaces)
+sys.modules['rospad_interfaces.srv'] = rospad_interfaces.srv

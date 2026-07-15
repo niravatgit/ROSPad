@@ -12,6 +12,7 @@ setup(
             'joint_state_publisher = ur5_control.joint_state_publisher:main',
             'joint_sine_demo       = ur5_control.joint_sine_demo:main',
             'joint_controller      = ur5_control.joint_controller:main',
+            'joint_state_server    = ur5_control.joint_state_server:main',
         ],
     },
 )
