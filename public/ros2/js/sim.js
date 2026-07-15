@@ -599,12 +599,12 @@ function make6DOFFallback() {
 }
 
 // Resolve package:// URLs used in URDF mesh filenames.
-// Prefer /ros2_ws/src/ (served statically by GitHub Pages / Express static).
+// Prefer /rospad-workspace/src/sys_packages/ (served statically by GitHub Pages).
 // Falls back to /ros2/packages/ if the static path 404s (Express server mode).
 function _resolveRosUrl(url) {
   // Use a relative path so it works both on GitHub Pages (/ROSPad/) and localhost (/)
   const base = window.location.pathname.split('/').slice(0, -1).join('/');
-  return url.replace(/^package:\/\/([^/]+)\/(.*)$/, `${base}/ros2_ws/src/$1/$2`);
+  return url.replace(/^package:\/\/([^/]+)\/(.*)$/, `${base}/rospad-workspace/src/sys_packages/$1/$2`);
 }
 
 // Custom minimal GLB parser — all objects built with global THREE so

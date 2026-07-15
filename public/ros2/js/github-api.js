@@ -2,7 +2,7 @@
  * github-api.js — drop-in replacement for the Express server API
  *
  * User workspace  → private GitHub repo "rospad-workspace" in the user's account
- * System packages → public ROSpad repo at ros2_ws/src/ (read-only, no auth needed)
+ * System packages → served statically from rospad-workspace/src/sys_packages/ on GitHub Pages
  *
  * Configure before use:
  *   ROSPAD_CONFIG.oauthProxyUrl  — Cloudflare Worker URL for code→token exchange
@@ -137,27 +137,27 @@ class GitHubAPI {
       await this.mkdir('src');
     }
 
-    // Seed src/demos/ once for every new user
-    let demosExist = true;
+    // Seed entire src/ (sys_packages + demos) once for every new user
+    let seeded = true;
     try {
       await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/demos`);
     } catch {
-      demosExist = false;
+      seeded = false;
     }
-    if (!demosExist) await this._seedDemos();
+    if (!seeded) await this._seedWorkspace();
   }
 
-  async _seedDemos() {
+  async _seedWorkspace() {
     const base = this._pagesBase();
-    const r = await fetch(`${base}/workspace-demos/index.json`);
+    const r = await fetch(`${base}/rospad-workspace/src-index.json`);
     if (!r.ok) return;
     const tree = await r.json();
 
     const writeAll = async (nodes) => {
       for (const node of nodes) {
-        const dest = `src/demos/${node.path}`;
+        const dest = `src/${node.path}`;
         if (node.type === 'file') {
-          const fr = await fetch(`${base}/workspace-demos/${node.path}`);
+          const fr = await fetch(`${base}/rospad-workspace/src/${node.path}`);
           if (fr.ok) await this.writeFile(dest, await fr.text());
         } else if (node.children?.length) {
           await writeAll(node.children);
@@ -258,12 +258,11 @@ class GitHubAPI {
     return newPath;
   }
 
-  // ── System packages — ROSpad's ros2_ws/src/ (read via static Pages URLs) ──
+  // ── System packages — served from rospad-workspace/src/sys_packages/ ────────
 
   async listRosDir(relPath) {
-    // Load the static index once and cache it
     if (!this._pkgIndex) {
-      const r = await fetch(`${this._pagesBase()}/ros2_ws/packages-index.json`);
+      const r = await fetch(`${this._pagesBase()}/rospad-workspace/packages-index.json`);
       if (!r.ok) throw new Error(`Failed to load package index: ${r.status}`);
       this._pkgIndex = await r.json();
     }
@@ -279,7 +278,7 @@ class GitHubAPI {
   }
 
   async readRosFile(relPath) {
-    const r = await fetch(`${this._pagesBase()}/ros2_ws/src/${relPath}`);
+    const r = await fetch(`${this._pagesBase()}/rospad-workspace/src/sys_packages/${relPath}`);
     if (!r.ok) throw new Error(`GitHub ${r.status}`);
     return r.text();
   }

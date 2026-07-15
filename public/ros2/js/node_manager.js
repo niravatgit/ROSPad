@@ -438,10 +438,10 @@ for _n in ['rclpy', 'rclpy.node', 'rclpy.qos', 'rclpy.logging']:
 \`);
 
     // msgs
-    await pyodide.runPythonAsync(await (await fetch(_BASE + '/msgs/__init__.py')).text());
+    await pyodide.runPythonAsync(await (await fetch(_BASE + '/ros2/msgs/__init__.py')).text());
 
     // rclpy.qos
-    const qosCode = await (await fetch(_BASE + '/rclpy/qos.py')).text();
+    const qosCode = await (await fetch(_BASE + '/ros2/rclpy/qos.py')).text();
     await pyodide.runPythonAsync(qosCode);
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy.qos']
@@ -452,7 +452,7 @@ sys.modules['rclpy'].qos = _m
 \`);
 
     // rclpy.logging
-    const logCode = await (await fetch(_BASE + '/rclpy/logging.py')).text();
+    const logCode = await (await fetch(_BASE + '/ros2/rclpy/logging.py')).text();
     await pyodide.runPythonAsync(logCode);
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy.logging']
@@ -462,7 +462,7 @@ sys.modules['rclpy'].logging = _m
 \`);
 
     // rclpy.node
-    const nodeCode = await (await fetch(_BASE + '/rclpy/node.py')).text();
+    const nodeCode = await (await fetch(_BASE + '/ros2/rclpy/node.py')).text();
     await pyodide.runPythonAsync(nodeCode);
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy.node']
@@ -473,7 +473,7 @@ sys.modules['rclpy'].node = _m
 \`);
 
     // rclpy/__init__.py (loaded last so from rclpy import node/qos/logging resolves)
-    await pyodide.runPythonAsync(await (await fetch(_BASE + '/rclpy/__init__.py')).text());
+    await pyodide.runPythonAsync(await (await fetch(_BASE + '/ros2/rclpy/__init__.py')).text());
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy']
 for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete','create_node','_ROSpadSpin']:

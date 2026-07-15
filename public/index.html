@@ -15,7 +15,7 @@
   <!-- Three.js — likewise before AMD loader -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <!-- URDFLoader — builds kinematic chain from URDF using window.THREE (no cross-instance issues) -->
-  <script src="js/URDFLoader.js"></script>
+  <script src="ros2/js/URDFLoader.js"></script>
   <!-- ammo.js — Bullet physics compiled to JS/WASM -->
   <script src="https://cdn.jsdelivr.net/npm/ammo.js/builds/ammo.js"></script>
   <!-- Cytoscape.js — must load BEFORE Monaco's AMD loader (same reason as xterm/Three) -->
@@ -798,10 +798,10 @@
 
   <div id="user-badge">
     <span class="username" id="topbar-username"></span>
-    <a class="topbtn" href="how_to_use_rospad.html" target="_blank">How to Use</a>
-    <a class="topbtn" href="ros2-intro.html" target="_blank">Intro to ROS2</a>
-    <a class="topbtn" href="teaching-guide.html" target="_blank">Teaching Guide</a>
-    <a class="topbtn" href="ros2-lecture.html" target="_blank">Lecture</a>
+    <a class="topbtn" href="tl_resources/how_to_use_rospad.html" target="_blank">How to Use</a>
+    <a class="topbtn" href="tl_resources/ros2-intro.html" target="_blank">Intro to ROS2</a>
+    <a class="topbtn" href="tl_resources/teaching-guide.html" target="_blank">Teaching Guide</a>
+    <a class="topbtn" href="tl_resources/ros2-lecture.html" target="_blank">Lecture</a>
     <button class="topbtn" onclick="authLogout()">Logout</button>
   </div>
   <div id="node-counter">0 nodes</div>
@@ -956,17 +956,17 @@
 </div>
 
 <!-- Scripts: load order matters (rosbus → github-api → ros2cli → terminal → sim → editor → topics → ui → app) -->
-<script src="rosbus.js"></script>
-<script src="js/github-api.js"></script>
-<script src="ros2cli/ros2cli.js"></script>
-<script src="ros2cli/node_manager.js"></script>
-<script src="js/terminal.js"></script>
-<script src="js/sim.js"></script>
-<script src="js/editor.js"></script>
-<script src="js/topics.js"></script>
-<script src="js/graph.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/app.js"></script>
+<script src="ros2/js/rosbus.js"></script>
+<script src="ros2/js/github-api.js"></script>
+<script src="ros2/js/ros2cli.js"></script>
+<script src="ros2/js/node_manager.js"></script>
+<script src="ros2/js/terminal.js"></script>
+<script src="ros2/js/sim.js"></script>
+<script src="ros2/js/editor.js"></script>
+<script src="ros2/js/topics.js"></script>
+<script src="ros2/js/graph.js"></script>
+<script src="ros2/js/ui.js"></script>
+<script src="ros2/js/app.js"></script>
 
 <script>
 // ── Theme ─────────────────────────────────────────────────────────────────────

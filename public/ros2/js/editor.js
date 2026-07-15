@@ -246,6 +246,19 @@ async function refreshTree() {
   await nodeManager.indexWorkspace();
 }
 
+let _sysWarnDismissed = false;
+function _showSysPackageWarning() {
+  if (_sysWarnDismissed) return;
+  let banner = document.getElementById('sys-pkg-warning');
+  if (banner) return;
+  banner = document.createElement('div');
+  banner.id = 'sys-pkg-warning';
+  banner.style.cssText = 'position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:9999;background:#6e4c00;color:#f0c843;border:1px solid #d29922;border-radius:6px;padding:8px 16px;font-size:12px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+  banner.innerHTML = '⚠ You\'re editing a system package — changes here may break ROS2 behaviour. <button onclick="document.getElementById(\'sys-pkg-warning\').remove();window._sysWarnDismissed=true" style="background:none;border:none;color:#f0c843;cursor:pointer;font-size:14px;padding:0 4px">✕</button>';
+  document.body.appendChild(banner);
+  setTimeout(() => banner?.remove(), 6000);
+}
+
 function _sectionLabel(text, dimmed = false) {
   const el = document.createElement('div');
   el.className = 'tree-section' + (dimmed ? ' tree-section-sys' : '');
@@ -294,6 +307,8 @@ function _detectLang(filePath) {
 async function openFile(path) {
   if (!monacoReady) { alert('Editor still loading...'); return; }
   if (openTabs.has(path)) { switchTab(path); return; }
+
+  if (path.startsWith('src/sys_packages/')) _showSysPackageWarning();
 
   let content;
   try { content = await githubAPI.readFile(path); }
