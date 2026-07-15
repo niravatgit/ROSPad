@@ -1006,15 +1006,23 @@ function startGitHubOAuth() {
 }
 
 async function _handleOAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  if (!code) return false;
+  const params         = new URLSearchParams(window.location.search);
+  const code           = params.get('code');
+  const installationId = params.get('installation_id');
 
-  // If this came from the installation flow, mark app as installed
-  // so future logins skip the repo picker and go straight to OAuth
-  if (params.get('installation_id')) {
+  if (installationId) {
+    // App was just installed — mark it so future logins skip the repo picker
     localStorage.setItem('gh_app_installed', '1');
+    if (!code) {
+      // GitHub redirected back after installation but didn't issue an OAuth code yet.
+      // Clean the URL then immediately trigger the OAuth authorize step.
+      window.history.replaceState({}, document.title, window.location.pathname);
+      githubAPI.startOAuth();
+      return true; // prevent login screen from flashing
+    }
   }
+
+  if (!code) return false;
 
   // Remove query params from URL without reload
   window.history.replaceState({}, document.title, window.location.pathname);
