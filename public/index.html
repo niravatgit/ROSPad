@@ -137,12 +137,20 @@
     }
     .reset-modal {
       background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 32px 44px;
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
-      min-width: 260px;
+      border-radius: 10px; padding: 28px 40px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      min-width: 300px;
     }
     .reset-modal-title { font-size: 13px; font-weight: 600; color: var(--text); }
-    .reset-modal-status { font-size: 12px; color: var(--text2); }
+    .reset-modal-phase { font-size: 10px; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--accent); }
+    .reset-modal-status { font-size: 12px; color: var(--text2); max-width: 260px;
+      text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reset-progress-bar { width: 100%; height: 4px; background: var(--border);
+      border-radius: 2px; overflow: hidden; }
+    .reset-progress-fill { height: 100%; background: var(--accent);
+      border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+    .reset-step-counter { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
     .reset-spinner {
       width: 26px; height: 26px; border: 3px solid var(--border);
       border-top-color: var(--accent); border-radius: 50%;
@@ -830,6 +838,10 @@
 
   <div id="user-badge">
     <span class="username" id="topbar-username"></span>
+    <span id="sync-indicator" style="display:none;font-size:11px;color:var(--accent);display:none;align-items:center;gap:5px">
+      <span style="display:inline-block;width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:ws-spin 0.75s linear infinite"></span>
+      <span id="sync-label">Syncing…</span>
+    </span>
     <a class="topbtn" href="tl_resources/how_to_use_rospad.html" target="_blank">How to Use</a>
     <a class="topbtn" href="tl_resources/ros2-intro.html" target="_blank">Intro to ROS2</a>
     <a class="topbtn" href="tl_resources/teaching-guide.html" target="_blank">Teaching Guide</a>
@@ -1069,10 +1081,17 @@ async function _handleOAuthCallback() {
     githubAPI.init(token, user.login);
     await githubAPI.ensureWorkspaceRepo();   // fast: just checks repo exists
     onAuthSuccess(user.login);
-    githubAPI.seedIfNeeded().catch(e => console.warn('Seed failed:', e)); // background
+    _runSeedWithIndicator();
     return true;
   } catch (e) {
-    errEl.textContent = e.message || 'GitHub login failed — please try again.';
+    let msg = e.message || 'GitHub login failed — please try again.';
+    if (e.code === 'REPO_NOT_FOUND' || e.code === 'REPO_NO_ACCESS') {
+      msg += ` <a href="https://github.com/new?name=rospad-workspace&description=ROSpad+workspace&auto_init=true"
+                  target="_blank" style="color:var(--accent);text-decoration:none">Create it now →</a>`;
+      errEl.innerHTML = msg;
+    } else {
+      errEl.textContent = msg;
+    }
     document.getElementById('auth-submit').disabled = false;
     return false;
   }
@@ -1083,6 +1102,21 @@ function onAuthSuccess(username) {
   document.getElementById('topbar-username').textContent = username;
   document.getElementById('user-badge').style.display = 'flex';
   refreshTree();
+}
+
+function _runSeedWithIndicator() {
+  const indicator = document.getElementById('sync-indicator');
+  const label     = document.getElementById('sync-label');
+  if (indicator) indicator.style.display = 'flex';
+  githubAPI.seedIfNeeded(msg => {
+    if (label) label.textContent = msg;
+  }).then(() => {
+    if (indicator) indicator.style.display = 'none';
+    refreshTree();
+  }).catch(e => {
+    console.warn('Seed failed:', e);
+    if (indicator) indicator.style.display = 'none';
+  });
 }
 
 function resetROSpad() {
@@ -1102,24 +1136,45 @@ async function resetWorkspace() {
   overlay.innerHTML =
     '<div class="reset-modal">' +
       '<div class="reset-spinner"></div>' +
-      '<div class="reset-modal-title">Resetting workspace…</div>' +
-      '<div class="reset-modal-status" id="reset-status">Preparing…</div>' +
+      '<div class="reset-modal-title">Resetting Workspace</div>' +
+      '<div class="reset-modal-phase" id="reset-phase">Preparing…</div>' +
+      '<div class="reset-modal-status" id="reset-status">Connecting to GitHub…</div>' +
+      '<div class="reset-progress-bar"><div class="reset-progress-fill" id="reset-bar"></div></div>' +
+      '<div class="reset-step-counter" id="reset-counter"></div>' +
     '</div>';
   document.body.appendChild(overlay);
 
   try {
-    const count = await githubAPI.resetWorkspace(msg => {
-      const el = document.getElementById('reset-status');
-      if (el) el.textContent = msg;
+    const count = await githubAPI.resetWorkspace(({ phase, label, step, total }) => {
+      const phaseEl   = document.getElementById('reset-phase');
+      const statusEl  = document.getElementById('reset-status');
+      const barEl     = document.getElementById('reset-bar');
+      const countEl   = document.getElementById('reset-counter');
+      if (!statusEl) return;
+      if (phase === 'delete') {
+        if (phaseEl) phaseEl.textContent = 'Phase 1 of 2 — Clearing';
+        statusEl.textContent = label;
+        if (barEl) barEl.style.width = `${Math.round((step / total) * 45)}%`;
+        if (countEl) countEl.textContent = `${step} / ${total}`;
+      } else {
+        if (phaseEl) phaseEl.textContent = 'Phase 2 of 2 — Seeding';
+        statusEl.textContent = label;
+        if (barEl) barEl.style.width = `${45 + Math.round((step / total) * 55)}%`;
+        if (countEl) countEl.textContent = `${step} / ${total} packages`;
+      }
     });
-    document.getElementById('reset-status').textContent = `Done — ${count} packages seeded`;
+    document.getElementById('reset-phase').textContent  = 'Complete';
+    document.getElementById('reset-status').textContent = `${count} packages seeded`;
+    document.getElementById('reset-bar').style.width    = '100%';
+    document.getElementById('reset-counter').textContent = '';
     window.term?.writeln(`\x1b[32m[workspace] Reset complete — ${count} packages seeded\x1b[0m`);
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
     refreshTree();
   } catch (e) {
-    document.getElementById('reset-status').textContent = `Error: ${e.message}`;
+    document.getElementById('reset-phase').textContent  = 'Error';
+    document.getElementById('reset-status').textContent = e.message;
     window.term?.writeln(`\x1b[31m[workspace] Reset failed: ${e.message}\x1b[0m`);
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 3500));
   } finally {
     overlay.remove();
   }
@@ -1150,6 +1205,7 @@ function authLogout() {
     try {
       await githubAPI.fetchUser(token); // validates token is still good
       onAuthSuccess(username);
+      _runSeedWithIndicator();
     } catch {
       authLogout(); // token expired — show login again
     }

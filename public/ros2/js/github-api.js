@@ -118,16 +118,16 @@ class GitHubAPI {
       await this._get(`/repos/${this.username}/${CFG.workspaceRepo}`);
     } catch (e) {
       if (e.status === 404) {
-        throw new Error(
-          `Repo "${CFG.workspaceRepo}" not found in your account. ` +
-          `Create it on GitHub (public or private), then re-authorize and grant ROSpad access to it.`
-        );
+        throw Object.assign(new Error(
+          `No repo named "${CFG.workspaceRepo}" found in your account. ` +
+          `Create a GitHub repo with exactly that name (public or private), then sign in again.`
+        ), { code: 'REPO_NOT_FOUND' });
       }
       if (e.status === 403) {
-        throw new Error(
+        throw Object.assign(new Error(
           `ROSpad doesn't have access to "${CFG.workspaceRepo}". ` +
-          `Re-authorize and make sure you select that repo when GitHub asks.`
-        );
+          `Sign in again and select that repo when GitHub asks which repositories to allow.`
+        ), { code: 'REPO_NO_ACCESS' });
       }
       throw e;
     }
@@ -141,7 +141,7 @@ class GitHubAPI {
   // Slow — seeds demos & sys_packages into workspace. Runs in background after login.
   // Checks each package individually so new packages are seeded for existing users
   // without touching packages they've already modified.
-  async seedIfNeeded() {
+  async seedIfNeeded(onProgress) {
     const base = this._pagesBase();
     const r = await fetch(`${base}/rospad-workspace/src-index.json`);
     if (!r.ok) return;
@@ -174,6 +174,7 @@ class GitHubAPI {
           // package already exists — skip it
         } catch {
           // package missing — seed it
+          onProgress?.(`Syncing ${pkg.name}…`);
           await writeAll([pkg]);
           anythingSeeded = true;
         }
@@ -211,7 +212,7 @@ class GitHubAPI {
     return _b64decode(data.content);
   }
 
-  async writeFile(relPath, content) {
+  async writeFile(relPath, content, _retries = 1) {
     let sha;
     try {
       const existing = await this._get(
@@ -220,10 +221,18 @@ class GitHubAPI {
       sha = existing.sha;
     } catch { /* new file */ }
 
-    await this._put(
-      `/repos/${this.username}/${CFG.workspaceRepo}/contents/${relPath}`,
-      { message: `Update ${relPath}`, content: _b64encode(content), ...(sha ? { sha } : {}) }
-    );
+    try {
+      await this._put(
+        `/repos/${this.username}/${CFG.workspaceRepo}/contents/${relPath}`,
+        { message: `Update ${relPath}`, content: _b64encode(content), ...(sha ? { sha } : {}) }
+      );
+    } catch (e) {
+      if (_retries > 0 && e.message?.includes('409')) {
+        // SHA was stale between GET and PUT — re-fetch and retry once
+        return this.writeFile(relPath, content, 0);
+      }
+      throw e;
+    }
   }
 
   async deleteEntry(relPath) {
@@ -314,17 +323,21 @@ class GitHubAPI {
   // Deletes everything under src/ and re-seeds all packages from the static index.
   // onProgress(msg) is called before each major step so the UI can show status.
   async resetWorkspace(onProgress) {
+    // Phase 1 — delete
     const entries = await this.listDir('src');
-    for (const e of entries) {
-      onProgress?.(`Deleting ${e.name}…`);
-      await this.deleteEntry(e.path);
+    const total = entries.length;
+    for (let i = 0; i < entries.length; i++) {
+      onProgress?.({ phase: 'delete', label: `Clearing ${entries[i].name}…`, step: i + 1, total });
+      await this.deleteEntry(entries[i].path);
     }
 
+    // Phase 2 — seed
     const base = this._pagesBase();
     const r = await fetch(`${base}/rospad-workspace/src-index.json`);
     if (!r.ok) throw new Error('Could not load src-index.json');
     const tree = await r.json();
 
+    const pkgs = tree.flatMap(c => c.children || []);
     const BINARY = /\.(glb|dae|stl|obj|bin|png|jpg|jpeg|svg)$/i;
     const writeAll = async (nodes) => {
       for (const node of nodes) {
@@ -342,12 +355,10 @@ class GitHubAPI {
     };
 
     let count = 0;
-    for (const container of tree) {
-      for (const pkg of (container.children || [])) {
-        onProgress?.(`Seeding ${pkg.name}…`);
-        await writeAll([pkg]);
-        count++;
-      }
+    for (const pkg of pkgs) {
+      count++;
+      onProgress?.({ phase: 'seed', label: `Seeding ${pkg.name}…`, step: count, total: pkgs.length });
+      await writeAll([pkg]);
     }
     return count;
   }
