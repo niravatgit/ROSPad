@@ -616,7 +616,7 @@ a:hover { text-decoration: underline; }
   <h1 class="doc-title">6-Hour ROS2 Teaching Guide</h1>
   <p class="doc-subtitle">A complete instructor walkthrough for two 3-hour sessions. Students use ROSpad — the browser-based ROS2 IDE — with no local installation required.</p>
   <div class="doc-meta">
-    <span class="meta-chip accent">http://192.168.0.166:3000</span>
+    <span class="meta-chip accent">https://niravatgit.github.io/ROSPad/</span>
     <span class="meta-chip">2 sessions · 3 hrs each</span>
     <span class="meta-chip">3 projects</span>
     <span class="meta-chip">No ROS install needed</span>
@@ -652,9 +652,9 @@ a:hover { text-decoration: underline; }
 <div class="prereqs">
   <div class="prereqs-title">Prerequisites &amp; Setup</div>
   <span class="prereq-key">Students need</span>
-  <span class="prereq-val">A modern browser (Chrome or Firefox recommended) and network access to the lab server at <strong>192.168.0.166:3000</strong>. No other software required.</span>
+  <span class="prereq-val">A modern browser (Chrome or Firefox recommended) and network access to the lab server at <strong>niravatgit.github.io/ROSPad</strong>. No other software required.</span>
   <span class="prereq-key">Instructor</span>
-  <span class="prereq-val">ROSpad server running on the lab machine (verify with <code style="font-family:monospace;font-size:11px;">curl http://192.168.0.166:3000</code>). Each student opens the URL — everything else happens in the browser.</span>
+  <span class="prereq-val">ROSpad server running on the lab machine (verify with <code style="font-family:monospace;font-size:11px;">curl https://niravatgit.github.io/ROSPad/</code>). Each student opens the URL — everything else happens in the browser.</span>
   <span class="prereq-key">Prior knowledge</span>
   <span class="prereq-val">Basic Python (functions, classes). No ROS, Linux, or robotics knowledge assumed.</span>
 </div>
@@ -719,7 +719,7 @@ a:hover { text-decoration: underline; }
         <span class="step-num">01</span>
         <div class="step-body">
           <h4>Open ROSpad in the browser</h4>
-          <p>Have every student navigate to <strong>http://192.168.0.166:3000</strong>. The IDE loads fully in the browser — no install. Point out the four panels: file tree (left), Monaco editor (center), 3D simulator (right), terminal (bottom).</p>
+          <p>Have every student navigate to <strong>https://niravatgit.github.io/ROSPad/</strong>. The IDE loads fully in the browser — no install. Point out the four panels: file tree (left), Monaco editor (center), 3D simulator (right), terminal (bottom).</p>
           <div class="callout note">
             <div class="callout-label">Instructor note</div>
             <p>ROSpad uses <strong>Pyodide</strong> (Python compiled to WebAssembly) to run Python code in the browser. There is no "real" ROS on a server — the pub/sub system is emulated via a JavaScript message bus. The API is identical to real rclpy, so all code they write here runs on a real robot without changes.</p>
