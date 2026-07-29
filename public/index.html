@@ -700,73 +700,115 @@
       font-size: 10px; color: var(--text2);
     }
 
-    /* ── Auth overlay ── */
+    /* ── Auth / Landing overlay ── */
     #auth-overlay {
       position: fixed; inset: 0; z-index: 9000;
       background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: row;
+      overflow-y: auto;
     }
-    #auth-box {
-      width: 340px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
+    /* Left panel — branding + tutorial links */
+    #auth-left {
+      flex: 1; min-width: 0;
+      padding: 48px 52px;
+      display: flex; flex-direction: column; gap: 0;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
     }
-    #auth-header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .auth-logo {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 16px; font-weight: 700; color: var(--ros);
-      margin-bottom: 4px;
+    .auth-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 22px; font-weight: 800; color: var(--ros);
+      letter-spacing: -.01em; margin-bottom: 10px;
     }
     .auth-logo-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--ros); box-shadow: 0 0 8px var(--ros);
-      animation: pulse 2s infinite;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--ros); box-shadow: 0 0 10px var(--ros);
+      animation: pulse 2s infinite; flex-shrink: 0;
     }
-    .auth-subtitle { font-size: 11px; color: var(--text2); }
-    #auth-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
+    .auth-tagline {
+      font-size: 14px; color: var(--text2); margin-bottom: 28px;
+      line-height: 1.5; max-width: 380px;
     }
-    .auth-tab {
-      flex: 1; padding: 10px; font-size: 12px; font-weight: 600;
-      text-align: center; cursor: pointer;
+    .auth-feature-grid {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px;
+    }
+    .auth-feat {
+      font-size: 11px; font-weight: 600;
       color: var(--text2); background: var(--bg2);
-      border: none; font-family: inherit;
-      transition: all 0.15s;
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 4px 12px; letter-spacing: .03em;
     }
-    .auth-tab.active { color: var(--accent); background: var(--bg); }
-    #auth-form { padding: 20px 24px; }
-    .auth-field { margin-bottom: 14px; }
-    .auth-field label {
-      display: block; font-size: 11px; color: var(--text2);
-      margin-bottom: 5px; letter-spacing: 0.04em;
+    .auth-docs-heading {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text2);
+      margin-bottom: 12px;
     }
-    .auth-field input {
-      width: 100%; padding: 8px 10px;
-      background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 5px; color: var(--text);
-      font-family: inherit; font-size: 13px;
-      outline: none; transition: border-color 0.15s;
+    .auth-doc-cards { display: flex; flex-direction: column; gap: 8px; }
+    .auth-doc-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; text-decoration: none;
+      transition: border-color .15s, background .15s;
     }
-    .auth-field input:focus { border-color: var(--accent); }
-    #auth-error {
-      font-size: 11px; color: var(--red);
-      margin-bottom: 12px; min-height: 16px;
+    .auth-doc-card:hover { border-color: var(--accent); background: var(--bg3); }
+    .auth-doc-card-icon { font-size: 18px; flex-shrink: 0; }
+    .auth-doc-card-text {}
+    .auth-doc-card-title { font-size: 12px; font-weight: 600; color: var(--text); }
+    .auth-doc-card-desc  { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+    /* Right panel — login */
+    #auth-right {
+      width: 400px; flex-shrink: 0;
+      padding: 48px 44px;
+      display: flex; flex-direction: column; justify-content: center;
+      overflow-y: auto;
     }
+    #auth-right-title {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      margin-bottom: 24px;
+    }
+    #auth-box {
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .auth-step-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .auth-step-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .auth-step-body { font-size: 12px; color: var(--text1); line-height: 1.6; }
+    .auth-step-body code {
+      background: var(--bg); padding: 1px 5px;
+      border-radius: 3px; font-size: 11px;
+    }
+    .auth-step-link {
+      display: inline-block; margin-top: 8px;
+      font-size: 11px; color: var(--accent); text-decoration: none;
+    }
+    .auth-step-link:hover { text-decoration: underline; }
     #auth-submit {
-      width: 100%; padding: 9px;
-      background: var(--ros); border: none; border-radius: 5px;
+      width: 100%; padding: 11px;
+      background: var(--ros); border: none; border-radius: 7px;
       color: #fff; font-size: 13px; font-weight: 700;
       cursor: pointer; font-family: inherit;
-      transition: opacity 0.15s;
+      transition: opacity .15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     #auth-submit:hover { opacity: 0.88; }
     #auth-submit:disabled { opacity: 0.5; cursor: default; }
+    #auth-error {
+      font-size: 11px; color: var(--red); min-height: 16px; text-align: center;
+    }
+    @media (max-width: 700px) {
+      #auth-overlay { flex-direction: column; }
+      #auth-left { border-right: none; border-bottom: 1px solid var(--border);
+        padding: 28px 24px; }
+      #auth-right { width: auto; padding: 28px 24px; }
+    }
 
     /* ── User badge in topbar ── */
     #user-badge {
@@ -783,40 +825,90 @@
 
 <!-- ── Auth overlay ────────────────────────────────────────────────────────── -->
 <div id="auth-overlay">
-  <div id="auth-box">
-    <div id="auth-header">
-      <div class="auth-logo"><div class="auth-logo-dot"></div>ROSpad</div>
-      <div class="auth-subtitle">ROS2 IDE — runs entirely in your browser</div>
+
+  <!-- ── Left panel: branding + tutorial links ────────────────────────────── -->
+  <div id="auth-left">
+    <div class="auth-brand"><div class="auth-logo-dot"></div>ROSpad</div>
+    <div class="auth-tagline">A browser-based ROS2 IDE — write Python nodes, launch packages, and drive robots in a live 3D simulator. No installation required.</div>
+
+    <div class="auth-feature-grid">
+      <span class="auth-feat">Python nodes</span>
+      <span class="auth-feat">Publishers &amp; subscribers</span>
+      <span class="auth-feat">ROS2 services</span>
+      <span class="auth-feat">3D simulator</span>
+      <span class="auth-feat">Computation graph</span>
+      <span class="auth-feat">Multi-session terminal</span>
+      <span class="auth-feat">UR5 arm</span>
+      <span class="auth-feat">DiffBot</span>
     </div>
-    <div id="auth-form" style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
-      <!-- Step 1 -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase">Step 1 — One-time setup</div>
-        <div style="font-size:12px;color:var(--text1);line-height:1.5">
-          Create a GitHub repo named <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px">rospad-workspace</code> in your account.<br>
-          Public or private — your choice. ROSpad only touches this repo.
+
+    <div class="auth-docs-heading">Documentation — read before you log in</div>
+    <div class="auth-doc-cards">
+      <a class="auth-doc-card" href="tl_resources/how_to_use_rospad.html" target="_blank">
+        <span class="auth-doc-card-icon">📚</span>
+        <div class="auth-doc-card-text">
+          <div class="auth-doc-card-title">Getting Started Guide</div>
+          <div class="auth-doc-card-desc">Step-by-step tutorials: talker/listener, turtlesim, DiffBot, UR5 arm, services</div>
         </div>
-        <a href="https://github.com/new?name=rospad-workspace&description=ROSpad+workspace&auto_init=true" target="_blank"
-           style="align-self:flex-start;font-size:11px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:4px">
-          Create on GitHub →
-        </a>
-        <div style="font-size:11px;color:var(--text2)">Already done? Skip to Step 2.</div>
-      </div>
-      <!-- Step 2 -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
-        <div style="font-size:11px;color:var(--text2);text-align:center">
-          Step 2 — When GitHub asks which repos to allow, select <strong>rospad-workspace</strong>.
+      </a>
+      <a class="auth-doc-card" href="tl_resources/ros2-intro.html" target="_blank">
+        <span class="auth-doc-card-icon">📖</span>
+        <div class="auth-doc-card-text">
+          <div class="auth-doc-card-title">Intro to ROS2</div>
+          <div class="auth-doc-card-desc">Nodes, topics, services, DDS, and how ROSpad maps to real ROS2</div>
         </div>
-        <button id="auth-submit" onclick="startGitHubOAuth()" style="display:flex;align-items:center;gap:8px;font-size:13px;width:100%;justify-content:center">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-          Login with GitHub
-        </button>
-        <div id="auth-error" style="font-size:11px;color:#f85149;min-height:16px;text-align:center"></div>
-      </div>
+      </a>
+      <a class="auth-doc-card" href="tl_resources/teaching-guide.html" target="_blank">
+        <span class="auth-doc-card-icon">👨‍🏫</span>
+        <div class="auth-doc-card-text">
+          <div class="auth-doc-card-title">Teaching Guide</div>
+          <div class="auth-doc-card-desc">6-hour instructor curriculum with timing, code walkthroughs, and Q&amp;A notes</div>
+        </div>
+      </a>
+      <a class="auth-doc-card" href="tl_resources/ros2-lecture.html" target="_blank">
+        <span class="auth-doc-card-icon">📊</span>
+        <div class="auth-doc-card-text">
+          <div class="auth-doc-card-title">Lecture Slides</div>
+          <div class="auth-doc-card-desc">Interactive slide deck — ROS2 concepts, build system, ROSpad live demo</div>
+        </div>
+      </a>
     </div>
   </div>
+
+  <!-- ── Right panel: login ───────────────────────────────────────────────── -->
+  <div id="auth-right">
+    <div id="auth-right-title">Get started</div>
+    <div id="auth-box">
+
+      <div class="auth-step-card">
+        <div class="auth-step-label">Step 1 — One-time setup</div>
+        <div class="auth-step-body">
+          Create a GitHub repository named <code>rospad-workspace</code> in your account.
+          Public or private — your choice. ROSpad stores your workspace files there.
+        </div>
+        <a class="auth-step-link" href="https://github.com/new?name=rospad-workspace&description=ROSpad+workspace&auto_init=true" target="_blank">
+          Create rospad-workspace on GitHub →
+        </a>
+      </div>
+
+      <div class="auth-step-card">
+        <div class="auth-step-label">Step 2 — Sign in</div>
+        <div class="auth-step-body">
+          Click below and sign in with GitHub. When asked which repositories to allow, select <code>rospad-workspace</code>.
+        </div>
+      </div>
+
+      <button id="auth-submit" onclick="startGitHubOAuth()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        Login with GitHub
+      </button>
+
+      <div id="auth-error"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ── Top bar ─────────────────────────────────────────────────────────────── -->

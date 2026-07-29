@@ -345,15 +345,21 @@ footer {
     <span class="chevron">›</span>
   </summary>
   <div class="card-body">
-    <p>Open <strong>ROSpad</strong> in your browser. You will see a login screen.</p>
-    <ul>
-      <li>Enter the <strong>username</strong> and <strong>password</strong> given by your instructor.</li>
-      <li>New users can click <strong>Register</strong> to create an account.</li>
-      <li>Once logged in, you land on the main IDE.</li>
-    </ul>
+    <p>ROSpad uses GitHub for authentication. Your workspace files are stored in a private GitHub repository in your own account — no shared server, no passwords to manage.</p>
+    <ol style="margin:.5rem 0 .5rem 1.2rem;line-height:2">
+      <li><strong>Create a GitHub account</strong> at <a href="https://github.com" target="_blank" style="color:var(--green)">github.com</a> if you don't have one.</li>
+      <li><strong>Create a repository</strong> named exactly <code class="inline-code">rospad-workspace</code> in your GitHub account (public or private). There is a direct link on the ROSpad login page.</li>
+      <li><strong>Open ROSpad</strong> at <a href="https://niravatgit.github.io/ROSPad/" target="_blank" style="color:var(--green)">niravatgit.github.io/ROSPad/</a> and click <strong>Login with GitHub</strong>.</li>
+      <li><strong>Authorize the ROSpad app</strong> — GitHub will ask which repositories to allow. Select <code class="inline-code">rospad-workspace</code>.</li>
+      <li>You land on the IDE. Demo packages are seeded into your workspace automatically (a spinner appears in the top bar while this runs).</li>
+    </ol>
     <div class="note note-info">
       <span class="note-icon">ℹ️</span>
-      <span>Each student has a private workspace. Your files and packages are isolated from other students.</span>
+      <span>Steps 1 and 2 are one-time setup. After that, clicking <strong>Login with GitHub</strong> takes you straight to the IDE in a few seconds.</span>
+    </div>
+    <div class="note note-info">
+      <span class="note-icon">ℹ️</span>
+      <span>Your workspace is your private GitHub repo — no other student can see your files. You can also view and edit your files directly on GitHub at <code class="inline-code">github.com/&lt;your-username&gt;/rospad-workspace</code>.</span>
     </div>
   </div>
 </details>

@@ -652,9 +652,11 @@ a:hover { text-decoration: underline; }
 <div class="prereqs">
   <div class="prereqs-title">Prerequisites &amp; Setup</div>
   <span class="prereq-key">Students need</span>
-  <span class="prereq-val">A modern browser (Chrome or Firefox recommended) and network access to the lab server at <strong>niravatgit.github.io/ROSPad</strong>. No other software required.</span>
+  <span class="prereq-val">A modern browser (Chrome or Firefox recommended) and a free GitHub account. No other software required.</span>
+  <span class="prereq-key">One-time student setup</span>
+  <span class="prereq-val">Each student creates a GitHub repository named <code style="font-family:monospace;font-size:11px">rospad-workspace</code> (public or private) in their own account. A direct creation link is shown on the ROSpad login page. This takes under 1 minute and only needs to be done once.</span>
   <span class="prereq-key">Instructor</span>
-  <span class="prereq-val">ROSpad server running on the lab machine (verify with <code style="font-family:monospace;font-size:11px;">curl https://niravatgit.github.io/ROSPad/</code>). Each student opens the URL — everything else happens in the browser.</span>
+  <span class="prereq-val">No server to manage — ROSpad runs on GitHub Pages at <strong>niravatgit.github.io/ROSPad/</strong>. Ensure the <strong>rospad-ws GitHub App</strong> is set to Public (GitHub → Settings → Developer Settings → GitHub Apps → rospad-ws → Make public). Students log in with GitHub OAuth — their files live in their own <code style="font-family:monospace;font-size:11px">rospad-workspace</code> repo.</span>
   <span class="prereq-key">Prior knowledge</span>
   <span class="prereq-val">Basic Python (functions, classes). No ROS, Linux, or robotics knowledge assumed.</span>
 </div>
@@ -719,10 +721,10 @@ a:hover { text-decoration: underline; }
         <span class="step-num">01</span>
         <div class="step-body">
           <h4>Open ROSpad in the browser</h4>
-          <p>Have every student navigate to <strong>https://niravatgit.github.io/ROSPad/</strong>. The IDE loads fully in the browser — no install. Point out the four panels: file tree (left), Monaco editor (center), 3D simulator (right), terminal (bottom).</p>
+          <p>Have every student navigate to <a href="https://niravatgit.github.io/ROSPad/" target="_blank"><strong>niravatgit.github.io/ROSPad/</strong></a>. First-time users will need to create a <code>rospad-workspace</code> GitHub repo and log in with GitHub (a link and instructions are on the landing page). Returning users click <strong>Login with GitHub</strong> and land on the IDE immediately. Point out the four panels: file tree (left), Monaco editor (center), 3D simulator (right), terminal (bottom).</p>
           <div class="callout note">
             <div class="callout-label">Instructor note</div>
-            <p>ROSpad uses <strong>Pyodide</strong> (Python compiled to WebAssembly) to run Python code in the browser. There is no "real" ROS on a server — the pub/sub system is emulated via a JavaScript message bus. The API is identical to real rclpy, so all code they write here runs on a real robot without changes.</p>
+            <p>ROSpad uses <strong>Pyodide</strong> (Python compiled to WebAssembly) to run Python code in the browser. There is no ROS server — the pub/sub and service system is emulated via a JavaScript message bus. The API is identical to real rclpy, so all code they write here runs on a real robot without changes. Student workspaces are stored in their own private GitHub repos — nothing is shared between students.</p>
           </div>
         </div>
       </div>
