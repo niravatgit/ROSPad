@@ -40,8 +40,24 @@ const XTERM_OPTIONS = {
 };
 
 const CWD            = '/rospad-workspace';
-const PROMPT_ANSI    = `\x1b[32mstudent@rospad\x1b[0m:\x1b[34m${CWD}\x1b[0m$ `;
-const PROMPT_PLAIN   = `student@rospad:${CWD}$ `;
+const PROMPT_ANSI    = `\x1b[32mstudent@rospad\x1b[0m:\x1b[34m~/ws\x1b[0m$ `;
+const PROMPT_PLAIN   = `student@rospad:~/ws$ `;
+
+// Resolve a cd argument relative to cwd, clamped to 'src' as the workspace root.
+function _resolveCwd(base, arg) {
+  if (!arg || arg === '~') return 'src';
+  const segs = arg.startsWith('/')
+    ? arg.slice(1).split('/')
+    : [...base.split('/'), ...arg.split('/')];
+  const out = [];
+  for (const s of segs) {
+    if (!s || s === '.') continue;
+    if (s === '..') out.pop();
+    else out.push(s);
+  }
+  if (!out.length || out[0] !== 'src') out.unshift('src');
+  return out.join('/') || 'src';
+}
 
 // ── Message templates for ros2 topic pub ─────────────────────────────────────
 const MSG_TEMPLATES = {
@@ -88,6 +104,14 @@ class TerminalSession {
     this._cur     = 0;
     this._history = [];
     this._histIdx = -1;
+
+    // Current working directory within the user's workspace (relative, rooted at 'src')
+    this._cwd     = 'src';
+  }
+
+  // Dynamic prompt — updates when _cwd changes
+  get _prompt() {
+    return `\x1b[32mstudent@rospad\x1b[0m:\x1b[34m~/ws${this._cwd.slice(3)}\x1b[0m$ `;
   }
 
   // ── Mount into the viewport ──────────────────────────────────────────────
@@ -157,7 +181,7 @@ class TerminalSession {
   }
 
   showPrompt() {
-    this.xterm.write(PROMPT_ANSI);
+    this.xterm.write(this._prompt);
     setTimeout(() => this.xterm.scrollToBottom(), 0);
   }
 
@@ -167,7 +191,7 @@ class TerminalSession {
   _moveCursorFromTo(from, to) {
     if (from === to) return;
     const cols = this.xterm.cols || 80;
-    const pLen = PROMPT_PLAIN.length;
+    const pLen = `student@rospad:~/ws${this._cwd.slice(3)}$ `.length;
     const fromRow = Math.floor((pLen + from) / cols);
     const toRow   = Math.floor((pLen + to)   / cols);
     const toCol   = (pLen + to) % cols;
@@ -320,13 +344,13 @@ class TerminalSession {
         } else if (hits.length > 1) {
           this.xterm.write('\r\n');
           hits.forEach(t => this.xterm.write(`  \x1b[36m${t}\x1b[0m\r\n`));
-          this.xterm.write(PROMPT_ANSI + input);
+          this.xterm.write(this._prompt + input);
         } else if (!partial) {
           this.xterm.write('\r\n\x1b[33m(no topics active — start a node first)\x1b[0m\r\n');
-          this.xterm.write(PROMPT_ANSI + input);
+          this.xterm.write(this._prompt + input);
         } else {
           this.xterm.write('\r\n\x1b[33m(topic type unknown — is the sim running?)\x1b[0m\r\n');
-          this.xterm.write(PROMPT_ANSI + input);
+          this.xterm.write(this._prompt + input);
         }
         return;
       }
@@ -342,7 +366,7 @@ class TerminalSession {
       } else if (hits.length > 1) {
         this.xterm.write('\r\n');
         hits.forEach(t => this.xterm.write(`  \x1b[36m${t}\x1b[0m\r\n`));
-        this.xterm.write(PROMPT_ANSI + input);
+        this.xterm.write(this._prompt + input);
       }
       return;
     }
@@ -354,14 +378,14 @@ class TerminalSession {
         const partial = parts[2] || '';
         const hits    = pkgs.filter(p => p.startsWith(partial));
         if (hits.length === 1)       this._setLine(`ros2 run ${hits[0]} `);
-        else if (hits.length > 1)    { this.xterm.write('\r\n'); hits.forEach(p => this.xterm.write(`  ${p}\r\n`)); this.xterm.write(PROMPT_ANSI + input); }
+        else if (hits.length > 1)    { this.xterm.write('\r\n'); hits.forEach(p => this.xterm.write(`  ${p}\r\n`)); this.xterm.write(this._prompt + input); }
       } else {
         const pkg  = parts[2];
         const exes = this.nodeManager.packages.get(pkg)?.executables?.map(e=>e.executable) || [];
         const partial = parts[3] || '';
         const hits    = exes.filter(e => e.startsWith(partial));
         if (hits.length === 1)       this._setLine(`ros2 run ${pkg} ${hits[0]}`);
-        else if (hits.length > 1)    { this.xterm.write('\r\n'); hits.forEach(e => this.xterm.write(`  ${e}\r\n`)); this.xterm.write(PROMPT_ANSI + input); }
+        else if (hits.length > 1)    { this.xterm.write('\r\n'); hits.forEach(e => this.xterm.write(`  ${e}\r\n`)); this.xterm.write(this._prompt + input); }
       }
       return;
     }
@@ -372,7 +396,7 @@ class TerminalSession {
       const partial = parts[2] || '';
       const hits    = pkgs.filter(p => p.startsWith(partial));
       if (hits.length === 1)  this._setLine(`ros2 launch ${hits[0]} `);
-      else if (hits.length>1) { this.xterm.write('\r\n'); hits.forEach(p => this.xterm.write(`  ${p}\r\n`)); this.xterm.write(PROMPT_ANSI + input); }
+      else if (hits.length>1) { this.xterm.write('\r\n'); hits.forEach(p => this.xterm.write(`  ${p}\r\n`)); this.xterm.write(this._prompt + input); }
       return;
     }
 
@@ -380,7 +404,7 @@ class TerminalSession {
     const allCmds = [
       'ros2 topic pub ','ros2 topic list','ros2 topic echo ','ros2 topic hz ','ros2 topic info ',
       'ros2 node list','ros2 node info ','ros2 run ','ros2 launch ','ros2 pkg create ',
-      'colcon build','clear','ls','cat ','help',
+      'colcon build','clear','ls','cat ','touch ','cd ','cd ..','pwd','help',
     ];
     const hits = allCmds.filter(c => c.startsWith(input));
     if (hits.length === 1) {
@@ -390,7 +414,7 @@ class TerminalSession {
       let prefix = hits[0];
       for (const h of hits) { let i=0; while(i<prefix.length && prefix[i]===h[i]) i++; prefix=prefix.slice(0,i); }
       if (prefix.length > input.length) this._setLine(prefix);
-      else { this.xterm.write('\r\n'); hits.forEach(h => this.xterm.write(`  ${h.trim()}\r\n`)); this.xterm.write(PROMPT_ANSI + input); }
+      else { this.xterm.write('\r\n'); hits.forEach(h => this.xterm.write(`  ${h.trim()}\r\n`)); this.xterm.write(this._prompt + input); }
     }
   }
 
@@ -493,13 +517,13 @@ class TerminalSession {
         case 'd': this._deleteForward();return;
         case 'l':
           this.xterm.clear();
-          this.xterm.write(PROMPT_ANSI + this._buf);
+          this.xterm.write(this._prompt + this._buf);
           return;
         case 'c':
           this.xterm.write('^C\r\n');
           this._buf = ''; this._cur = 0;
           this.ros2cli._echoSubs?.forEach((_, t) => this.ros2cli.stopEcho(t));
-          this.xterm.write(PROMPT_ANSI);
+          this.xterm.write(this._prompt);
           return;
         case 'v':
           navigator.clipboard.readText().then(text => {
@@ -525,17 +549,53 @@ class TerminalSession {
   // ── Command dispatch ─────────────────────────────────────────────────────
 
   async _run(cmd) {
-    if (cmd.startsWith('ros2'))         { await this.ros2cli.execute(cmd); return; }
+    const firstWord = cmd.trim().split(/\s+/)[0];
+
+    // cd — navigate workspace directories
+    if (firstWord === 'cd') {
+      const arg  = cmd.trim().slice(2).trim();
+      const next = _resolveCwd(this._cwd, arg);
+      if (next !== this._cwd) {
+        try {
+          await githubAPI.listDir(next);
+          this._cwd = next;
+        } catch {
+          this.xterm.writeln(`\x1b[31mcd: ${arg || '~'}: No such directory\x1b[0m`);
+        }
+      }
+      return;
+    }
+
+    if (cmd.startsWith('ros2')) {
+      const isPkgCreate = /^ros2\s+pkg\s+create/.test(cmd);
+      const overlay = isPkgCreate ? this._showBusyOverlay('Creating package…', 'Writing files to GitHub — please wait') : null;
+      try { await this.ros2cli.execute(cmd); }
+      finally { overlay?.remove(); }
+      return;
+    }
     if (cmd.startsWith('colcon build')) { await this.ros2cli.colconBuild(); return; }
     if (cmd === 'clear')                { this.xterm.clear(); return; }
     if (cmd === 'help')                 { this.ros2cli._help(); return; }
 
     // Route file/directory commands to the browser-side GitHub API shell.
-    const output = await githubAPI.shell(cmd);
+    const output = await githubAPI.shell(cmd, this._cwd);
     if (output) {
       this.xterm.write(output);
       if (!output.endsWith('\n') && !output.endsWith('\r\n')) this.xterm.write('\r\n');
     }
+  }
+
+  // Busy overlay — shown during GitHub API write operations so users know to wait
+  _showBusyOverlay(title, status) {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:9000;backdrop-filter:blur(4px);';
+    el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 36px;text-align:center;min-width:300px;max-width:440px;">
+      <div class="reset-spinner" style="margin:0 auto 16px;"></div>
+      <div style="font-weight:600;font-size:15px;color:var(--text);margin-bottom:8px;">${title}</div>
+      <div style="font-size:13px;color:var(--muted);">${status}</div>
+    </div>`;
+    document.body.appendChild(el);
+    return el;
   }
 }
 

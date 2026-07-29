@@ -341,6 +341,109 @@
             ]
           }
         ]
+      },
+      {
+        "name": "diffbot_camera_description",
+        "path": "demos/diffbot_camera_description",
+        "type": "dir",
+        "children": [
+          {
+            "name": "diffbot_camera_description",
+            "path": "demos/diffbot_camera_description/diffbot_camera_description",
+            "type": "dir",
+            "children": [
+              { "name": "__init__.py", "path": "demos/diffbot_camera_description/diffbot_camera_description/__init__.py", "type": "file" }
+            ]
+          },
+          {
+            "name": "launch",
+            "path": "demos/diffbot_camera_description/launch",
+            "type": "dir",
+            "children": [
+              { "name": "diffbot_camera.launch.py", "path": "demos/diffbot_camera_description/launch/diffbot_camera.launch.py", "type": "file" }
+            ]
+          },
+          {
+            "name": "setup.py",
+            "path": "demos/diffbot_camera_description/setup.py",
+            "type": "file"
+          },
+          {
+            "name": "urdf",
+            "path": "demos/diffbot_camera_description/urdf",
+            "type": "dir",
+            "children": [
+              { "name": "diffbot_camera.urdf", "path": "demos/diffbot_camera_description/urdf/diffbot_camera.urdf", "type": "file" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "ur5_camera_description",
+        "path": "demos/ur5_camera_description",
+        "type": "dir",
+        "children": [
+          {
+            "name": "ur5_camera_description",
+            "path": "demos/ur5_camera_description/ur5_camera_description",
+            "type": "dir",
+            "children": [
+              { "name": "__init__.py", "path": "demos/ur5_camera_description/ur5_camera_description/__init__.py", "type": "file" }
+            ]
+          },
+          {
+            "name": "launch",
+            "path": "demos/ur5_camera_description/launch",
+            "type": "dir",
+            "children": [
+              { "name": "ur5_camera.launch.py", "path": "demos/ur5_camera_description/launch/ur5_camera.launch.py", "type": "file" }
+            ]
+          },
+          {
+            "name": "setup.py",
+            "path": "demos/ur5_camera_description/setup.py",
+            "type": "file"
+          },
+          {
+            "name": "urdf",
+            "path": "demos/ur5_camera_description/urdf",
+            "type": "dir",
+            "children": [
+              { "name": "ur5_camera.urdf", "path": "demos/ur5_camera_description/urdf/ur5_camera.urdf", "type": "file" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "vision_demos",
+        "path": "demos/vision_demos",
+        "type": "dir",
+        "children": [
+          {
+            "name": "launch",
+            "path": "demos/vision_demos/launch",
+            "type": "dir",
+            "children": [
+              { "name": "color_tracker.launch.py", "path": "demos/vision_demos/launch/color_tracker.launch.py", "type": "file" }
+            ]
+          },
+          {
+            "name": "setup.py",
+            "path": "demos/vision_demos/setup.py",
+            "type": "file"
+          },
+          {
+            "name": "vision_demos",
+            "path": "demos/vision_demos/vision_demos",
+            "type": "dir",
+            "children": [
+              { "name": "__init__.py",        "path": "demos/vision_demos/vision_demos/__init__.py",        "type": "file" },
+              { "name": "color_tracker.py",   "path": "demos/vision_demos/vision_demos/color_tracker.py",   "type": "file" },
+              { "name": "image_info.py",      "path": "demos/vision_demos/vision_demos/image_info.py",      "type": "file" },
+              { "name": "wrist_detector.py",  "path": "demos/vision_demos/vision_demos/wrist_detector.py",  "type": "file" }
+            ]
+          }
+        ]
       }
     ]
   },

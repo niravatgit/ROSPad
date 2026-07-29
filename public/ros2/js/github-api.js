@@ -309,12 +309,11 @@ class GitHubAPI {
   // ── Package scaffolding ────────────────────────────────────────────────────
 
   async createPackage(name) {
-    await Promise.all([
-      this.writeFile(`src/${name}/package.xml`,    _packageXml(name)),
-      this.writeFile(`src/${name}/setup.py`,        _setupPy(name)),
-      this.writeFile(`src/${name}/${name}/__init__.py`, ''),
-      this.writeFile(`src/${name}/launch/.gitkeep`, ''),
-    ]);
+    // Sequential writes — parallel writes race on branch HEAD and cause 409 conflicts.
+    await this.writeFile(`src/${name}/package.xml`,         _packageXml(name));
+    await this.writeFile(`src/${name}/setup.py`,             _setupPy(name));
+    await this.writeFile(`src/${name}/${name}/__init__.py`, '');
+    await this.writeFile(`src/${name}/launch/.gitkeep`,     '');
     return `src/${name}`;
   }
 
@@ -370,13 +369,15 @@ class GitHubAPI {
     const base  = parts[0];
     const arg   = parts[1] || '';
 
-    if (base === 'pwd')  return `/${cwd}\r\n`;
+    if (base === 'pwd')  return `~/ws${cwd.slice(3)}\r\n`;
     if (base === 'echo') return `${parts.slice(1).join(' ')}\r\n`;
     if (base === 'clear') return '\x1bc';
 
     if (base === 'ls' || base === 'll' || base === 'la') {
       const dir = arg ? `${cwd}/${arg}`.replace(/^\//, '') : cwd;
-      const entries = await this.listDir(dir);
+      let entries;
+      try { entries = await this.listDir(dir); }
+      catch { return `\x1b[31mls: cannot access '${arg}': No such directory\x1b[0m\r\n`; }
       if (!entries.length) return '(empty)\r\n';
       return entries.map(e => (e.type === 'dir' ? `\x1b[34m${e.name}/\x1b[0m` : e.name)).join('  ') + '\r\n';
     }
@@ -386,6 +387,18 @@ class GitHubAPI {
       const path = arg.startsWith('/') ? arg.slice(1) : `${cwd}/${arg}`;
       try { return (await this.readFile(path)) + '\r\n'; }
       catch { return `\x1b[31mcat: ${arg}: No such file\x1b[0m\r\n`; }
+    }
+
+    if (base === 'touch') {
+      if (!arg) return 'touch: missing file argument\r\n';
+      const path = arg.startsWith('/') ? arg.slice(1) : `${cwd}/${arg}`;
+      try {
+        await this.writeFile(path, '');
+        window.dispatchEvent(new CustomEvent('rospad:refresh-tree'));
+        return '';
+      } catch (e) {
+        return `\x1b[31mtouch: ${arg}: ${e.message}\x1b[0m\r\n`;
+      }
     }
 
     return `\x1b[31m${base}: command not available in browser environment\x1b[0m\r\n`;

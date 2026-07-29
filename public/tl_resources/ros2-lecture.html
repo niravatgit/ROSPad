@@ -656,7 +656,33 @@ self.sub = self.<span class="fn">create_subscription</span>(
 </div>
 
 <!-- 12. Hands-on & Next Steps -->
-<div class="slide" data-section="rospad" id="slide-12" data-notes="Give students 30 minutes to complete the talker/listener exercise. Walk around and help. The goal: everyone has two nodes talking to each other before the end of class.">
+<div class="slide" data-section="rospad" id="slide-12" data-notes="This is the bridge from pure pub/sub to sensor-driven robotics. Key idea: an image is just a large array — once it's in NumPy, all the usual array operations apply. Ask students: what else could you detect besides colour?">
+  <span class="badge">ROSpad</span>
+  <h2>Vision: cameras as topics</h2>
+  <div class="sub">A camera is just a node that publishes <code style="font-family:monospace;color:#22d3ee">sensor_msgs/Image</code> — image data is a NumPy array.</div>
+  <div class="cols" style="margin-top:1vh">
+    <div class="col">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:#22d3ee;font-weight:700;margin-bottom:1vh">How it works</div>
+      <ul>
+        <li>Declare a <code style="font-family:monospace;color:#22d3ee">&lt;sensor type="camera"&gt;</code> in URDF</li>
+        <li>Simulator auto-publishes <code style="font-family:monospace;color:#22d3ee">/camera/image_raw</code> at 10 Hz</li>
+        <li>Click the topic in the Topics panel — see a live preview</li>
+        <li>Subscribe in Python → <code style="font-family:monospace;color:#22d3ee">np.asarray(msg.data).reshape(h,w,3)</code></li>
+      </ul>
+    </div>
+    <div class="col">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:#22d3ee;font-weight:700;margin-bottom:1vh">colour tracker pattern</div>
+      <ul>
+        <li>Threshold by RGB: <code style="font-family:monospace;color:#22d3ee">R&gt;150 &amp; G&lt;80 &amp; B&lt;80</code></li>
+        <li>Find centroid with <code style="font-family:monospace;color:#22d3ee">np.where(mask)</code></li>
+        <li>Compute horizontal offset → <code style="font-family:monospace;color:#22d3ee">angular.z</code></li>
+        <li>Robot steers toward the coloured target — <strong>visual servoing</strong></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="slide" data-section="rospad" id="slide-13" data-notes="Give students 30 minutes to complete the talker/listener exercise. Walk around and help. The goal: everyone has two nodes talking to each other before the end of class.">
   <span class="badge">ROSpad</span>
   <h2>Now: build it yourself</h2>
   <div class="sub">Follow the Teaching Guide to build your first talker/listener pair.</div>
@@ -692,7 +718,7 @@ self.sub = self.<span class="fn">create_subscription</span>(
 
 <div id="nav">
   <button class="nav-btn" id="btn-prev" onclick="go(-1)" disabled>←</button>
-  <span id="slide-counter">1 / 12</span>
+  <span id="slide-counter">1 / 13</span>
   <button class="nav-btn" id="btn-next" onclick="go(1)">→</button>
 </div>
 

@@ -48,6 +48,9 @@ const LIDAR_RANGE = 5.0;
 const simObstacles  = []; // tracked meshes for LiDAR raycasting + collision
 const ROBOT_RADIUS  = 0.26; // metres — bounding circle of diffbot footprint
 
+// ── Robot camera rigs (sensor_msgs/Image publishers driven by WebGLRenderTarget)
+let _robotCameras = []; // [{cam, target, mount, topic, width, height, lastMs}]
+
 // ── Bullet physics (ammo.js) ──────────────────────────────────────────────────
 let _Ammo             = null;  // resolved ammo.js namespace
 let physicsWorld      = null;
@@ -152,12 +155,125 @@ function stopSim() {
 }
 
 function clearRobot() {
+  _clearCameraRigs();
   if (simRobot) { simScene.remove(simRobot); simRobot = null; }
   // Turtle is created once at init and stays in the scene — just hide it and
   // reset state so the next cmd_vel can make it reappear (don't null/remove it)
   if (_simTurtle) { _simTurtle.visible = false; _simTurtle.position.set(0, 0, 0); }
   Object.assign(_simTurtleState, { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false });
   _setSimLabel('');
+}
+
+// ── URDF camera sensor parsing ────────────────────────────────────────────────
+function _parseCamerasFromUrdf(urdfXml) {
+  const dom = new DOMParser().parseFromString(urdfXml, 'text/xml');
+  const cameras = [];
+  dom.querySelectorAll('gazebo').forEach(gz => {
+    const ref    = gz.getAttribute('reference');
+    const sensor = gz.querySelector('sensor[type="camera"]');
+    if (!sensor || !ref) return;
+    const w   = parseInt(sensor.querySelector('image width')?.textContent  || '320');
+    const h   = parseInt(sensor.querySelector('image height')?.textContent || '240');
+    const fov = parseFloat(sensor.querySelector('horizontal_fov')?.textContent || '1.0472');
+    let topic = '/camera/image_raw';
+    const remap = sensor.querySelector('remapping');
+    if (remap) {
+      const m = remap.textContent.match(/:=\s*(\S+)/);
+      if (m) topic = m[1].trim();
+    }
+    // Find the fixed joint that attaches this link to its parent, extract xyz offset
+    let offset = [0, 0, 0];
+    for (const j of dom.querySelectorAll('joint')) {
+      if (j.querySelector('child')?.getAttribute('link') === ref) {
+        const orig = j.querySelector('origin');
+        if (orig) offset = (orig.getAttribute('xyz') || '0 0 0').split(/\s+/).map(Number);
+        break;
+      }
+    }
+    cameras.push({ ref, topic, width: w, height: h, fov, offset });
+  });
+  return cameras;
+}
+
+// Dispose all active camera rigs (call before loading a new robot)
+function _clearCameraRigs() {
+  for (const rig of _robotCameras) {
+    if (rig.mount.parent) rig.mount.parent.remove(rig.mount);
+    rig.target.dispose();
+  }
+  _robotCameras = [];
+}
+
+// Build Three.js camera rigs from parsed URDF camera definitions.
+// Each rig: a PerspectiveCamera + WebGLRenderTarget attached to the robot.
+function _setupCameraRigs(cameras, robot, robotType) {
+  if (!cameras.length || !robot || !simRenderer || !simScene) return;
+  cameras.forEach(def => {
+    // URDF uses ROS frame (x=forward, y=left, z=up).
+    // Three.js robot local frame: x=forward, y=up, z=right.
+    // Conversion: urdf(x,y,z) → three(x, z, -y)
+    const [ux, uy, uz] = def.offset;
+
+    // Attachment point: wrist_3 for arm cameras, robot root for diffbot
+    let attachTo = robot;
+    if (robotType === 'arm') {
+      const joints = robot._armJoints;
+      if (joints?.length) attachTo = joints[joints.length - 1];
+    }
+
+    const mount = new THREE.Object3D();
+    mount.position.set(ux, uz, -uy);
+    attachTo.add(mount);
+
+    const fovDeg = def.fov * (180 / Math.PI);
+    const cam = new THREE.PerspectiveCamera(fovDeg, def.width / def.height, 0.01, 50);
+    // Three.js camera looks along local -Z by default.
+    // DiffBot forward = robot local +X → rotate camera -90° around Y so -Z becomes +X.
+    // UR5 arm joints are in ROS Z-up space (inside the -π/2 wrapper); keep default.
+    if (robotType === 'diffbot') cam.rotation.y = -Math.PI / 2;
+    mount.add(cam);
+
+    const target = new THREE.WebGLRenderTarget(def.width, def.height);
+    _robotCameras.push({ cam, target, mount, topic: def.topic, frameId: def.ref,
+                         width: def.width, height: def.height, lastMs: 0 });
+    rosBus.trackPublisher(def.topic, 'sim_bridge', 'sensor_msgs/Image');
+  });
+}
+
+// Called each animation frame: capture + publish at ~10 Hz per rig
+function _captureCameraFrames(time) {
+  if (!simRunning || !_robotCameras.length) return;
+  for (const rig of _robotCameras) {
+    if (time - rig.lastMs < 100) continue;
+    rig.lastMs = time;
+
+    simRenderer.setRenderTarget(rig.target);
+    simRenderer.render(simScene, rig.cam);
+    simRenderer.setRenderTarget(null);
+
+    // Read RGBA pixels (OpenGL bottom-to-top) → flip + strip alpha → RGB
+    const buf = new Uint8Array(rig.width * rig.height * 4);
+    simRenderer.readRenderTargetPixels(rig.target, 0, 0, rig.width, rig.height, buf);
+    const rgb = new Uint8Array(rig.width * rig.height * 3);
+    for (let row = 0; row < rig.height; row++) {
+      const srcRow = rig.height - 1 - row; // flip vertically
+      for (let col = 0; col < rig.width; col++) {
+        const s = (srcRow * rig.width + col) * 4;
+        const d = (row   * rig.width + col) * 3;
+        rgb[d] = buf[s]; rgb[d+1] = buf[s+1]; rgb[d+2] = buf[s+2];
+      }
+    }
+
+    rosBus.publish(rig.topic, 'sensor_msgs/Image', {
+      header: { stamp: { sec: Math.floor(time / 1000), nanosec: 0 }, frame_id: rig.frameId || 'camera_link' },
+      height: rig.height,
+      width:  rig.width,
+      encoding: 'rgb8',
+      is_bigendian: false,
+      step: rig.width * 3,
+      data: rgb,
+    });
+  }
 }
 
 window.startSim    = startSim;
@@ -511,13 +627,15 @@ function _setSimLabel(text) {
   if (el) el.textContent = text;
 }
 
-async function loadRobot(type) {
+async function loadRobot(type, cameras = []) {
+  _clearCameraRigs();
   if (simRobot) simScene.remove(simRobot);
   if (type === 'diffbot') {
     simRobot = makeDiffBot();
     simRobot.userData = { type: 'diffbot', vx: 0, wz: 0, x: 0, y: 0, theta: 0 };
     simScene.add(simRobot);
     _setSimLabel('DiffBot');
+    if (cameras.length) _setupCameraRigs(cameras, simRobot, 'diffbot');
   } else if (type === 'arm') {
     _setSimLabel('UR5 Arm (loading meshes…)');
     // Placeholder group so scene is never empty
@@ -538,12 +656,14 @@ async function loadRobot(type) {
       _publishStaticTF();
       // Aim camera at mid-arm height
       orbitCam.ty = 0.5;
+      if (cameras.length) _setupCameraRigs(cameras, simRobot, 'arm');
     }).catch(() => {
       // Fallback to stick arm if GLB loading fails
       simScene.remove(simRobot);
       simRobot = make6DOFFallback();
       simRobot.userData = { type: 'arm' };
       simScene.add(simRobot);
+      if (cameras.length) _setupCameraRigs(cameras, simRobot, 'arm');
     });
   }
 }
@@ -882,9 +1002,12 @@ function _loadRobotFromUrdf(urdfXml) {
     rosBus.trackSubscriber('/joint_states', 'sim_bridge');
   }
 
+  // Parse any <gazebo><sensor type="camera"> blocks from the URDF
+  const cameras = _parseCamerasFromUrdf(urdfXml);
+
   const simCanvas = document.getElementById('sim-canvas');
   if (simCanvas) { simCanvas.style.display = 'block'; resize(); }
-  loadRobot(type);
+  loadRobot(type, cameras);
 }
 
 function resetSim() {
@@ -1006,6 +1129,7 @@ function animate(time = 0) {
 
   updateOrbitCamera();
   updateLidar(time);
+  _captureCameraFrames(time);
   if (_selHelper) _selHelper.update();
   simRenderer.render(simScene, simCamera);
 }
@@ -1243,19 +1367,31 @@ function _enableImageViz(topic) {
   if (!panel) return;
   const wrap = document.createElement('div');
   wrap.className = 'img-viz-overlay';
-  wrap.innerHTML = `<canvas width="160" height="120"></canvas>`;
+  wrap.innerHTML = `
+    <div style="font-size:10px;color:#58a6ff;padding:2px 4px;background:rgba(0,0,0,.6)">
+      ${topic}
+    </div>
+    <canvas style="display:block;max-width:160px;image-rendering:pixelated"></canvas>`;
   panel.appendChild(wrap);
   const cv  = wrap.querySelector('canvas');
   const ctx = cv.getContext('2d');
-  ctx.fillStyle = '#1a2634'; ctx.fillRect(0, 0, 160, 120);
-  ctx.fillStyle = '#58a6ff'; ctx.font = '10px monospace';
-  ctx.fillText(topic, 4, 14);
+  cv.width = 160; cv.height = 120;
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, 160, 120);
 
   const subId = rosBus.subscribe(topic, 'sensor_msgs/Image', (data) => {
-    ctx.fillStyle = '#1a2634'; ctx.fillRect(0, 0, 160, 120);
-    ctx.fillStyle = '#58a6ff'; ctx.font = '10px monospace';
-    ctx.fillText(`${data.width || '?'}×${data.height || '?'}`, 4, 14);
-    ctx.fillText(data.encoding || 'rgb8', 4, 28);
+    const w = data.width || 320, h = data.height || 240;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const raw = data.data;
+    if (!raw || raw.length < w * h * 3) return;
+    const imgData = ctx.createImageData(w, h);
+    const rgba = imgData.data;
+    for (let i = 0; i < w * h; i++) {
+      rgba[i*4]   = raw[i*3];
+      rgba[i*4+1] = raw[i*3+1];
+      rgba[i*4+2] = raw[i*3+2];
+      rgba[i*4+3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
   });
   _activeViz.set(topic, { objects: [], subId, imgEl: wrap });
 }

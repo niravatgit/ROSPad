@@ -101,6 +101,11 @@ function _renderInspector() {
     el.innerHTML = `<div class="inspector-empty">No data for ${inspectedTopic}</div>`;
     return;
   }
+  // Image topics get a canvas preview instead of raw JSON
+  if (info.msgType === 'sensor_msgs/Image' && info.lastMsg) {
+    _renderImageInspector(el, info, inspectedTopic);
+    return;
+  }
   const body = info.lastMsg != null ? _formatMsg(info.lastMsg) : '(no message received yet)';
   el.innerHTML = `
     <div class="inspector-header">
@@ -108,6 +113,45 @@ function _renderInspector() {
       <span class="inspector-type">${info.msgType || ''}</span>
     </div>
     <pre class="inspector-body">${_escHtml(body)}</pre>`;
+}
+
+function _renderImageInspector(el, info, topic) {
+  const msg = info.lastMsg;
+  const w = msg.width || 320, h = msg.height || 240;
+
+  // Rebuild DOM only when topic changes — keep canvas alive between refreshes
+  if (el._imgTopic !== topic) {
+    el.innerHTML = `
+      <div class="inspector-header">
+        <span class="inspector-topic">${topic}</span>
+        <span class="inspector-type">sensor_msgs/Image</span>
+      </div>
+      <div style="padding:8px">
+        <canvas style="max-width:100%;border-radius:4px;image-rendering:pixelated;display:block"></canvas>
+        <div class="img-meta"></div>
+      </div>`;
+    el._imgTopic = topic;
+  }
+
+  const cv = el.querySelector('canvas');
+  if (!cv) return;
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+
+  const meta = el.querySelector('.img-meta');
+  if (meta) meta.textContent = `${w}×${h}  ${msg.encoding || 'rgb8'}  ${info.hz >= 0 ? info.hz.toFixed(1) + ' Hz' : '--'}`;
+
+  const raw = msg.data;
+  if (!raw || raw.length < w * h * 3) return;
+  const ctx = cv.getContext('2d');
+  const imgData = ctx.createImageData(w, h);
+  const rgba = imgData.data;
+  for (let i = 0; i < w * h; i++) {
+    rgba[i*4]   = raw[i*3];
+    rgba[i*4+1] = raw[i*3+1];
+    rgba[i*4+2] = raw[i*3+2];
+    rgba[i*4+3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
 }
 
 function _escHtml(s) {

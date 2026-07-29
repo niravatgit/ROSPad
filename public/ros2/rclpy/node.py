@@ -304,6 +304,11 @@ def _dict_to_msg(msg_type, d):
                             except (TypeError, ValueError):
                                 cleaned.append(item)
                     v = cleaned
+                elif k == 'data' and not isinstance(v, (list, tuple, str, int, float, bool, type(None))):
+                    # Image data arrives as a JsProxy wrapping Uint8Array — keep as-is.
+                    # Python code accesses it via: np.asarray(msg.data, dtype=np.uint8)
+                    setattr(msg, k, v)
+                    continue
                 setattr(msg, k, v)
     return msg
 

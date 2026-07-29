@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ROSpad — Vision Tutorial</title>
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #0d1117;
+  --surface:   #161b22;
+  --surface2:  #1c2128;
+  --border:    #30363d;
+  --text:      #e6edf3;
+  --muted:     #8b949e;
+  --accent:    #58a6ff;
+  --green:     #3fb950;
+  --orange:    #d29922;
+  --red:       #f85149;
+  --purple:    #bc8cff;
+  --code-bg:   #010409;
+  --prompt:    #3fb950;
+  --ros:       #e85d04;
+  --cam:       #22d3ee;   /* camera / vision accent */
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:       #f6f8fa;  --surface:  #ffffff;  --surface2: #f0f3f6;
+    --border:   #d0d7de;  --text:     #1f2328;  --muted:    #57606a;
+    --accent:   #0969da;  --green:    #1a7f37;  --orange:   #9a6700;
+    --red:      #d1242f;  --purple:   #8250df;  --code-bg:  #161b22;
+    --prompt:   #1a7f37;  --ros:      #bc4a00;  --cam:      #0891b2;
+  }
+}
+:root[data-theme="dark"] { --bg:#0d1117; --surface:#161b22; --surface2:#1c2128; --border:#30363d; --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --orange:#d29922; --red:#f85149; --purple:#bc8cff; --code-bg:#010409; --prompt:#3fb950; --ros:#e85d04; --cam:#22d3ee; }
+:root[data-theme="light"] { --bg:#f6f8fa; --surface:#ffffff; --surface2:#f0f3f6; --border:#d0d7de; --text:#1f2328; --muted:#57606a; --accent:#0969da; --green:#1a7f37; --orange:#9a6700; --red:#d1242f; --purple:#8250df; --code-bg:#161b22; --prompt:#1a7f37; --ros:#bc4a00; --cam:#0891b2; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; scroll-behavior: smooth; }
+body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.65; min-height:100vh; }
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; gap:16px; }
+@media (prefers-color-scheme:light) { header { background:rgba(246,248,250,.92); } }
+:root[data-theme="light"] header { background:rgba(246,248,250,.92); }
+:root[data-theme="dark"]  header { background:rgba(13,17,23,.92); }
+.logo { font-size:17px; font-weight:700; color:var(--accent); letter-spacing:-.3px; display:flex; align-items:center; gap:8px; }
+.logo-badge { font-size:10px; font-weight:600; background:var(--ros); color:#fff; padding:2px 6px; border-radius:4px; letter-spacing:.5px; }
+.header-nav { display:flex; gap:4px; margin-left:auto; }
+.nav-link { font-size:13px; color:var(--muted); text-decoration:none; padding:4px 10px; border-radius:6px; transition:color .15s,background .15s; }
+.nav-link:hover { color:var(--text); background:var(--surface2); }
+
+/* ── Layout ─────────────────────────────────────────────────────────────────── */
+.page-wrap { max-width:860px; margin:0 auto; padding:32px 24px 64px; }
+.page-hero { margin-bottom:40px; }
+.hero-eyebrow { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--cam); margin-bottom:10px; }
+.page-hero h1 { font-size:clamp(24px,4vw,36px); font-weight:700; letter-spacing:-.5px; line-height:1.2; margin-bottom:14px; }
+.page-hero p { font-size:16px; color:var(--muted); max-width:640px; }
+
+/* ── TOC ────────────────────────────────────────────────────────────────────── */
+.toc { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px 24px; margin-bottom:36px; }
+.toc h3 { font-size:12px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+.toc ol { padding-left:20px; display:flex; flex-direction:column; gap:6px; }
+.toc a { color:var(--accent); text-decoration:none; font-size:14px; }
+.toc a:hover { text-decoration:underline; }
+
+/* ── Prerequisite box ───────────────────────────────────────────────────────── */
+.prereq { background:rgba(88,166,255,.07); border:1px solid rgba(88,166,255,.25); border-radius:10px; padding:18px 22px; margin-bottom:32px; }
+.prereq h3 { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.prereq ul { padding-left:20px; display:flex; flex-direction:column; gap:5px; font-size:14px; color:var(--muted); }
+.prereq li strong { color:var(--text); }
+
+/* ── Section headings ───────────────────────────────────────────────────────── */
+.section { margin-bottom:48px; }
+.section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.step-num { width:32px; height:32px; background:var(--cam); color:#0d1117; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+.concept-num { width:32px; height:32px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; color:var(--muted); flex-shrink:0; }
+.section-header h2 { font-size:20px; font-weight:600; letter-spacing:-.2px; }
+.section p { color:var(--muted); margin-bottom:12px; font-size:14.5px; }
+.section p strong { color:var(--text); }
+
+/* ── Steps within sections ──────────────────────────────────────────────────── */
+.steps { display:flex; flex-direction:column; gap:14px; margin:16px 0; }
+.step { display:flex; gap:14px; align-items:flex-start; }
+.step-dot { width:24px; height:24px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); color:var(--muted); font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.step-body { flex:1; font-size:14.5px; }
+.step-body code { font-family:'SF Mono',Consolas,monospace; font-size:13px; background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 6px; color:var(--cam); }
+
+/* ── Code blocks ────────────────────────────────────────────────────────────── */
+.code-block { background:var(--code-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:16px 0; }
+.code-block-header { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:var(--surface); border-bottom:1px solid var(--border); }
+.code-lang { font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+.code-path { font-size:11px; color:var(--accent); font-family:'SF Mono',Consolas,monospace; }
+.code-block pre { padding:16px; overflow-x:auto; font-family:'SF Mono',Consolas,monospace; font-size:12.5px; line-height:1.6; color:#e6edf3; }
+.code-block pre .comment { color:#6e7681; }
+.code-block pre .kw     { color:#ff7b72; }
+.code-block pre .fn     { color:#d2a8ff; }
+.code-block pre .str    { color:#a5d6ff; }
+.code-block pre .num    { color:#79c0ff; }
+.code-block pre .cls    { color:#ffa657; }
+
+/* ── Terminal blocks ────────────────────────────────────────────────────────── */
+.terminal { background:#010409; border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:16px 0; }
+.terminal-bar { display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--surface); border-bottom:1px solid var(--border); }
+.t-dot { width:10px; height:10px; border-radius:50%; }
+.t-dot.r { background:#f85149; } .t-dot.y { background:#d29922; } .t-dot.g { background:#3fb950; }
+.terminal pre { padding:14px 16px; font-family:'SF Mono',Consolas,monospace; font-size:12.5px; line-height:1.6; color:#e6edf3; overflow-x:auto; }
+.terminal .prompt { color:#3fb950; }
+.terminal .cmd    { color:#e6edf3; }
+.terminal .out    { color:#8b949e; }
+.terminal .ok     { color:#3fb950; }
+.terminal .warn   { color:#d29922; }
+
+/* ── Info boxes ─────────────────────────────────────────────────────────────── */
+.info-box { border-radius:8px; padding:14px 18px; margin:16px 0; font-size:13.5px; display:flex; gap:12px; align-items:flex-start; }
+.info-box.tip  { background:rgba(63,185,80,.08);  border:1px solid rgba(63,185,80,.25);  }
+.info-box.warn { background:rgba(210,153,34,.08); border:1px solid rgba(210,153,34,.25); }
+.info-box.note { background:rgba(34,211,238,.08); border:1px solid rgba(34,211,238,.25); }
+.info-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.info-box p { margin:0; color:var(--muted); }
+.info-box p strong { color:var(--text); }
+
+/* ── Concept cards ───────────────────────────────────────────────────────────── */
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin:16px 0; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+.card-icon { font-size:22px; margin-bottom:8px; }
+.card h4 { font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; }
+.card p { font-size:13px; color:var(--muted); margin:0; }
+.card code { font-family:'SF Mono',Consolas,monospace; font-size:11.5px; background:var(--surface2); border-radius:3px; padding:1px 5px; color:var(--cam); }
+
+/* ── Field table ────────────────────────────────────────────────────────────── */
+.field-table { width:100%; border-collapse:collapse; font-size:13.5px; margin:16px 0; }
+.field-table th { text-align:left; font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--border); }
+.field-table td { padding:8px 12px; border-bottom:1px solid var(--surface2); vertical-align:top; }
+.field-table td:first-child { font-family:'SF Mono',Consolas,monospace; font-size:12px; color:var(--cam); white-space:nowrap; }
+.field-table td:last-child { color:var(--muted); }
+.field-table tr:last-child td { border-bottom:none; }
+
+/* ── Package list ───────────────────────────────────────────────────────────── */
+.pkg-list { display:flex; flex-direction:column; gap:10px; margin:14px 0; }
+.pkg-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; gap:12px; align-items:flex-start; }
+.pkg-badge { font-size:11px; font-weight:600; background:var(--surface2); border:1px solid var(--border); padding:3px 8px; border-radius:5px; white-space:nowrap; color:var(--muted); font-family:'SF Mono',Consolas,monospace; }
+.pkg-desc { font-size:13.5px; color:var(--muted); }
+.pkg-desc strong { color:var(--text); }
+
+/* ── Diagram ─────────────────────────────────────────────────────────────────── */
+.pipeline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:16px 0; font-size:13px; }
+.pipe-box { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:8px 14px; white-space:nowrap; }
+.pipe-box.hl { border-color:var(--cam); color:var(--cam); }
+.pipe-arrow { color:var(--muted); font-size:16px; }
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width:600px) {
+  .page-wrap { padding:24px 16px 48px; }
+  .cards { grid-template-columns:1fr; }
+  .section-header h2 { font-size:17px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    ROSpad
+    <span class="logo-badge">ROS2</span>
+  </div>
+  <nav class="header-nav">
+    <a href="how_to_use_rospad.html" class="nav-link">Guides</a>
+    <a href="ros2-intro.html" class="nav-link">ROS2 Intro</a>
+    <a href="teaching-guide.html" class="nav-link">Instructor Guide</a>
+    <a href="https://niravatgit.github.io/ROSPad/" class="nav-link" target="_blank">Open ROSpad →</a>
+  </nav>
+</header>
+
+<div class="page-wrap">
+
+  <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+  <div class="page-hero">
+    <div class="hero-eyebrow">Tutorial 6 — Vision</div>
+    <h1>Simulated Cameras &amp; Vision-Based Robot Control</h1>
+    <p>Add a camera sensor to a robot via URDF, subscribe to live image data in Python, and use NumPy to build perception-action loops — all in the browser, no install required.</p>
+  </div>
+
+  <!-- ── TOC ───────────────────────────────────────────────────────────────── -->
+  <div class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#concept">How URDF cameras work in ROSpad</a></li>
+      <li><a href="#packages">New packages overview</a></li>
+      <li><a href="#diffbot-demo">Demo A — DiffBot colour tracker</a></li>
+      <li><a href="#ur5-demo">Demo B — UR5 wrist camera detector</a></li>
+      <li><a href="#image-api">Image message API reference</a></li>
+      <li><a href="#write-your-own">Writing your own vision node</a></li>
+      <li><a href="#troubleshoot">Troubleshooting</a></li>
+    </ol>
+  </div>
+
+  <!-- ── Prerequisites ─────────────────────────────────────────────────────── -->
+  <div class="prereq">
+    <h3>⚡ Prerequisites</h3>
+    <ul>
+      <li><strong>ROSpad basics</strong> — you can launch a package and run a node (see Tutorial 1).</li>
+      <li><strong>DiffBot or UR5</strong> — you have run the existing demo packages at least once.</li>
+      <li><strong>Reset Workspace</strong> — if you don't see the new vision packages in your file tree, click <strong>⊘</strong> in the sidebar to re-seed (it preserves files you've edited).</li>
+    </ul>
+  </div>
+
+  <!-- ── Section 1: Concept ─────────────────────────────────────────────────── -->
+  <div class="section" id="concept">
+    <div class="section-header">
+      <div class="concept-num">1</div>
+      <h2>How URDF cameras work in ROSpad</h2>
+    </div>
+
+    <p>ROSpad's simulator reads your robot's URDF and looks for <strong>Gazebo camera sensor declarations</strong>. When it finds one, it automatically:</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-dot">A</div><div class="step-body">Creates a Three.js <code>PerspectiveCamera</code> and attaches it to the declared link (e.g. <code>camera_link</code> on DiffBot, <code>wrist_camera_link</code> on UR5).</div></div>
+      <div class="step"><div class="step-dot">B</div><div class="step-body">Renders the 3D scene from that camera's viewpoint 10 times per second into an offscreen <code>WebGLRenderTarget</code>.</div></div>
+      <div class="step"><div class="step-dot">C</div><div class="step-body">Reads the pixel data and publishes it as <code>sensor_msgs/Image</code> on the topic declared in the URDF's <code>&lt;remapping&gt;</code> tag.</div></div>
+      <div class="step"><div class="step-dot">D</div><div class="step-body">Any Python node can subscribe to that topic and receive live image frames as NumPy arrays.</div></div>
+    </div>
+
+    <p>The camera sensor is declared with Gazebo-compatible XML so the same URDF works in both ROSpad (browser) and real Gazebo (on a Linux machine):</p>
+
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-lang">XML</span><span class="code-path">in any .urdf file</span></div>
+<pre><span class="comment">&lt;!-- 1. Add a link for the camera body --&gt;</span>
+&lt;link name=<span class="str">"camera_link"</span>&gt;
+  &lt;visual&gt;&lt;geometry&gt;&lt;box size=<span class="str">"0.03 0.06 0.04"</span>/&gt;&lt;/geometry&gt;&lt;/visual&gt;
+&lt;/link&gt;
+
+<span class="comment">&lt;!-- 2. Attach it to the robot with a fixed joint --&gt;</span>
+&lt;joint name=<span class="str">"camera_joint"</span> type=<span class="str">"fixed"</span>&gt;
+  &lt;parent link=<span class="str">"base_link"</span>/&gt;
+  &lt;child  link=<span class="str">"camera_link"</span>/&gt;
+  &lt;origin xyz=<span class="str">"0.15 0 0.16"</span> rpy=<span class="str">"0 0 0"</span>/&gt;  <span class="comment">&lt;!-- 15 cm forward, 16 cm up --&gt;</span>
+&lt;/joint&gt;
+
+<span class="comment">&lt;!-- 3. Declare the sensor and its topic --&gt;</span>
+&lt;gazebo reference=<span class="str">"camera_link"</span>&gt;
+  &lt;sensor type=<span class="str">"camera"</span> name=<span class="str">"front_camera"</span>&gt;
+    &lt;camera&gt;
+      &lt;horizontal_fov&gt;<span class="num">1.0472</span>&lt;/horizontal_fov&gt;  <span class="comment">&lt;!-- 60° --&gt;</span>
+      &lt;image&gt;&lt;width&gt;<span class="num">320</span>&lt;/width&gt;&lt;height&gt;<span class="num">240</span>&lt;/height&gt;&lt;/image&gt;
+    &lt;/camera&gt;
+    &lt;plugin name=<span class="str">"rospad_camera"</span> filename=<span class="str">"libgazebo_ros_camera.so"</span>&gt;
+      &lt;ros&gt;&lt;remapping&gt;~/image_raw:=<span class="str">/camera/image_raw</span>&lt;/remapping&gt;&lt;/ros&gt;
+      &lt;frame_name&gt;camera_link&lt;/frame_name&gt;
+    &lt;/plugin&gt;
+  &lt;/sensor&gt;
+&lt;/gazebo&gt;</pre>
+    </div>
+
+    <div class="info-box note">
+      <span class="info-icon">📷</span>
+      <p><strong>No extra node needed.</strong> The camera is run entirely by the simulator bridge. Just launching the URDF is enough to start publishing images.</p>
+    </div>
+  </div>
+
+  <!-- ── Section 2: Packages ───────────────────────────────────────────────── -->
+  <div class="section" id="packages">
+    <div class="section-header">
+      <div class="concept-num">2</div>
+      <h2>New packages overview</h2>
+    </div>
+
+    <div class="pkg-list">
+      <div class="pkg-item">
+        <span class="pkg-badge">diffbot_camera_description</span>
+        <div class="pkg-desc"><strong>DiffBot URDF with front-facing camera.</strong> Extends the base DiffBot with a <code>camera_link</code> mounted 15 cm forward and 16 cm up from the chassis centre. Publishes images on <code>/camera/image_raw</code>.</div>
+      </div>
+      <div class="pkg-item">
+        <span class="pkg-badge">ur5_camera_description</span>
+        <div class="pkg-desc"><strong>UR5 URDF with wrist (eye-in-hand) camera.</strong> Adds <code>wrist_camera_link</code> at the tool0 position on wrist_3. Camera view changes with arm pose. Publishes on <code>/wrist_camera/image_raw</code>.</div>
+      </div>
+      <div class="pkg-item">
+        <span class="pkg-badge">vision_demos</span>
+        <div class="pkg-desc"><strong>Python vision nodes.</strong> Contains <code>color_tracker</code> (steers DiffBot toward a coloured obstacle), <code>wrist_detector</code> (logs coloured object positions from UR5 wrist cam), and <code>image_info</code> (quick pipeline sanity check).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 3: DiffBot demo ───────────────────────────────────────────── -->
+  <div class="section" id="diffbot-demo">
+    <div class="section-header">
+      <div class="step-num">A</div>
+      <h2>Demo A — DiffBot colour tracker</h2>
+    </div>
+
+    <p>The robot's front camera publishes live images. A Python node detects a coloured target in the image and steers the robot toward it using <code>/cmd_vel</code>. This is the classic <strong>visual servoing</strong> pattern.</p>
+
+    <div class="pipeline">
+      <div class="pipe-box hl">Camera (sim)</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-box hl"><code>/camera/image_raw</code></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-box hl">color_tracker node</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-box"><code>/cmd_vel</code></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-box">DiffBot moves</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <strong>Launch the DiffBot with camera URDF.</strong><br>
+          Click the <strong>⚡ launch</strong> icon on <code>diffbot_camera_description</code>, or run in terminal:
+          <div class="terminal">
+            <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div></div>
+            <pre><span class="prompt">$</span> <span class="cmd">ros2 launch diffbot_camera_description diffbot_camera.launch.py</span>
+<span class="ok">[launch] Published /robot_description (4.2 kB)</span>
+<span class="out">[sim] DiffBot loaded — camera rig attached to camera_link</span>
+<span class="out">[sim] Publishing /camera/image_raw at 10 Hz</span></pre>
+          </div>
+          The DiffBot appears in the sim. A small camera body is visible on the front.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <strong>Verify the camera feed.</strong><br>
+          Open the <strong>Topics</strong> tab in the right panel. You should see <code>/camera/image_raw</code> at ~10 Hz. Click it — the inspector shows a live canvas preview of what the robot sees.
+          <div class="info-box tip">
+            <span class="info-icon">💡</span>
+            <p>The Viz panel also has a checkbox for <code>/camera/image_raw</code>. Enabling it overlays a small camera window in the corner of the 3D sim viewport.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <strong>Add a coloured target.</strong><br>
+          In the sim panel, click <strong>+ Box</strong> (or Sphere) in the Obstacles area. Then select the obstacle and set its colour to a bright red (<code>#ff2020</code>) in the colour picker. Place it a few metres in front of the robot.
+          <div class="info-box note">
+            <span class="info-icon">📐</span>
+            <p>The <code>color_tracker</code> node detects <strong>red pixels</strong> (R&gt;150, G&lt;80, B&lt;80). Any bright red obstacle works. You can also edit the thresholds in the source file to track other colours.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">4</div>
+        <div class="step-body">
+          <strong>Run the vision node.</strong>
+          <div class="terminal">
+            <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div></div>
+            <pre><span class="prompt">$</span> <span class="cmd">ros2 run vision_demos color_tracker</span>
+<span class="ok">[INFO] [color_tracker]: ColorTracker started — waiting for /camera/image_raw</span>
+<span class="out">[INFO] [color_tracker]: Searching... (red pixels: 0)</span>
+<span class="out">[INFO] [color_tracker]: Target at cx=178px  offset=+0.11  area=3.2%  vx=0.27  wz=-0.09</span></pre>
+          </div>
+          <p>The robot will spin while no red is visible, then lock on and steer toward the target.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">5</div>
+        <div class="step-body">
+          <strong>Watch the perception-action loop in the Topics panel.</strong> You can see <code>/camera/image_raw</code> and <code>/cmd_vel</code> both active and updating. The robot adjusts its heading as the target moves in the image frame.
+        </div>
+      </div>
+    </div>
+
+    <p>Open <code>vision_demos/color_tracker.py</code> in the editor to explore the numpy-based detection logic. The key section:</p>
+
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">vision_demos/vision_demos/color_tracker.py</span></div>
+<pre><span class="kw">def</span> <span class="fn">_on_image</span>(self, msg):
+    w, h = msg.width, msg.height
+
+    <span class="comment"># Convert JsProxy Uint8Array → NumPy RGB array</span>
+    arr = np.asarray(msg.data, dtype=np.uint8).reshape(h, w, <span class="num">3</span>)
+
+    <span class="comment"># Boolean mask: True where pixel is "red enough"</span>
+    red_mask = (arr[:, :, <span class="num">0</span>] > <span class="num">150</span>) &amp; (arr[:, :, <span class="num">1</span>] &lt; <span class="num">80</span>) &amp; (arr[:, :, <span class="num">2</span>] &lt; <span class="num">80</span>)
+
+    <span class="kw">if</span> np.sum(red_mask) &lt; <span class="num">50</span>:
+        twist.angular.z = <span class="num">0.4</span>          <span class="comment"># spin to search</span>
+    <span class="kw">else</span>:
+        ys, xs = np.where(red_mask)
+        cx = float(np.mean(xs))        <span class="comment"># horizontal centroid</span>
+        offset = (cx - w/<span class="num">2</span>) / (w/<span class="num">2</span>)   <span class="comment"># −1 = left, +1 = right</span>
+        twist.angular.z = -<span class="num">0.8</span> * offset  <span class="comment"># steer toward target</span>
+        twist.linear.x  = <span class="num">0.3</span></pre>
+    </div>
+  </div>
+
+  <!-- ── Section 4: UR5 demo ───────────────────────────────────────────────── -->
+  <div class="section" id="ur5-demo">
+    <div class="section-header">
+      <div class="step-num">B</div>
+      <h2>Demo B — UR5 wrist camera detector</h2>
+    </div>
+
+    <p>The UR5 arm has a camera at its end-effector (tool flange). As you move the arm, the camera's view changes. This is the <strong>eye-in-hand</strong> configuration used in robotic pick-and-place.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <strong>Launch UR5 with wrist camera.</strong>
+          <div class="terminal">
+            <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div></div>
+            <pre><span class="prompt">$</span> <span class="cmd">ros2 launch ur5_camera_description ur5_camera.launch.py</span>
+<span class="ok">[launch] Published /robot_description</span>
+<span class="out">[sim] UR5 Arm — wrist camera at wrist_3_link</span>
+<span class="out">[sim] Publishing /wrist_camera/image_raw at 10 Hz</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <strong>Optionally animate the arm.</strong> Run <code>ros2 run ur5_control joint_sine_demo</code> to make the arm sweep — you'll see the camera view change as wrist_3 rotates.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <strong>Add coloured obstacles</strong> and run the detector:
+          <div class="terminal">
+            <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div></div>
+            <pre><span class="prompt">$</span> <span class="cmd">ros2 run vision_demos wrist_detector</span>
+<span class="out">[INFO] [wrist_detector]: Detected — red: pos=(0.48,0.52) area=4.1%  |  blue: pos=(0.72,0.61) area=2.3%</span></pre>
+          </div>
+          Position values are normalised (0,0) = top-left, (1,1) = bottom-right of the camera frame.
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      <span class="info-icon">⚠️</span>
+      <p><strong>Camera orientation.</strong> The wrist camera is attached in the arm's joint frame. The exact view direction depends on the current wrist_3 angle. Rotate the arm to aim the camera at objects in the scene.</p>
+    </div>
+  </div>
+
+  <!-- ── Section 5: Image API ──────────────────────────────────────────────── -->
+  <div class="section" id="image-api">
+    <div class="section-header">
+      <div class="concept-num">5</div>
+      <h2>Image message API reference</h2>
+    </div>
+
+    <p>Camera topics publish <code>sensor_msgs/Image</code> messages. In Python, you receive them in a subscription callback:</p>
+
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">import pattern</span></div>
+<pre><span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">callback</span>(msg):
+    arr = np.asarray(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, <span class="num">3</span>)
+    <span class="comment"># arr is now a (H, W, 3) uint8 NumPy array — standard RGB</span></pre>
+    </div>
+
+    <p>The fields of <code>sensor_msgs/Image</code>:</p>
+
+    <table class="field-table">
+      <tr><th>Field</th><th>Type</th><th>Value in ROSpad</th></tr>
+      <tr><td>header.frame_id</td><td>str</td><td>Link name (e.g. <code>"camera_link"</code>)</td></tr>
+      <tr><td>height</td><td>int</td><td>240 (default)</td></tr>
+      <tr><td>width</td><td>int</td><td>320 (default)</td></tr>
+      <tr><td>encoding</td><td>str</td><td><code>"rgb8"</code></td></tr>
+      <tr><td>step</td><td>int</td><td><code>width × 3</code> bytes per row</td></tr>
+      <tr><td>data</td><td>JsProxy (Uint8Array)</td><td>Raw RGB bytes — use <code>np.asarray(msg.data, dtype=np.uint8)</code></td></tr>
+    </table>
+
+    <div class="info-box note">
+      <span class="info-icon">ℹ️</span>
+      <p><code>msg.data</code> is a JavaScript <code>Uint8Array</code> passed directly from the renderer. NumPy can consume it via <code>np.asarray()</code> without copying. Do <strong>not</strong> try to iterate it as a Python list — it will be slow.</p>
+    </div>
+  </div>
+
+  <!-- ── Section 6: Write your own ─────────────────────────────────────────── -->
+  <div class="section" id="write-your-own">
+    <div class="section-header">
+      <div class="concept-num">6</div>
+      <h2>Writing your own vision node</h2>
+    </div>
+
+    <p>Use <code>image_info.py</code> as a starting template — it's the minimal subscriber with NumPy access:</p>
+
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">minimal vision node template</span></div>
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> rclpy
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> <span class="cls">Node</span>
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>
+<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> <span class="cls">Twist</span>
+
+<span class="kw">class</span> <span class="cls">MyVisionNode</span>(<span class="cls">Node</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        super().__init__(<span class="str">'my_vision_node'</span>)
+        self.create_subscription(<span class="cls">Image</span>, <span class="str">'/camera/image_raw'</span>, self.on_image, <span class="num">10</span>)
+        self._pub = self.create_publisher(<span class="cls">Twist</span>, <span class="str">'/cmd_vel'</span>, <span class="num">10</span>)
+
+    <span class="kw">def</span> <span class="fn">on_image</span>(self, msg):
+        <span class="comment"># 1. Convert to NumPy array</span>
+        img = np.asarray(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, <span class="num">3</span>)
+
+        <span class="comment"># 2. Process: detect, threshold, find blobs, etc.</span>
+        brightness = float(np.mean(img))
+        self.get_logger().info(f<span class="str">'Mean brightness: {brightness:.1f}'</span>)
+
+        <span class="comment"># 3. Act: publish velocity, log results, etc.</span>
+
+<span class="kw">def</span> <span class="fn">main</span>():
+    rclpy.init()
+    rclpy.spin(<span class="cls">MyVisionNode</span>())
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    main()</pre>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🎨</div>
+        <h4>Colour detection</h4>
+        <p>Threshold by RGB channel: <code>mask = (img[:,:,0] &gt; 150) &amp; (img[:,:,2] &lt; 80)</code> gives red pixels.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📍</div>
+        <h4>Centroid finding</h4>
+        <p><code>ys, xs = np.where(mask)</code> then <code>cx = np.mean(xs)</code> gives the horizontal centre of the detected region.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📏</div>
+        <h4>Area estimation</h4>
+        <p><code>area = np.sum(mask) / (w*h)</code> estimates how much of the image is covered — useful as a proxy for distance.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <h4>Edge detection</h4>
+        <p>Use <code>np.gradient(img[:,:,0].astype(float))</code> for a simple Sobel-like gradient without OpenCV.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 7: Troubleshoot ───────────────────────────────────────────── -->
+  <div class="section" id="troubleshoot">
+    <div class="section-header">
+      <div class="concept-num">7</div>
+      <h2>Troubleshooting</h2>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">?</div>
+        <div class="step-body">
+          <strong><code>/camera/image_raw</code> doesn't appear in the Topics panel.</strong><br>
+          Make sure you launched <code>diffbot_camera_description</code>, not the plain <code>diffbot_description</code>. The plain description has no camera sensor in its URDF.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">?</div>
+        <div class="step-body">
+          <strong>Topics panel shows the topic but the canvas preview is black.</strong><br>
+          The camera rendered before the robot loaded. Stop the sim (<strong>■ Stop</strong>), re-launch, and click the topic again. This is a one-time startup race.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">?</div>
+        <div class="step-body">
+          <strong><code>ValueError: cannot reshape array of size 0 into shape (240, 320, 3)</code></strong><br>
+          The subscription fired before the first image arrived. Add a guard: <code>if not msg.data or msg.width == 0: return</code> at the top of your callback.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">?</div>
+        <div class="step-body">
+          <strong>Robot doesn't move after running color_tracker.</strong><br>
+          Confirm the robot is a DiffBot (not UR5). Only DiffBot responds to <code>/cmd_vel</code> from the sim bridge. Also check that the sim is running (not paused).
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">?</div>
+        <div class="step-body">
+          <strong>New packages not in file tree.</strong><br>
+          Click <strong>⊘</strong> in the sidebar to re-seed. This adds any new packages that are in the index but not yet in your repo.
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box tip" style="margin-top:24px">
+      <span class="info-icon">🔬</span>
+      <p><strong>Quick pipeline check:</strong> Run <code>ros2 run vision_demos image_info</code> right after launching the camera URDF. It prints the image dimensions and mean RGB every 10 frames. If you see output, the camera pipeline is working end-to-end.</p>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+</body>
+</html>

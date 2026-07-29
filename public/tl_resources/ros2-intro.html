@@ -423,6 +423,12 @@ code { font-family: "JetBrains Mono","Fira Code",monospace; font-size: .85em; ba
           <td class="match">Supported</td>
         </tr>
         <tr>
+          <td>Camera sensors (<code>sensor_msgs/Image</code>)</td>
+          <td>Hardware driver publishes frames</td>
+          <td>Sim renders from URDF camera rig; Python uses <code>np.asarray(msg.data)</code></td>
+          <td class="match">Supported</td>
+        </tr>
+        <tr>
           <td>Actions</td>
           <td>Feedback + cancellation</td>
           <td>Not implemented</td>

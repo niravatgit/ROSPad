@@ -1032,6 +1032,61 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
 </details>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-group-label" id="tut-vision">Tutorial 6 — Simulated Cameras &amp; Vision</div>
+
+<details>
+  <summary>
+    <div class="sum-icon" style="background:rgba(34,211,238,0.12)">📷</div>
+    DiffBot colour tracker — visual servoing with sensor_msgs/Image
+    <span class="sum-badge badge-beginner">Beginner</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>Attach a camera sensor to a robot using URDF and subscribe to live image data in Python. The simulator detects <code>&lt;gazebo&gt;&lt;sensor type="camera"&gt;</code> blocks and automatically publishes <code>sensor_msgs/Image</code> at 10 Hz.</p>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">1</span>Launch the camera URDF<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>The <strong>diffbot_camera_description</strong> package lives in <span class="inline-code">src/demos/diffbot_camera_description/</span>. It extends the base DiffBot with a front-facing camera link. Expand the package, open the launch file, and click <span class="btn-ref launch">⚡ Launch</span>.</p>
+        <p>The robot appears in the sim with a small camera body on its front. The <strong>Topics</strong> panel shows <span class="inline-code">/camera/image_raw</span> at ~10 Hz.</p>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">2</span>View the camera feed<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>In the <strong>Topics</strong> tab, click <span class="inline-code">/camera/image_raw</span>. Instead of JSON text, the inspector shows a live canvas preview of what the robot sees — updated every 100 ms.</p>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">3</span>Add a coloured obstacle<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>In the sim, click <strong>+ Box</strong> in the Obstacles panel. Set the colour to bright red and place the box a few metres in front of the robot.</p>
+        <div class="note note-tip"><span class="note-icon">💡</span><span>The <code>color_tracker</code> node looks for pixels where R&gt;150, G&lt;80, B&lt;80. Any vivid red works.</span></div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">4</span>Run the vision node<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Open a terminal and run:</p>
+        <pre style="margin:.5rem 0;padding:.6rem .8rem;background:var(--bg3);border-radius:5px;font-size:12px;color:var(--green)">ros2 run vision_demos color_tracker</pre>
+        <p>The robot spins to search for red, then steers toward it. Watch <span class="inline-code">/cmd_vel</span> in the Topics panel to see the velocity commands.</p>
+      </div>
+    </details>
+
+    <p>Full walkthrough and UR5 wrist camera demo: <a href="vision-tutorial.html" style="color:var(--blue)">Vision Tutorial →</a></p>
+
+    <table>
+      <tr><th>Topic</th><th>Type</th><th>Published by</th></tr>
+      <tr><td>/camera/image_raw</td><td>sensor_msgs/Image</td><td>sim (diffbot_camera_description)</td></tr>
+      <tr><td>/wrist_camera/image_raw</td><td>sensor_msgs/Image</td><td>sim (ur5_camera_description)</td></tr>
+    </table>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="section-group-label">Reference</div>
 
 <!-- Terminal commands -->

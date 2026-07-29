@@ -1648,6 +1648,80 @@ self.create_timer(<span class="nu">1.0</span>, self._call_once)
     </div>
   </div>  </details>
 
+  <details class="phase">
+    <summary class="phase-header">
+      <span class="phase-time">3:45 – 4:45</span>
+      <span class="phase-tag demo">Demo + Coding</span>
+      <span class="phase-title">Project 5 — Simulated Cameras &amp; Vision Control</span>
+    </summary>
+  <div class="phase-body">
+
+    <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px;">
+      Students add a camera sensor to a robot via URDF and write a Python node that reads image frames as NumPy arrays and reacts to what it sees. The key insight: an image is just a 2D array — all NumPy operations apply.
+    </p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-term">URDF camera sensor</div>
+        <div class="concept-def">A <code>&lt;gazebo reference="..."&gt;&lt;sensor type="camera"&gt;</code> block in the URDF tells the simulator to publish <code>sensor_msgs/Image</code> on a named topic. No extra node needed — it's part of the robot description.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">sensor_msgs/Image</div>
+        <div class="concept-def">A message with <code>width</code>, <code>height</code>, <code>encoding</code> (<code>rgb8</code>), and <code>data</code> (raw bytes). In Python: <code>np.asarray(msg.data, dtype=np.uint8).reshape(h, w, 3)</code> gives a standard NumPy image array.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Visual servoing</div>
+        <div class="concept-def">Controlling a robot using pixel-level feedback from a camera. Example: find the centroid of red pixels → compute angular offset → publish <code>cmd_vel</code>. The robot steers toward the target entirely from image data.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-term">Eye-in-hand</div>
+        <div class="concept-def">A camera mounted at the robot's end-effector (tool tip). Used in pick-and-place: the camera's view changes as the arm moves, letting you localise objects relative to the gripper.</div>
+      </div>
+    </div>
+
+    <div class="step-group">
+
+      <div class="teaching-step">
+        <span class="ts-num">1</span>
+        <div class="ts-body">
+          <strong>Demo (10 min):</strong> open the Topics panel and click <code>/camera/image_raw</code>. Show the live canvas preview. Pan the sim camera or move the robot to show the feed updating in real time.
+        </div>
+      </div>
+
+      <div class="teaching-step">
+        <span class="ts-num">2</span>
+        <div class="ts-body">
+          <strong>Explain (10 min):</strong> walk through how the image arrives as bytes and how <code>np.asarray(msg.data).reshape(h,w,3)</code> turns it into an indexable grid. Show that <code>arr[y, x, 0]</code> is the red channel at pixel (x, y).
+          <div class="callout info" style="margin-top:8px;font-size:0.8rem;">
+            Good question to ask: "If you wanted to count how many pixels are brighter than 200, how would you write that?" → <code>np.sum(arr &gt; 200)</code>. This leads naturally to thresholding.
+          </div>
+        </div>
+      </div>
+
+      <div class="teaching-step">
+        <span class="ts-num">3</span>
+        <div class="ts-body">
+          <strong>Guided build (25 min):</strong> students copy the <code>color_tracker.py</code> skeleton, fill in the threshold mask and centroid calculation, and watch the DiffBot steer toward a red box they placed in the sim.
+          <br><br>Reference: <a href="vision-tutorial.html" style="color:var(--accent)">Vision Tutorial</a>
+        </div>
+      </div>
+
+      <div class="teaching-step">
+        <span class="ts-num">4</span>
+        <div class="ts-body">
+          <strong>Stretch (20 min):</strong> switch to the UR5 wrist camera (<code>ur5_camera_description</code>) and run <code>wrist_detector</code>. Ask students to add a second colour (green) to the detection logic.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="callout tip" style="margin-top:16px;font-size:0.8rem;">
+      <div class="callout-label">Facilitator tip</div>
+      If the robot doesn't move after running <code>color_tracker</code>, check that the sim is running (not paused) and that a DiffBot (not UR5) is loaded. Only DiffBot responds to <code>/cmd_vel</code> from the sim bridge.
+    </div>
+
+  </div>  </details>
+
   <div class="callout note" style="margin-top:8px;">
     <div class="callout-label">End of Session 2 — Wrap-up points</div>
     <p>You have now covered all three core ROS2 communication patterns: <strong>topics</strong> (streaming data), <strong>publishers/subscribers</strong> (continuous control loops), and <strong>services</strong> (on-demand request–response). Every pattern appears verbatim in production robotics code.</p>
