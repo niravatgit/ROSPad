@@ -159,6 +159,80 @@
     @keyframes ws-spin { to { transform: rotate(360deg); } }
     .sidebar-icon-btn.reset-btn:hover { color: var(--red); background: rgba(248,81,73,0.12); }
 
+    /* ── Add Package picker ── */
+    #pkg-picker-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      align-items: center; justify-content: center; z-index: 9999;
+    }
+    .pkg-picker {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; width: 440px; max-width: calc(100vw - 32px);
+      max-height: 78vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .pkg-picker-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .pkg-picker-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .pkg-picker-x {
+      background: none; border: none; cursor: pointer; color: var(--text2);
+      font-size: 15px; padding: 2px 6px; border-radius: 3px; line-height: 1;
+    }
+    .pkg-picker-x:hover { background: var(--bg3); color: var(--text); }
+    #pkg-picker-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+    .pkg-cat-hdr {
+      padding: 10px 16px 4px; font-size: 10px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--text2);
+    }
+    .pkg-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 14px; cursor: pointer;
+      border: 1px solid transparent; border-radius: 6px; margin: 1px 8px;
+      transition: background 0.1s;
+    }
+    .pkg-item:hover { background: var(--bg3); }
+    .pkg-item.selected { background: rgba(88,166,255,0.08); border-color: var(--accent); }
+    .pkg-item-info { flex: 1; min-width: 0; }
+    .pkg-item-name { font-size: 12px; font-weight: 600; color: var(--text); font-family: 'Consolas','Monaco',monospace; }
+    .pkg-item-desc { font-size: 11px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+    .pkg-badge {
+      font-size: 10px; font-weight: 600; padding: 2px 8px;
+      border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+    }
+    .pkg-badge-installed {
+      background: rgba(63,185,80,0.12); color: var(--green);
+      border: 1px solid rgba(63,185,80,0.25);
+    }
+    #pkg-picker-footer {
+      border-top: 1px solid var(--border); padding: 12px 16px; flex-shrink: 0;
+    }
+    .pkg-footer-label { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+    .pkg-footer-label code {
+      color: var(--text); background: var(--bg3);
+      padding: 1px 5px; border-radius: 3px; font-family: 'Consolas','Monaco',monospace;
+    }
+    .pkg-overwrite-warn {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: rgba(210,153,34,0.08); border: 1px solid rgba(210,153,34,0.3);
+      border-radius: 6px; padding: 8px 12px; margin-bottom: 10px;
+      font-size: 12px; color: var(--yellow); line-height: 1.4;
+    }
+    .pkg-footer-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .pkg-btn {
+      font-size: 12px; padding: 5px 14px; border-radius: 5px;
+      border: 1px solid var(--border); cursor: pointer;
+      background: var(--bg3); color: var(--text);
+    }
+    .pkg-btn:hover { background: var(--border); }
+    .pkg-btn.primary {
+      background: rgba(88,166,255,0.12); border-color: var(--accent); color: var(--accent);
+    }
+    .pkg-btn.primary:hover { background: rgba(88,166,255,0.22); }
+    .pkg-btn.danger {
+      background: rgba(248,81,73,0.08); border-color: var(--red); color: var(--red);
+    }
+    .pkg-btn.danger:hover { background: rgba(248,81,73,0.18); }
+
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: var(--text2);
@@ -954,8 +1028,9 @@
       Explorer
       <div style="display:flex;gap:4px">
         <button class="sidebar-icon-btn" onclick="newFile()" title="New file">+</button>
+        <button class="sidebar-icon-btn" onclick="addPackage()" title="Add package to workspace">⊕</button>
         <button class="sidebar-icon-btn" onclick="refreshTree()" title="Refresh">↺</button>
-        <button class="sidebar-icon-btn reset-btn" onclick="resetWorkspace()" title="Reset workspace — deletes src/ and re-seeds demo packages">⊘</button>
+        <button class="sidebar-icon-btn reset-btn" onclick="resetWorkspace()" title="Reset workspace — deletes src/ and re-seeds all packages">⊘</button>
       </div>
     </div>
     <div id="file-tree">
@@ -1303,6 +1378,163 @@ function authLogout() {
     }
   }
 })();
+
+// ── Add Package picker ─────────────────────────────────────────────────────
+
+const PKG_DESCRIPTIONS = {
+  talker_listener:            'Hello World — publisher + subscriber pair',
+  turtlesim_demo:             'Keyboard teleop for the 2D turtle simulator',
+  diffbot_control:            'DiffBot velocity control: circle drive, teleop, odometry',
+  demo_robot:                 'Differential drive robot with RRT motion planner',
+  service_demo:               'ROS2 service demo — AddTwoInts server and client',
+  ur5_control:                'UR5 arm joint control, sine demo, and service client',
+  diffbot_camera_description: 'DiffBot URDF with forward-facing RGB camera sensor',
+  ur5_camera_description:     'UR5 URDF with wrist-mounted RGB camera sensor',
+  vision_demos:               'Camera-based demos — red colour tracker and wrist detector',
+  diffbot_description:        'DiffBot robot URDF and mesh assets (system package)',
+  ur5_description:            'UR5 arm URDF and mesh assets (system package)',
+};
+
+async function addPackage() {
+  const overlay  = document.getElementById('pkg-picker-overlay');
+  const list     = document.getElementById('pkg-picker-list');
+  const footer   = document.getElementById('pkg-picker-footer');
+  const progress = document.getElementById('pkg-picker-progress');
+  overlay.style.display  = 'flex';
+  list.style.display     = '';
+  footer.style.display   = 'none';
+  progress.style.display = 'none';
+  list.innerHTML = '<div style="padding:20px 16px;display:flex;align-items:center;gap:10px;color:var(--text2);font-size:12px">' +
+    '<div class="reset-spinner" style="width:16px;height:16px;border-width:2px"></div>Loading packages…</div>';
+
+  try {
+    const base = githubAPI._pagesBase();
+    const r    = await fetch(`${base}/rospad-workspace/src-index.json`);
+    if (!r.ok) throw new Error('Could not load package index');
+    const tree    = await r.json();
+    const allPkgs = tree.flatMap(c => (c.children || []).map(p => ({ ...p, _cat: c.name })));
+
+    // Check which packages are already in the user's workspace (parallel reads)
+    const exists = await Promise.all(
+      allPkgs.map(pkg =>
+        githubAPI.listDir('src/' + pkg.path).then(() => true).catch(() => false)
+      )
+    );
+
+    let html = '';
+    let curCat = null;
+    allPkgs.forEach((pkg, i) => {
+      if (pkg._cat !== curCat) {
+        curCat = pkg._cat;
+        const label = curCat === 'sys_packages' ? 'System Packages' : 'Demo Packages';
+        html += `<div class="pkg-cat-hdr">${label}</div>`;
+      }
+      const desc  = PKG_DESCRIPTIONS[pkg.name] || '';
+      const badge = exists[i]
+        ? `<span class="pkg-badge pkg-badge-installed">Installed</span>`
+        : '';
+      html += `<div class="pkg-item" data-path="${pkg.path}" data-name="${pkg.name}" data-installed="${exists[i]}" onclick="_pkgSelect(this)">` +
+        `<div class="pkg-item-info">` +
+          `<div class="pkg-item-name">${pkg.name}</div>` +
+          (desc ? `<div class="pkg-item-desc">${desc}</div>` : '') +
+        `</div>${badge}</div>`;
+    });
+    list.innerHTML = html;
+  } catch (e) {
+    list.innerHTML = `<div style="padding:16px;color:var(--red);font-size:12px">Failed to load packages: ${e.message}</div>`;
+  }
+}
+
+function _pkgSelect(el) {
+  document.querySelectorAll('.pkg-item.selected').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const name      = el.dataset.name;
+  const path      = el.dataset.path;
+  const installed = el.dataset.installed === 'true';
+  const footer  = document.getElementById('pkg-picker-footer');
+  const nameEl  = document.getElementById('pkg-footer-name');
+  const warnEl  = document.getElementById('pkg-overwrite-warn');
+  const addBtn  = document.getElementById('pkg-add-btn');
+  const overBtn = document.getElementById('pkg-overwrite-btn');
+
+  nameEl.textContent    = name;
+  footer.style.display  = 'block';
+  warnEl.style.display  = installed ? 'flex' : 'none';
+  addBtn.style.display  = installed ? 'none' : '';
+  overBtn.style.display = installed ? '' : 'none';
+  addBtn.onclick  = () => _pkgSeed(path, name);
+  overBtn.onclick = () => _pkgSeed(path, name);
+}
+
+async function _pkgSeed(pkgPath, pkgName) {
+  const list       = document.getElementById('pkg-picker-list');
+  const footer     = document.getElementById('pkg-picker-footer');
+  const progress   = document.getElementById('pkg-picker-progress');
+  const progPhase  = document.getElementById('pkg-prog-phase');
+  const progStatus = document.getElementById('pkg-prog-status');
+  const progBar    = document.getElementById('pkg-prog-bar');
+
+  list.style.display     = 'none';
+  footer.style.display   = 'none';
+  progress.style.display = 'flex';
+  progPhase.textContent  = 'Seeding…';
+  progStatus.textContent = 'Preparing…';
+  progBar.style.width    = '0%';
+
+  try {
+    const count = await githubAPI.installPackage(pkgPath, ({ label, step, total }) => {
+      progStatus.textContent = label;
+      progBar.style.width    = total ? `${Math.round(step / total * 100)}%` : '50%';
+    });
+    progPhase.textContent  = 'Complete';
+    progStatus.textContent = `${pkgName} — ${count} files written`;
+    progBar.style.width    = '100%';
+    window.term?.writeln(`\x1b[32m[workspace] Added: ${pkgName} (${count} files)\x1b[0m`);
+    await new Promise(r => setTimeout(r, 1000));
+    _pkgPickerClose();
+    refreshTree();
+  } catch (e) {
+    progPhase.textContent  = 'Error';
+    progStatus.textContent = e.message;
+    window.term?.writeln(`\x1b[31m[workspace] Add package failed: ${e.message}\x1b[0m`);
+    await new Promise(r => setTimeout(r, 3000));
+    _pkgPickerClose();
+  }
+}
+
+function _pkgPickerClose() {
+  document.getElementById('pkg-picker-overlay').style.display = 'none';
+}
 </script>
+
+<!-- Package picker overlay -->
+<div id="pkg-picker-overlay" style="display:none">
+  <div class="pkg-picker">
+    <div class="pkg-picker-hdr">
+      <span class="pkg-picker-title">Add Package to Workspace</span>
+      <button class="pkg-picker-x" onclick="_pkgPickerClose()">&#x2715;</button>
+    </div>
+    <div id="pkg-picker-list"></div>
+    <div id="pkg-picker-progress" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:28px 16px">
+      <div class="reset-spinner"></div>
+      <div class="reset-modal-phase" id="pkg-prog-phase">Seeding…</div>
+      <div class="reset-modal-status" id="pkg-prog-status" style="text-align:center;max-width:300px"></div>
+      <div class="reset-progress-bar" style="width:240px"><div class="reset-progress-fill" id="pkg-prog-bar"></div></div>
+    </div>
+    <div id="pkg-picker-footer" style="display:none">
+      <div class="pkg-footer-label">Adding <code id="pkg-footer-name"></code></div>
+      <div class="pkg-overwrite-warn" id="pkg-overwrite-warn" style="display:none">
+        <span style="font-size:14px;flex-shrink:0">&#x26A0;</span>
+        <span>Already in your workspace — adding will overwrite all files in this package with the default version.</span>
+      </div>
+      <div class="pkg-footer-btns">
+        <button class="pkg-btn" onclick="_pkgPickerClose()">Cancel</button>
+        <button class="pkg-btn danger" id="pkg-overwrite-btn" style="display:none">Overwrite Files</button>
+        <button class="pkg-btn primary" id="pkg-add-btn">Add Package</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

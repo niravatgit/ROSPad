@@ -405,6 +405,41 @@ class GitHubAPI {
 
     return `\x1b[31m${base}: command not available in browser environment\x1b[0m\r\n`;
   }
+
+  // Seeds a single package (identified by its path in src-index.json) into the workspace.
+  // Calls onProgress({ label, step, total }) before each file write.
+  // Returns number of files written.
+  async installPackage(pkgPath, onProgress) {
+    const base = this._pagesBase();
+    const r    = await fetch(`${base}/rospad-workspace/src-index.json`);
+    if (!r.ok) throw new Error('Could not load package index');
+    const tree = await r.json();
+
+    const pkgEntry = tree.flatMap(c => c.children || []).find(p => p.path === pkgPath);
+    if (!pkgEntry) throw new Error(`Package not found: ${pkgPath}`);
+
+    const BINARY = /\.(glb|dae|stl|obj|bin|png|jpg|jpeg|svg)$/i;
+    const files = [];
+    const emptyDirs = [];
+    const collect = (nodes) => {
+      for (const node of nodes) {
+        if (node.type === 'file') { if (!BINARY.test(node.name)) files.push(node); }
+        else if (node.children?.length) collect(node.children);
+        else emptyDirs.push(node);
+      }
+    };
+    collect([pkgEntry]);
+
+    for (let i = 0; i < files.length; i++) {
+      const node = files[i];
+      onProgress?.({ label: node.name, step: i + 1, total: files.length });
+      const fr = await fetch(`${base}/rospad-workspace/src/${node.path}`);
+      if (fr.ok) await this.writeFile(`src/${node.path}`, await fr.text());
+    }
+    for (const dir of emptyDirs) await this.mkdir(`src/${dir.path}`);
+
+    return files.length;
+  }
 }
 
 // ── Private helpers ───────────────────────────────────────────────────────────
