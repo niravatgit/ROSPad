@@ -138,8 +138,10 @@ class GitHubAPI {
     }
   }
 
-  // Slow — seeds demos & sys_packages into workspace. Runs in background after login.
-  // Checks each package individually so new packages are seeded for existing users
+  // Seeds only sys_packages into the workspace on login.
+  // Demos are never auto-seeded — use resetWorkspace() to get the full collection,
+  // or the "Add Package" picker to add individual demo packages during a teaching session.
+  // Checks each package individually so new sys_packages are seeded for existing users
   // without touching packages they've already modified.
   async seedIfNeeded(onProgress) {
     const base = this._pagesBase();
@@ -165,9 +167,9 @@ class GitHubAPI {
       }
     };
 
-    // Check each package individually — only seed the ones that are missing.
-    // This lets us add new packages without forcing existing users to delete anything.
+    // Only seed sys_packages on login — demos are added explicitly via Reset or the package picker.
     for (const container of tree) {
+      if (container.name !== 'sys_packages') continue;
       for (const pkg of (container.children || [])) {
         try {
           await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/${pkg.path}`);
