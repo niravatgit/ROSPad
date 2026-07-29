@@ -39,7 +39,9 @@ class GitHubAPI {
       'X-GitHub-Api-Version': '2022-11-28',
     };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-    return fetch(`https://api.github.com${path}`, { ...opts, headers: { ...headers, ...opts.headers } });
+    // no-cache: revalidate with GitHub on every request so directory listings
+    // reflect recent writes immediately (GitHub API caches for up to 60 s).
+    return fetch(`https://api.github.com${path}`, { cache: 'no-cache', ...opts, headers: { ...headers, ...opts.headers } });
   }
 
   async _get(path) {
