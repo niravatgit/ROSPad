@@ -1415,11 +1415,11 @@ async function addPackage() {
     const tree    = await r.json();
     const allPkgs = tree.flatMap(c => (c.children || []).map(p => ({ ...p, _cat: c.name })));
 
-    // Check which packages are already in the user's workspace (parallel reads)
+    // Check which packages are already in the user's workspace (parallel reads).
+    // pathExists() throws on 404 — listDir() silently returns [] on 404, which
+    // would make every package appear installed.
     const exists = await Promise.all(
-      allPkgs.map(pkg =>
-        githubAPI.listDir('src/' + pkg.path).then(() => true).catch(() => false)
-      )
+      allPkgs.map(pkg => githubAPI.pathExists('src/' + pkg.path))
     );
 
     let html = '';

@@ -186,6 +186,17 @@ class GitHubAPI {
     if (anythingSeeded) window.refreshTree?.();
   }
 
+  // Returns true if the repo path exists, false if 404, re-throws other errors.
+  async pathExists(relPath) {
+    try {
+      await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/${relPath}`);
+      return true;
+    } catch (e) {
+      if (e.status === 404) return false;
+      throw e;
+    }
+  }
+
   // ── User workspace (paths relative to repo root, e.g. "src/my_pkg/node.py") ─
 
   async listDir(relPath) {
