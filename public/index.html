@@ -1287,8 +1287,9 @@ function _runSeedWithIndicator() {
 }
 
 function resetROSpad() {
-  stopAll();                                                    // stops workers + sim (which now clears robot)
-  termManager?.sessions?.forEach(s => s.xterm?.clear());       // wipe terminal output
+  stopAll();                        // terminate all Python workers
+  window.simClearAll?.();           // clear robot, obstacles, camera rigs, physics — belt-and-suspenders
+  termManager?.sessions?.forEach(s => s.xterm?.clear());
 }
 
 async function resetWorkspace() {

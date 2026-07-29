@@ -293,9 +293,33 @@ function _captureCameraFrames(time) {
   }
 }
 
+// Full reset: stops sim, clears robot + camera rigs + turtle + obstacles + physics.
+// Safe to call at any time — all guards are null-checked.
+function simClearAll() {
+  stopSim();  // sets simRunning=false, clears robot mesh, camera rigs, turtle state, rosBus
+
+  // Remove placed obstacles from scene and physics world
+  selectObs(null);
+  simObstacles.forEach(o => {
+    simScene.remove(o);
+    if (o.userData.physBody && physicsWorld) physicsWorld.removeRigidBody(o.userData.physBody);
+  });
+  simObstacles.length = 0;
+
+  // Reset robot physics body to origin so the next launch starts at (0,0)
+  if (robotBody && _Ammo && _tmpAmmoTransform) {
+    _tmpAmmoTransform.setIdentity();
+    _tmpAmmoVec.setValue(0, ROBOT_RADIUS, 0);
+    _tmpAmmoTransform.setOrigin(_tmpAmmoVec);
+    robotBody.setWorldTransform(_tmpAmmoTransform);
+    robotBody.getMotionState()?.setWorldTransform(_tmpAmmoTransform);
+  }
+}
+
 window.startSim    = startSim;
 window.stopSim     = stopSim;
 window.clearRobot  = clearRobot;
+window.simClearAll = simClearAll;
 window.addObstacle = addObstacle;
 window.resetSim    = resetSim;
 Object.defineProperty(window, 'simRunning', { get: () => simRunning });
