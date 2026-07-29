@@ -690,8 +690,9 @@ async function loadRobot(type, cameras = []) {
       simRobot.userData = { type: 'arm' };
       simScene.add(simRobot);
       _setSimLabel('UR5 Arm');
-      // Start at URDF zero config — joints are driven entirely by /joint_states.
-      // Run joint_state_publisher or joint_controller to position the arm.
+      // Upright home pose: shoulder_lift and wrist_1 at -π/2 so the arm looks
+      // correct on load. Overridden the moment any node publishes /joint_states.
+      updateArmJoints([0, -Math.PI / 2, 0, -Math.PI / 2, 0, 0]);
       // Broadcast static TF (fixed joints) once on load
       _publishStaticTF();
       // Aim camera at mid-arm height
