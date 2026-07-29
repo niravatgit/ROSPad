@@ -330,7 +330,17 @@ class GitHubAPI {
     return `src/${name}`;
   }
 
-  // ── Reset workspace ────────────────────────────────────────────────────────
+  // ── Reset / Clear workspace ───────────────────────────────────────────────
+
+  // Deletes everything under src/ with no reseeding — clean slate.
+  async clearWorkspace(onProgress) {
+    const entries = await this.listDir('src');
+    const total = entries.length;
+    for (let i = 0; i < entries.length; i++) {
+      onProgress?.({ label: `Removing ${entries[i].name}…`, step: i + 1, total });
+      await this.deleteEntry(entries[i].path);
+    }
+  }
 
   // Deletes everything under src/ and re-seeds all packages from the static index.
   // onProgress(msg) is called before each major step so the UI can show status.

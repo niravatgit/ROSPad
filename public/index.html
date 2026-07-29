@@ -160,7 +160,8 @@
       animation: ws-spin 0.75s linear infinite;
     }
     @keyframes ws-spin { to { transform: rotate(360deg); } }
-    .sidebar-icon-btn.reset-btn:hover { color: var(--red); background: rgba(248,81,73,0.12); }
+    .sidebar-icon-btn.reset-btn:hover  { color: var(--red);    background: rgba(248,81,73,0.12); }
+    .sidebar-icon-btn.clear-btn:hover  { color: var(--yellow); background: rgba(210,153,34,0.12); }
 
     /* ── Add Package picker ── */
     #pkg-picker-overlay {
@@ -1032,6 +1033,7 @@
       <div style="display:flex;gap:4px">
         <button class="sidebar-icon-btn" onclick="newFile()" title="New file">+</button>
         <button class="sidebar-icon-btn" onclick="addPackage()" title="Add package to workspace">⊕</button>
+        <button class="sidebar-icon-btn clear-btn" onclick="clearWorkspace()" title="Clear workspace — removes all packages, nothing re-seeded">⊖</button>
         <button class="sidebar-icon-btn" onclick="refreshTree()" title="Refresh">↺</button>
         <button class="sidebar-icon-btn reset-btn" onclick="resetWorkspace()" title="Reset workspace — deletes src/ and re-seeds all packages">⊘</button>
       </div>
@@ -1293,6 +1295,50 @@ function resetROSpad() {
   stopAll();                        // terminate all Python workers
   window.simClearAll?.();           // clear robot, obstacles, camera rigs, physics — belt-and-suspenders
   termManager?.sessions?.forEach(s => s.xterm?.clear());
+}
+
+async function clearWorkspace() {
+  if (!confirm(
+    'Clear workspace?\n\n' +
+    'This will delete ALL packages from src/. Nothing will be re-seeded.\n\n' +
+    'Use ⊕ to add packages one at a time, or ⊘ to re-seed everything.\n\n' +
+    'Any custom code you have written will be permanently lost.'
+  )) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'reset-overlay';
+  overlay.innerHTML =
+    '<div class="reset-modal">' +
+      '<div class="reset-spinner"></div>' +
+      '<div class="reset-modal-title">Clearing Workspace</div>' +
+      '<div class="reset-modal-phase" id="reset-phase">Removing packages…</div>' +
+      '<div class="reset-modal-status" id="reset-status">Connecting to GitHub…</div>' +
+      '<div class="reset-progress-bar"><div class="reset-progress-fill" id="reset-bar"></div></div>' +
+      '<div class="reset-step-counter" id="reset-counter"></div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  try {
+    await githubAPI.clearWorkspace(({ label, step, total }) => {
+      document.getElementById('reset-status').textContent  = label;
+      document.getElementById('reset-bar').style.width     = `${Math.round(step / total * 100)}%`;
+      document.getElementById('reset-counter').textContent = `${step} / ${total}`;
+    });
+    document.getElementById('reset-phase').textContent  = 'Complete';
+    document.getElementById('reset-status').textContent = 'Workspace cleared — use ⊕ to add packages';
+    document.getElementById('reset-bar').style.width    = '100%';
+    document.getElementById('reset-counter').textContent = '';
+    window.term?.writeln('\x1b[33m[workspace] Cleared — use ⊕ to add packages one at a time\x1b[0m');
+    await new Promise(r => setTimeout(r, 1200));
+    refreshTree();
+  } catch (e) {
+    document.getElementById('reset-phase').textContent  = 'Error';
+    document.getElementById('reset-status').textContent = e.message;
+    window.term?.writeln(`\x1b[31m[workspace] Clear failed: ${e.message}\x1b[0m`);
+    await new Promise(r => setTimeout(r, 3500));
+  } finally {
+    overlay.remove();
+  }
 }
 
 async function resetWorkspace() {
