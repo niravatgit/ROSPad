@@ -479,7 +479,11 @@ async function main() {
   try {
     const pyodide = await loadPyodide({
       stdout: (text) => postLog('\\x1b[0m' + text),
-      stderr: (text) => postLog('\\x1b[31m' + text + '\\x1b[0m'),
+      // Suppress _ROSpadSpin sentinel traceback — Pyodide may write it to stderr
+      // before the JS catch block can intercept it.
+      stderr: (text) => {
+        if (!text.includes('_ROSpadSpin')) postLog('\\x1b[31m' + text + '\\x1b[0m');
+      },
     });
 
     await pyodide.loadPackage(['numpy']);

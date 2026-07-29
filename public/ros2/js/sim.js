@@ -161,6 +161,7 @@ function clearRobot() {
   // reset state so the next cmd_vel can make it reappear (don't null/remove it)
   if (_simTurtle) { _simTurtle.visible = false; _simTurtle.position.set(0, 0, 0); }
   Object.assign(_simTurtleState, { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false });
+  _clearTurtleTrail();
   _setSimLabel('');
 }
 
@@ -222,7 +223,14 @@ function _setupCameraRigs(cameras, robot, robotType) {
     }
 
     const mount = new THREE.Object3D();
-    mount.position.set(ux, uz, -uy);
+    if (robotType === 'arm') {
+      // Arm hierarchy uses ROS Z-up coordinates internally (the wrapper at the top
+      // converts to Three.js Y-up). Use the URDF joint offset directly.
+      mount.position.set(ux, uy, uz);
+    } else {
+      // DiffBot: robot root is in Three.js Y-up space; convert ROS(x,y,z)→Three.js(x,z,-y).
+      mount.position.set(ux, uz, -uy);
+    }
     attachTo.add(mount);
 
     const fovDeg = def.fov * (180 / Math.PI);
@@ -343,9 +351,53 @@ function _makeFloorTex() {
 }
 
 
-// ── 3D Turtle (appears in main sim scene when /turtle1/cmd_vel is received) ───
+// ── 3D Turtle + trail (appears in main sim scene when /turtle1/cmd_vel is received) ───
 let _simTurtle = null;
 const _simTurtleState = { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false };
+
+// Trail: grows as the turtle moves, cleared on sim reset
+const _TRAIL_MAX = 4000;
+let _trailLine = null;
+let _trailPositions = null; // Float32Array(TRAIL_MAX * 3)
+let _trailCount = 0;
+let _trailLastX = null;
+let _trailLastZ = null;
+
+function _initTurtleTrail() {
+  _trailPositions = new Float32Array(_TRAIL_MAX * 3);
+  _trailCount = 0; _trailLastX = null; _trailLastZ = null;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(_trailPositions, 3));
+  geo.setDrawRange(0, 0);
+  _trailLine = new THREE.Line(
+    geo,
+    new THREE.LineBasicMaterial({ color: 0x22c55e, linewidth: 2, depthWrite: false })
+  );
+  _trailLine.frustumCulled = false;
+  simScene.add(_trailLine);
+}
+
+function _addTrailPoint(x, z) {
+  if (_trailLastX !== null && Math.abs(x - _trailLastX) < 0.005 && Math.abs(z - _trailLastZ) < 0.005) return;
+  if (_trailCount < _TRAIL_MAX) {
+    const i = _trailCount * 3;
+    _trailPositions[i]   = x;
+    _trailPositions[i+1] = 0.01; // just above ground
+    _trailPositions[i+2] = z;
+    _trailCount++;
+    _trailLine.geometry.setDrawRange(0, _trailCount);
+    _trailLine.geometry.attributes.position.needsUpdate = true;
+  }
+  _trailLastX = x; _trailLastZ = z;
+}
+
+function _clearTurtleTrail() {
+  _trailCount = 0; _trailLastX = null; _trailLastZ = null;
+  if (_trailLine) {
+    _trailLine.geometry.setDrawRange(0, 0);
+    _trailLine.geometry.attributes.position.needsUpdate = true;
+  }
+}
 
 function _makeTurtle3D() {
   const g = new THREE.Group();
@@ -435,6 +487,7 @@ function initSim() {
   _simTurtle = _makeTurtle3D();
   _simTurtle.visible = false;
   simScene.add(_simTurtle);
+  _initTurtleTrail();
   rosBus.subscribe('/turtle1/cmd_vel', 'geometry_msgs/Twist', (data) => {
     _simTurtleState.vx = data.linear?.x  || 0;
     _simTurtleState.wz = data.angular?.z || 0;
@@ -1066,10 +1119,11 @@ function resetSim() {
     robotBody.setWorldTransform(_tmpAmmoTransform);
     robotBody.getMotionState().setWorldTransform(_tmpAmmoTransform);
   }
-  // Reset turtle
+  // Reset turtle + trail
   _simTurtleState.x = 0; _simTurtleState.y = 0; _simTurtleState.theta = 0;
   _simTurtleState.vx = 0; _simTurtleState.wz = 0;
   if (_simTurtle) _simTurtle.position.set(0, 0, 0);
+  _clearTurtleTrail();
   // If a robot is already loaded, reset it to origin
   if (simRobot) loadRobot(simRobot.userData.type);
 }
@@ -1162,6 +1216,9 @@ function animate(time = 0) {
     _simTurtleState.y     += _simTurtleState.vx * Math.sin(_simTurtleState.theta) * dt;
     _simTurtle.position.set(_simTurtleState.x, 0, _simTurtleState.y);
     _simTurtle.rotation.y = _simTurtleState.theta;
+    if (_simTurtleState.vx !== 0 || _simTurtleState.wz !== 0) {
+      _addTrailPoint(_simTurtleState.x, _simTurtleState.y);
+    }
     rosBus.publish('/turtle1/pose', 'turtlesim/Pose', {
       x: _simTurtleState.x, y: _simTurtleState.y, theta: _simTurtleState.theta,
       linear_velocity: _simTurtleState.vx, angular_velocity: _simTurtleState.wz,
