@@ -309,6 +309,7 @@ footer {
   </div>
   <nav class="header-nav">
     <a class="nav-link" href="#ui-tour">UI Tour</a>
+    <a class="nav-link" href="#workspace">Workspace</a>
     <a class="nav-link" href="#tut-talker">Talker/Listener</a>
     <a class="nav-link" href="#tut-turtle">Turtlesim</a>
     <a class="nav-link" href="#tut-diffbot">DiffBot</a>
@@ -351,7 +352,7 @@ footer {
       <li><strong>Create a repository</strong> named exactly <code class="inline-code">rospad-workspace</code> in your GitHub account (public or private). There is a direct link on the ROSpad login page.</li>
       <li><strong>Open ROSpad</strong> at <a href="https://niravatgit.github.io/ROSPad/" target="_blank" style="color:var(--green)">niravatgit.github.io/ROSPad/</a> and click <strong>Login with GitHub</strong>.</li>
       <li><strong>Authorize the ROSpad app</strong> — GitHub will ask which repositories to allow. Select <code class="inline-code">rospad-workspace</code>.</li>
-      <li>You land on the IDE. Demo packages are seeded into your workspace automatically (a spinner appears in the top bar while this runs).</li>
+      <li>You land on the IDE. <strong>System packages</strong> (the ROS2 Python shim and core utilities) are seeded automatically — a spinner appears in the top bar while this runs. Demo packages are <em>not</em> installed automatically; add them one at a time with the <strong>⊕ Add Package</strong> button in the file explorer sidebar.</li>
     </ol>
     <div class="note note-info">
       <span class="note-icon">ℹ️</span>
@@ -377,7 +378,7 @@ footer {
       <div class="ui-card">
         <div class="ui-card-icon">📁</div>
         <div class="ui-card-title">File Explorer (left)</div>
-        <div class="ui-card-desc">Your workspace packages. Click a folder to expand it. Click a file to open it in the editor. <em>System Packages</em> shows read-only ROS2 packages.</div>
+        <div class="ui-card-desc">Your workspace packages. Click a folder to expand it. Click a file to open it in the editor. <em>System Packages</em> shows read-only ROS2 packages. Five buttons at the top manage your workspace — see <em>Managing Your Workspace</em> below.</div>
       </div>
       <div class="ui-card">
         <div class="ui-card-icon">📝</div>
@@ -402,18 +403,99 @@ footer {
       <div class="ui-card">
         <div class="ui-card-icon">🎛️</div>
         <div class="ui-card-title">Toolbar (top)</div>
-        <div class="ui-card-desc"><span class="btn-ref run">▶ Run</span> a .py file &nbsp; <span class="btn-ref launch">⚡ Launch</span> a launch file &nbsp; <span class="btn-ref stop">■ Stop</span> running nodes</div>
+        <div class="ui-card-desc"><span class="btn-ref run">▶ Run</span> a .py file &nbsp; <span class="btn-ref launch">⚡ Launch</span> a launch file &nbsp; <span class="btn-ref stop">■ Stop</span> all nodes &nbsp; <span class="btn-ref" style="border-color:var(--purple);color:var(--purple);background:rgba(188,140,255,0.1)">↺ Reset</span> stops nodes + clears sim (no file changes)</div>
       </div>
     </div>
 
     <details class="step-details">
-      <summary class="step-summary"><span class="step-n">!</span>Button state rules<span class="chevron">›</span></summary>
+      <summary class="step-summary"><span class="step-n">!</span>Button reference<span class="chevron">›</span></summary>
       <div class="step-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px">Top toolbar</p>
         <ul>
           <li><span class="btn-ref run">▶ Run</span> — enabled only when a <span class="inline-code">.py</span> file (non-launch) is open and no node is running.</li>
           <li><span class="btn-ref launch">⚡ Launch</span> — enabled only when a <span class="inline-code">.launch.py</span> file is open and no node is running.</li>
           <li><span class="btn-ref stop">■ Stop</span> — enabled only when a node is running. Stops all nodes across all terminal sessions.</li>
+          <li><span class="btn-ref" style="border-color:var(--purple);color:var(--purple);background:rgba(188,140,255,0.1)">↺ Reset</span> — always enabled. Stops all running nodes and clears the 3D simulator. <strong>Does not touch workspace files.</strong></li>
         </ul>
+        <p style="font-size:12px;color:var(--muted);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px">File explorer sidebar</p>
+        <ul>
+          <li><strong>+</strong> New File — always enabled. Creates a blank file at a path you specify.</li>
+          <li><strong>⊕</strong> Add Package — always enabled. Opens the package picker to install one demo package.</li>
+          <li><strong>⊖</strong> Clear Workspace — always enabled. Asks for confirmation, then removes <em>all</em> packages from <span class="inline-code">src/</span> with no re-seeding.</li>
+          <li><strong>↺</strong> Refresh — always enabled. Re-reads the file tree from GitHub. Does not stop nodes or change files.</li>
+          <li><strong>⊘</strong> Reset — always enabled. Asks for confirmation, then wipes <span class="inline-code">src/</span> and re-seeds the full demo collection. Also stops nodes and clears the sim.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</details>
+
+<!-- Workspace Management -->
+<details id="workspace">
+  <summary>
+    <div class="sum-icon" style="background:rgba(63,185,80,0.12)">📦</div>
+    Managing Your Workspace
+    <span class="sum-badge badge-beginner">Beginner</span>
+    <span class="chevron">›</span>
+  </summary>
+  <div class="card-body">
+    <p>The file explorer sidebar has five buttons in the top-right corner. Each one manages the packages in your workspace differently — here is what each one does and when to use it.</p>
+
+    <table>
+      <tr><th>Button</th><th>Name</th><th>What it does</th></tr>
+      <tr><td style="font-size:18px;text-align:center;color:var(--green);font-weight:700">+</td><td>New File</td><td>Creates a new blank file. Enter the full path (e.g. <code>src/my_pkg/my_pkg/node.py</code>) and the file appears immediately in the explorer.</td></tr>
+      <tr><td style="font-size:18px;text-align:center;color:var(--accent);font-weight:700">⊕</td><td>Add Package</td><td>Opens the package picker overlay. Browse available demo packages, select one, and install it. Already-installed packages are marked and show a warning before overwriting.</td></tr>
+      <tr><td style="font-size:18px;text-align:center;color:var(--orange);font-weight:700">⊖</td><td>Clear Workspace</td><td>Removes <em>all</em> packages from <code>src/</code> with no re-seeding. Prompts for confirmation first. Use this to start completely fresh, then build up with ⊕.</td></tr>
+      <tr><td style="font-size:18px;text-align:center;color:var(--muted);font-weight:700">↺</td><td>Refresh</td><td>Re-reads the file tree from GitHub and updates the explorer. Use this if the tree looks stale. Does not stop nodes or change any files.</td></tr>
+      <tr><td style="font-size:18px;text-align:center;color:var(--red);font-weight:700">⊘</td><td>Reset</td><td>Deletes <code>src/</code> and re-seeds the full demo package collection. Also stops all running nodes and clears the 3D simulator. Prompts for confirmation first.</td></tr>
+    </table>
+
+    <div class="note note-warn">
+      <span class="note-icon">⚠️</span>
+      <span><strong>⊖ Clear</strong> and <strong>⊘ Reset</strong> are destructive — they delete files from your GitHub repository. Both ask for confirmation before doing anything. Your workspace is recoverable from GitHub history if needed.</span>
+    </div>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">💡</span>Teaching workflow — build the workspace together<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>ROSpad is designed for progressive classroom discovery. The recommended flow:</p>
+        <ol style="margin:.5rem 0 .5rem 1.2rem;line-height:2.2">
+          <li><strong>Login</strong> — only <span class="inline-code">sys_packages</span> (the ROS2 Python shim) is seeded. The workspace is nearly empty.</li>
+          <li><strong>⊕ Add Package</strong> — install demo packages one at a time as the session progresses. Students see each package appear live in their explorer and can explore it before running anything.</li>
+          <li><strong>⊖ Clear Workspace</strong> — at the start of a new topic or exercise, wipe the workspace and begin building again from scratch.</li>
+          <li><strong>⊘ Reset</strong> — if you need all demos at once (exam prep, self-study) or want to recover a clean state, Reset seeds the complete collection in one click.</li>
+        </ol>
+        <div class="note note-tip">
+          <span class="note-icon">💡</span>
+          <span>The file tree refreshes automatically after every add, clear, and reset — you don't need to click ↺ manually.</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">💡</span>Using the ⊕ package picker<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Click <strong>⊕</strong> to open the picker overlay. A list of all available demo packages appears, each with a short description.</p>
+        <ul style="margin:.5rem 0 .5rem 1.2rem;line-height:2">
+          <li>Packages already in your workspace are marked <strong style="color:var(--green)">Installed</strong>.</li>
+          <li>Click any package name to select it and see its description.</li>
+          <li>If it is already installed, a yellow warning reads <em>"These files will be overwritten."</em> Click <strong>Overwrite Files</strong> to confirm, or choose a different package.</li>
+          <li>Click <strong>Install Package</strong> to seed it. A progress bar shows each file as it is written.</li>
+          <li>Click <strong>✕ Close</strong> or press Escape to dismiss without installing anything.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">!</span>Topbar ↺ Reset vs sidebar ⊘ Reset vs sidebar ↺ Refresh<span class="chevron">›</span></summary>
+      <div class="step-body">
+        <p>Three controls have similar names — here is exactly what each one does:</p>
+        <table>
+          <tr><th>Button</th><th>Location</th><th>Effect</th></tr>
+          <tr><td>↺ Reset</td><td>Top toolbar</td><td>Stops all nodes and clears the 3D simulator. <strong>No files are touched.</strong> Use this between runs to get a clean slate without losing your code.</td></tr>
+          <tr><td>↺ Refresh</td><td>Sidebar (4th button)</td><td>Re-reads the file tree from GitHub. No nodes are stopped; no files are changed. Use when the explorer looks stale.</td></tr>
+          <tr><td>⊘ Reset</td><td>Sidebar (5th button)</td><td>Deletes <span class="inline-code">src/</span> and re-seeds all demo packages. Also stops nodes and clears the sim. Use to restore the full workspace.</td></tr>
+        </table>
       </div>
     </details>
   </div>
@@ -1167,6 +1249,22 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
     <details class="step-details">
       <summary class="step-summary"><span class="step-n">?</span>I can't see a topic I just created<span class="chevron">›</span></summary>
       <div class="step-body"><p>Topics only appear when a node is publishing or subscribing. Run your node first, then check <span class="inline-code">ros2 topic list</span> in the terminal or look in the Topics panel.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>The file tree doesn't update after adding / removing packages<span class="chevron">›</span></summary>
+      <div class="step-body"><p>The explorer normally refreshes automatically after every add, clear, and reset. If it still looks stale, click the <strong>↺ Refresh</strong> button (sidebar, 4th button). It bypasses the browser cache and re-reads your GitHub repository directly.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>⊕ Add Package shows "Failed to load packages"<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Your browser loaded an old cached version of ROSpad's JavaScript. Press <strong>Ctrl + Shift + R</strong> (Windows/Linux) or <strong>⌘ + Shift + R</strong> (Mac) to force a hard reload, then try again.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>All packages show "Installed" in the picker even for a new workspace<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Press <strong>Ctrl + Shift + R</strong> (or <strong>⌘ + Shift + R</strong> on Mac) to clear stale browser cache. The picker re-checks each package path directly against your GitHub repository after a clean reload.</p></div>
+    </details>
+    <details class="step-details">
+      <summary class="step-summary"><span class="step-n">?</span>The simulator still shows the robot after clicking Reset<span class="chevron">›</span></summary>
+      <div class="step-body"><p>Use the <strong>↺ Reset</strong> button in the <em>top toolbar</em> (not the ⊘ in the sidebar). The top toolbar Reset explicitly stops all nodes and clears the 3D simulator scene — robot meshes, obstacles, and physics bodies are all removed.</p></div>
     </details>
   </div>
 </details>
