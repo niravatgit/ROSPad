@@ -233,6 +233,23 @@ function _setupCameraRigs(cameras, robot, robotType) {
     if (robotType === 'diffbot') cam.rotation.y = -Math.PI / 2;
     mount.add(cam);
 
+    // Visible camera body — procedural geometry so no STL file is needed
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6, metalness: 0.4 });
+    const lensMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.2, metalness: 0.8 });
+    const body    = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.032, 0.042), bodyMat);
+    const lens    = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.014, 0.022, 12), lensMat);
+    if (robotType === 'diffbot') {
+      // Camera looks along mount +X; lens nub extends forward
+      lens.rotation.z = Math.PI / 2;
+      lens.position.x = 0.038;
+    } else {
+      // Camera looks along mount -Z; lens nub extends forward
+      lens.rotation.x = Math.PI / 2;
+      lens.position.z = -0.032;
+    }
+    mount.add(body);
+    mount.add(lens);
+
     const target = new THREE.WebGLRenderTarget(def.width, def.height);
     _robotCameras.push({ cam, target, mount, topic: def.topic, frameId: def.ref,
                          width: def.width, height: def.height, lastMs: 0 });

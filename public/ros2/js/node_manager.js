@@ -546,12 +546,14 @@ for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete
       await pyodide.runPythonAsync(${JSON.stringify(userCode)});
       postMessage({ type: 'stopped' });
     } catch(runErr) {
-      // Pyodide wraps Python exceptions as PythonError; check all string representations
+      // Pyodide wraps Python exceptions as PythonError; check all string representations.
+      // In Pyodide v0.25+ the full traceback lives in .stack, not .message.
       const _errStr = [
         String(runErr),
         runErr?.message,
         runErr?.type,
         runErr?.name,
+        runErr?.stack,
       ].filter(Boolean).join(' ');
       if (_errStr.includes('_ROSpadSpin')) {
         // spin() raised its sentinel — node is alive via JS timers, do NOT stop

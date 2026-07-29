@@ -314,6 +314,12 @@ class TerminalSession {
   _tab() {
     const input  = this._buf;
     const parts  = input.trimStart().split(/\s+/);
+
+    // cd completion — lists subdirectories of current path
+    if (parts[0] === 'cd') {
+      void this._cdComplete(parts[1] || '');
+      return;
+    }
     const topics = () => rosBus.getTopics().map(t => t.topic);
     const msgType = (topic) => rosBus.getTopics().find(t => t.topic === topic)?.msgType;
 
@@ -415,6 +421,38 @@ class TerminalSession {
       for (const h of hits) { let i=0; while(i<prefix.length && prefix[i]===h[i]) i++; prefix=prefix.slice(0,i); }
       if (prefix.length > input.length) this._setLine(prefix);
       else { this.xterm.write('\r\n'); hits.forEach(h => this.xterm.write(`  ${h.trim()}\r\n`)); this.xterm.write(this._prompt + input); }
+    }
+  }
+
+  // Async cd completion — fetches child directories and completes or lists them
+  async _cdComplete(arg) {
+    // Split arg into parent dir (to list) and the prefix being typed
+    const slashIdx = arg.lastIndexOf('/');
+    const parentArg = slashIdx >= 0 ? arg.slice(0, slashIdx) : '';
+    const prefix    = slashIdx >= 0 ? arg.slice(slashIdx + 1) : arg;
+    const listDir   = parentArg ? _resolveCwd(this._cwd, parentArg) : this._cwd;
+
+    let entries = [];
+    try { entries = await githubAPI.listDir(listDir); } catch { return; }
+
+    const dirs = entries.filter(e => e.type === 'dir').map(e => e.name);
+    const hits = dirs.filter(d => d.startsWith(prefix));
+    if (!hits.length) return;
+
+    const base = parentArg ? `${parentArg}/` : '';
+    if (hits.length === 1) {
+      this._setLine(`cd ${base}${hits[0]}/`);
+    } else {
+      // Find longest common prefix among hits
+      let lcp = hits[0];
+      for (const h of hits) { let i = 0; while (i < lcp.length && lcp[i] === h[i]) i++; lcp = lcp.slice(0, i); }
+      if (lcp.length > prefix.length) {
+        this._setLine(`cd ${base}${lcp}`);
+      } else {
+        this.xterm.write('\r\n');
+        hits.forEach(d => this.xterm.write(`  \x1b[34m${d}/\x1b[0m\r\n`));
+        this.xterm.write(this._prompt + this._buf);
+      }
     }
   }
 
