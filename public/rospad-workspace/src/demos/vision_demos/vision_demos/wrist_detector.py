@@ -63,7 +63,15 @@ class WristDetector(Node):
         if w == 0 or h == 0:
             return
 
-        arr = np.asarray(msg.data, dtype=np.uint8).reshape(h, w, 3)
+        # Debug: log data type + first pixel on first few frames
+        if self._frame_count <= 30:
+            raw = msg.data
+            self.get_logger().info(
+                f'DBG data type={type(raw).__name__} len={len(raw) if hasattr(raw,"__len__") else "?"}'
+                f' first3={list(raw)[:3] if hasattr(raw,"__iter__") else "no-iter"}'
+            )
+
+        arr = np.asarray(list(msg.data), dtype=np.uint8).reshape(h, w, 3)
 
         detections = []
         for name, bounds in COLOURS.items():
