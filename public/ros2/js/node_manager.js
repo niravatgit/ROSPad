@@ -376,8 +376,11 @@ class NodeManager {
     // Include pathname base so this works on GitHub Pages (/ROSPad/) and localhost (/)
     const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
     const pfxJson = JSON.stringify(prefix); // safe to embed in JS string literal
+    // Cache-bust all dynamic shim fetches so stale files don't mask JS changes.
+    const _v = '20260733';
     return `
 const _BASE = ${JSON.stringify(baseUrl)};
+const _V = '${_v}';
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
 
 const _PFX = ${pfxJson};
@@ -497,10 +500,10 @@ for _n in ['rclpy', 'rclpy.node', 'rclpy.qos', 'rclpy.logging']:
 \`);
 
     // msgs
-    await pyodide.runPythonAsync(await (await fetch(_BASE + '/ros2/msgs/__init__.py')).text());
+    await pyodide.runPythonAsync(await (await fetch(_BASE + '/ros2/msgs/__init__.py?v=' + _V)).text());
 
     // rclpy.qos
-    const qosCode = await (await fetch(_BASE + '/ros2/rclpy/qos.py')).text();
+    const qosCode = await (await fetch(_BASE + '/ros2/rclpy/qos.py?v=' + _V)).text();
     await pyodide.runPythonAsync(qosCode);
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy.qos']
@@ -511,7 +514,7 @@ sys.modules['rclpy'].qos = _m
 \`);
 
     // rclpy.logging
-    const logCode = await (await fetch(_BASE + '/ros2/rclpy/logging.py')).text();
+    const logCode = await (await fetch(_BASE + '/ros2/rclpy/logging.py?v=' + _V)).text();
     await pyodide.runPythonAsync(logCode);
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy.logging']
@@ -521,7 +524,7 @@ sys.modules['rclpy'].logging = _m
 \`);
 
     // rclpy.node
-    const nodeCode = await (await fetch(_BASE + '/ros2/rclpy/node.py')).text();
+    const nodeCode = await (await fetch(_BASE + '/ros2/rclpy/node.py?v=' + _V)).text();
     await pyodide.runPythonAsync(nodeCode);
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy.node']
@@ -532,7 +535,7 @@ sys.modules['rclpy'].node = _m
 \`);
 
     // rclpy/__init__.py (loaded last so from rclpy import node/qos/logging resolves)
-    await pyodide.runPythonAsync(await (await fetch(_BASE + '/ros2/rclpy/__init__.py')).text());
+    await pyodide.runPythonAsync(await (await fetch(_BASE + '/ros2/rclpy/__init__.py?v=' + _V)).text());
     await pyodide.runPythonAsync(\`
 import sys; _g = globals(); _m = sys.modules['rclpy']
 for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete','create_node','_ROSpadSpin']:
