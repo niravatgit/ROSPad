@@ -59,10 +59,11 @@ let _tmpAmmoVec       = null;  // reusable btVector3 — avoids per-frame alloca
 let _tmpAmmoTransform = null;  // reusable btTransform
 
 function _initPhysics() {
-  if (typeof Ammo === 'undefined') { console.warn('ammo.js not loaded'); return; }
+  if (typeof Ammo === 'undefined') { console.warn('ammo.js not loaded — physics disabled'); return; }
   // Some CDN builds expose Ammo as the ready namespace; others return a Promise
   const ammoReady = typeof Ammo === 'function' ? Ammo() : Promise.resolve(Ammo);
   ammoReady.then(ammo => {
+    try {
     _Ammo = ammo;
     const A = _Ammo;
 
@@ -97,6 +98,7 @@ function _initPhysics() {
 
     // Build bodies for any obstacles already in scene
     simObstacles.forEach(obs => { if (!obs.userData.physBody) obs.userData.physBody = _makeObsBody(obs); });
+    } catch(e) { console.warn('ammo.js init failed — physics disabled:', e.message); _Ammo = null; physicsWorld = null; }
   });
 }
 
