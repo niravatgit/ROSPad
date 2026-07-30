@@ -479,15 +479,10 @@ async function main() {
   try {
     const pyodide = await loadPyodide({
       stdout: (text) => postLog('\\x1b[0m' + text),
-      // spin() sets the Python global _rospadSpinning=True before raising.
-      // By the time stderr fires (traceback formatting), pyodide is assigned
-      // so pyodide.globals.get() is safe. Keep text filter as belt-and-suspenders.
+      // _ROSpadSpin is now caught in Python before traceback formatting,
+      // so it never reaches stderr. Keep the text filter as last resort.
       stderr: (text) => {
-        let _sp = false;
-        try { _sp = !!pyodide.globals.get('_rospadSpinning'); } catch(_) {}
-        if (!_sp && !text.includes('_ROSpadSpin')) {
-          postLog('\\x1b[31m' + text + '\\x1b[0m');
-        }
+        if (!text.includes('_ROSpadSpin')) postLog('\\x1b[31m' + text + '\\x1b[0m');
       },
     });
 
@@ -551,27 +546,28 @@ for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete
     }
 
     postMessage({ type: 'ready' });
+    // Run user code inside a Python try/except that catches _ROSpadSpin before it
+    // ever reaches JS. This sidesteps all PythonError string-matching unreliability.
+    // exec(compile(..., 'exec'), globals()) shares pyodide.globals so imports and
+    // class definitions behave identically to plain runPythonAsync.
+    pyodide.globals.set('_rospad_uc_', ${JSON.stringify(userCode)});
     try {
-      await pyodide.runPythonAsync(${JSON.stringify(userCode)});
-      postMessage({ type: 'stopped' });
-    } catch(runErr) {
-      // Primary: spin() sets Python global _rospadSpinning=True before raising.
-      // pyodide.globals.get() is a direct Python-heap read — no import, no proxy issues.
-      let _isSpin = false;
-      try { _isSpin = !!pyodide.globals.get('_rospadSpinning'); } catch(_) {}
-      // Fallback: string-match all runErr representations.
-      const _parts = [];
-      try { _parts.push(String(runErr)); } catch(_) {}
-      try { if (runErr?.message) _parts.push(runErr.message); } catch(_) {}
-      try { if (runErr?.stack)   _parts.push(runErr.stack);   } catch(_) {}
-      try { if (runErr?.name)    _parts.push(runErr.name);    } catch(_) {}
-      const _errStr = _parts.join(' ');
-      if (_isSpin || _errStr.includes('_ROSpadSpin')) {
-        // spin() sentinel — node is alive via JS timers, do NOT stop
-      } else {
-        postError(runErr.message || String(runErr), runErr.stack || '');
+      await pyodide.runPythonAsync(\`
+_rospad_spin_caught_ = False
+_rospad_SpinT_ = __import__('sys').modules['rclpy']._ROSpadSpin
+try:
+    exec(compile(_rospad_uc_, '<exec>', 'exec'), globals())
+except _rospad_SpinT_:
+    _rospad_spin_caught_ = True
+del _rospad_uc_
+\`);
+      if (!pyodide.globals.get('_rospad_spin_caught_')) {
         postMessage({ type: 'stopped' });
       }
+    } catch(runErr) {
+      // _ROSpadSpin is caught in Python — only real errors reach here.
+      postError(runErr.message || String(runErr), runErr.stack || '');
+      postMessage({ type: 'stopped' });
     }
 
   } catch(e) {

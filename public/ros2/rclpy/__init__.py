@@ -41,10 +41,8 @@ class _ROSpadSpin(BaseException):
 def spin(node):
     """In WebROS/Pyodide, timers are driven by JS setInterval — already running.
     Raise the sentinel so main() exits cleanly without reaching shutdown().
-    The worker catches _ROSpadSpin and stays alive until worker.terminate().
+    The worker's exec wrapper catches _ROSpadSpin in Python before it reaches JS.
     """
-    global _rospadSpinning
-    _rospadSpinning = True
     raise _ROSpadSpin()
 
 
