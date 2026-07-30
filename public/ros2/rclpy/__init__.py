@@ -43,6 +43,11 @@ def spin(node):
     Raise the sentinel so main() exits cleanly without reaching shutdown().
     The worker catches _ROSpadSpin and stays alive until worker.terminate().
     """
+    try:
+        import js as _js
+        _js._rospadSpinning = True
+    except Exception:
+        pass
     raise _ROSpadSpin()
 
 

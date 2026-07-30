@@ -479,10 +479,12 @@ async function main() {
   try {
     const pyodide = await loadPyodide({
       stdout: (text) => postLog('\\x1b[0m' + text),
-      // Suppress _ROSpadSpin sentinel traceback — Pyodide may write it to stderr
-      // before the JS catch block can intercept it.
+      // Suppress _ROSpadSpin traceback — spin() sets self._rospadSpinning=true in
+      // Python before raising, so the flag is live by the time stderr fires.
       stderr: (text) => {
-        if (!text.includes('_ROSpadSpin')) postLog('\\x1b[31m' + text + '\\x1b[0m');
+        if (!self._rospadSpinning && !text.includes('_ROSpadSpin')) {
+          postLog('\\x1b[31m' + text + '\\x1b[0m');
+        }
       },
     });
 
@@ -550,17 +552,16 @@ for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete
       await pyodide.runPythonAsync(${JSON.stringify(userCode)});
       postMessage({ type: 'stopped' });
     } catch(runErr) {
-      // Pyodide wraps Python exceptions as PythonError; check all string representations.
-      // In Pyodide v0.25+ the full traceback lives in .stack, not .message.
+      // Primary check: spin() sets self._rospadSpinning=true (via js module) before
+      // raising, so this flag is reliable regardless of how Pyodide formats the error.
+      const _isSpin = !!self._rospadSpinning;
+      self._rospadSpinning = false;
+      // Fallback: string-match in case js import failed inside spin().
       const _errStr = [
-        String(runErr),
-        runErr?.message,
-        runErr?.type,
-        runErr?.name,
-        runErr?.stack,
+        String(runErr), runErr?.message, runErr?.type, runErr?.name, runErr?.stack,
       ].filter(Boolean).join(' ');
-      if (_errStr.includes('_ROSpadSpin')) {
-        // spin() raised its sentinel — node is alive via JS timers, do NOT stop
+      if (_isSpin || _errStr.includes('_ROSpadSpin')) {
+        // spin() sentinel — node is alive via JS timers, do NOT stop
       } else {
         postError(runErr.message || String(runErr), runErr.stack || '');
         postMessage({ type: 'stopped' });
