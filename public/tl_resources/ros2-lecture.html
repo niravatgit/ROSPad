@@ -667,7 +667,7 @@ self.sub = self.<span class="fn">create_subscription</span>(
         <li>Declare a <code style="font-family:monospace;color:#22d3ee">&lt;sensor type="camera"&gt;</code> in URDF</li>
         <li>Simulator auto-publishes <code style="font-family:monospace;color:#22d3ee">/camera/image_raw</code> at 10 Hz</li>
         <li>Click the topic in the Topics panel — see a live preview</li>
-        <li>Subscribe in Python → <code style="font-family:monospace;color:#22d3ee">np.asarray(msg.data).reshape(h,w,3)</code></li>
+        <li>Subscribe in Python → <code style="font-family:monospace;color:#22d3ee">np.asarray(list(msg.data), dtype=np.uint8).reshape(h,w,3)</code></li>
       </ul>
     </div>
     <div class="col">
@@ -679,6 +679,9 @@ self.sub = self.<span class="fn">create_subscription</span>(
         <li>Robot steers toward the coloured target — <strong>visual servoing</strong></li>
       </ul>
     </div>
+  </div>
+  <div style="margin-top:1.5vh;font-size:.72rem;color:#8090b0">
+    Full walkthrough: <a href="vision-tutorial.html" style="color:#22d3ee;text-decoration:none;font-weight:600">Vision Tutorial →</a>
   </div>
 </div>
 
