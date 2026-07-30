@@ -39,11 +39,12 @@ class _ROSpadSpin(BaseException):
 
 
 def spin(node):
-    """In WebROS/Pyodide, timers are driven by JS setInterval — already running.
-    Raise the sentinel so main() exits cleanly without reaching shutdown().
-    The worker's exec wrapper catches _ROSpadSpin in Python before it reaches JS.
+    """In WebROS/Pyodide, JS setInterval timers are already running the node.
+    Set a flag and return so the worker knows NOT to post 'stopped'.
+    No exception = nothing for Pyodide's async layer to intercept.
     """
-    raise _ROSpadSpin()
+    global _rospad_spin_called_
+    _rospad_spin_called_ = True
 
 
 async def _spin_async(node):

@@ -549,26 +549,16 @@ for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete
     }
 
     postMessage({ type: 'ready' });
-    // Run user code inside a Python try/except that catches _ROSpadSpin before it
-    // ever reaches JS. This sidesteps all PythonError string-matching unreliability.
-    // exec(compile(..., 'exec'), globals()) shares pyodide.globals so imports and
-    // class definitions behave identically to plain runPythonAsync.
-    pyodide.globals.set('_rospad_uc_', ${JSON.stringify(userCode)});
+    // spin() sets _rospad_spin_called_=True and returns normally — no exception.
+    // runPythonAsync resolves cleanly; we check the flag to decide whether to
+    // post 'stopped'. No exception = no Pyodide async-layer interception.
     try {
-      await pyodide.runPythonAsync(\`
-_rospad_spin_caught_ = False
-_rospad_SpinT_ = __import__('sys').modules['rclpy']._ROSpadSpin
-try:
-    exec(compile(_rospad_uc_, '<exec>', 'exec'), globals())
-except _rospad_SpinT_:
-    _rospad_spin_caught_ = True
-del _rospad_uc_
-\`);
-      if (!pyodide.globals.get('_rospad_spin_caught_')) {
+      await pyodide.runPythonAsync(${JSON.stringify(userCode)});
+      const _wasSpin = !!pyodide.globals.get('_rospad_spin_called_');
+      if (!_wasSpin) {
         postMessage({ type: 'stopped' });
       }
     } catch(runErr) {
-      // _ROSpadSpin is caught in Python — only real errors reach here.
       postError(runErr.message || String(runErr), runErr.stack || '');
       postMessage({ type: 'stopped' });
     }
