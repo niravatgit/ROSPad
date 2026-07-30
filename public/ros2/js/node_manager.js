@@ -479,10 +479,13 @@ async function main() {
   try {
     const pyodide = await loadPyodide({
       stdout: (text) => postLog('\\x1b[0m' + text),
-      // Suppress _ROSpadSpin traceback — spin() sets self._rospadSpinning=true in
-      // Python before raising, so the flag is live by the time stderr fires.
+      // spin() sets the Python global _rospadSpinning=True before raising.
+      // By the time stderr fires (traceback formatting), pyodide is assigned
+      // so pyodide.globals.get() is safe. Keep text filter as belt-and-suspenders.
       stderr: (text) => {
-        if (!self._rospadSpinning && !text.includes('_ROSpadSpin')) {
+        let _sp = false;
+        try { _sp = !!pyodide.globals.get('_rospadSpinning'); } catch(_) {}
+        if (!_sp && !text.includes('_ROSpadSpin')) {
           postLog('\\x1b[31m' + text + '\\x1b[0m');
         }
       },
@@ -552,14 +555,17 @@ for _k in ['init','shutdown','ok','spin','spin_once','spin_until_future_complete
       await pyodide.runPythonAsync(${JSON.stringify(userCode)});
       postMessage({ type: 'stopped' });
     } catch(runErr) {
-      // Primary check: spin() sets self._rospadSpinning=true (via js module) before
-      // raising, so this flag is reliable regardless of how Pyodide formats the error.
-      const _isSpin = !!self._rospadSpinning;
-      self._rospadSpinning = false;
-      // Fallback: string-match in case js import failed inside spin().
-      const _errStr = [
-        String(runErr), runErr?.message, runErr?.type, runErr?.name, runErr?.stack,
-      ].filter(Boolean).join(' ');
+      // Primary: spin() sets Python global _rospadSpinning=True before raising.
+      // pyodide.globals.get() is a direct Python-heap read — no import, no proxy issues.
+      let _isSpin = false;
+      try { _isSpin = !!pyodide.globals.get('_rospadSpinning'); } catch(_) {}
+      // Fallback: string-match all runErr representations.
+      const _parts = [];
+      try { _parts.push(String(runErr)); } catch(_) {}
+      try { if (runErr?.message) _parts.push(runErr.message); } catch(_) {}
+      try { if (runErr?.stack)   _parts.push(runErr.stack);   } catch(_) {}
+      try { if (runErr?.name)    _parts.push(runErr.name);    } catch(_) {}
+      const _errStr = _parts.join(' ');
       if (_isSpin || _errStr.includes('_ROSpadSpin')) {
         // spin() sentinel — node is alive via JS timers, do NOT stop
       } else {
