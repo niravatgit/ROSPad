@@ -22,11 +22,16 @@ from sensor_msgs.msg import Image
 
 
 # Colour definitions: name → (R_min, R_max, G_min, G_max, B_min, B_max)
+# Ranges account for Lambert shading (ambient 0.4 → shadow at 40% brightness).
+# Pure colours: #ff0000, #00ff00, #0000ff.
+# Sim palette (OBS_COLORS): 0xf85149, 0x3fb950, 0x39c5cf, 0x58a6ff, 0xd29922, 0x8957e5.
 COLOURS = {
-    'red':    (150, 255,   0,  80,   0,  80),
-    'green':  (  0,  80, 120, 255,   0,  80),
-    'blue':   (  0,  80,   0,  80, 120, 255),
-    'yellow': (150, 255, 120, 255,   0,  80),
+    'red':    ( 70, 255,   0,  95,   0,  95),  # #ff0000 + 0xf85149
+    'green':  (  0,  85,  60, 255,   0,  90),  # #00ff00 + 0x3fb950
+    'blue':   (  0, 115,   0, 115,  80, 255),  # #0000ff + 0x58a6ff (B_min 80 covers shadow)
+    'cyan':   (  0,  70, 100, 255,  90, 255),  # 0x39c5cf (G≈B both high, R low)
+    'orange': ( 70, 220,  50, 170,   0,  55),  # 0xd29922
+    'purple': ( 40, 165,  15, 110,  60, 240),  # 0x8957e5
 }
 
 
