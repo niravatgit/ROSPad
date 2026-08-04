@@ -465,7 +465,7 @@ footer {
       <div class="step-body">
         <p>ROSpad is designed for progressive classroom discovery. The recommended flow:</p>
         <ol style="margin:.5rem 0 .5rem 1.2rem;line-height:2.2">
-          <li><strong>Login</strong> — only <span class="inline-code">sys_packages</span> (the ROS2 Python shim) is seeded. The workspace is nearly empty.</li>
+          <li><strong>Login</strong> — robot description packages (<span class="inline-code">diffbot_description</span>, <span class="inline-code">ur5_description</span>, etc.) are seeded automatically. The workspace is otherwise nearly empty.</li>
           <li><strong>⊕ Add Package</strong> — install demo packages one at a time as the session progresses. Students see each package appear live in their explorer and can explore it before running anything.</li>
           <li><strong>⊖ Clear Workspace</strong> — at the start of a new topic or exercise, wipe the workspace and begin building again from scratch.</li>
           <li><strong>⊘ Reset</strong> — if you need all demos at once (exam prep, self-study) or want to recover a clean state, Reset seeds the complete collection in one click.</li>
@@ -1080,15 +1080,15 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
     <details class="step-details">
       <summary class="step-summary"><span class="step-n">1</span>Launch the UR5<span class="chevron">›</span></summary>
       <div class="step-body">
-        <p>Expand <strong>sys_packages → ur5_description → launch</strong> and open <span class="inline-code">ur5_bringup.launch.py</span>. Click <span class="btn-ref launch">⚡ Launch</span>. The arm loads in the 3D sim.</p>
-        <p>Optionally, run <span class="inline-code">src/demos/ur5_control/ur5_control/joint_sine_demo.py</span> to make the arm move continuously.</p>
+        <p>Expand <strong>ur5 → ur5_description → launch</strong> and open <span class="inline-code">ur5_bringup.launch.py</span>. Click <span class="btn-ref launch">⚡ Launch</span>. The arm loads in the 3D sim.</p>
+        <p>Optionally, run <span class="inline-code">src/ur5/ur5_description/scripts/joint_sine_demo.py</span> to make the arm move continuously.</p>
       </div>
     </details>
 
     <details class="step-details">
       <summary class="step-summary"><span class="step-n">2</span>Start the joint-state service server<span class="chevron">›</span></summary>
       <div class="step-body">
-        <p>Open <span class="inline-code">src/demos/ur5_control/ur5_control/joint_state_server.py</span> and click <span class="btn-ref run">▶ Run</span>.</p>
+        <p>Open <span class="inline-code">src/ur5/ur5_control/ur5_control/joint_state_server.py</span> and click <span class="btn-ref run">▶ Run</span>.</p>
         <p>The terminal prints:</p>
         <pre style="margin:.5rem 0;padding:.6rem .8rem;background:var(--bg3);border-radius:5px;font-size:12px;color:var(--green)">[ur5_joint_state_server] Service /get_ur5_joints ready</pre>
         <div class="note note-info"><span class="note-icon">ℹ️</span><span>The server subscribes to <code>/joint_states</code> and caches the latest values. It serves them instantly to any client without re-reading the topic.</span></div>
@@ -1158,7 +1158,7 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
       <summary class="step-summary"><span class="step-n">4</span>Run the vision node<span class="chevron">›</span></summary>
       <div class="step-body">
         <p>Open a terminal and run:</p>
-        <pre style="margin:.5rem 0;padding:.6rem .8rem;background:var(--bg3);border-radius:5px;font-size:12px;color:var(--green)">ros2 run vision_demos color_tracker</pre>
+        <pre style="margin:.5rem 0;padding:.6rem .8rem;background:var(--bg3);border-radius:5px;font-size:12px;color:var(--green)">ros2 run diffbot_vision color_tracker</pre>
         <p>The robot spins to search for red, then steers toward it. Watch <span class="inline-code">/cmd_vel</span> in the Topics panel to see the velocity commands.</p>
       </div>
     </details>

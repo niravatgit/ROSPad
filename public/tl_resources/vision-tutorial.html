@@ -276,8 +276,12 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
         <div class="pkg-desc"><strong>UR5 URDF with wrist (eye-in-hand) camera.</strong> Adds <code>wrist_camera_link</code> at the tool0 position on wrist_3. Camera view changes with arm pose. Publishes on <code>/wrist_camera/image_raw</code>.</div>
       </div>
       <div class="pkg-item">
-        <span class="pkg-badge">vision_demos</span>
-        <div class="pkg-desc"><strong>Python vision nodes.</strong> Contains <code>color_tracker</code> (steers DiffBot toward a coloured obstacle), <code>wrist_detector</code> (logs coloured object positions from UR5 wrist cam), and <code>image_info</code> (quick pipeline sanity check).</div>
+        <span class="pkg-badge">diffbot_vision</span>
+        <div class="pkg-desc"><strong>DiffBot vision node.</strong> Contains <code>color_tracker</code> — steers the DiffBot toward a coloured obstacle using the front camera.</div>
+      </div>
+      <div class="pkg-item">
+        <span class="pkg-badge">ur5_vision</span>
+        <div class="pkg-desc"><strong>UR5 vision nodes.</strong> Contains <code>wrist_detector</code> (logs coloured object positions from UR5 wrist cam) and <code>image_info</code> (quick pipeline sanity check).</div>
       </div>
     </div>
   </div>
@@ -350,7 +354,7 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
           <strong>Run the vision node.</strong>
           <div class="terminal">
             <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div></div>
-            <pre><span class="prompt">$</span> <span class="cmd">ros2 run vision_demos color_tracker</span>
+            <pre><span class="prompt">$</span> <span class="cmd">ros2 run diffbot_vision color_tracker</span>
 <span class="ok">[INFO] [color_tracker]: ColorTracker started — waiting for /camera/image_raw</span>
 <span class="out">[INFO] [color_tracker]: Searching... (red pixels: 0)</span>
 <span class="out">[INFO] [color_tracker]: Target at cx=178px  offset=+0.11  area=3.2%  vx=0.27  wz=-0.09</span></pre>
@@ -367,10 +371,10 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
       </div>
     </div>
 
-    <p>Open <code>vision_demos/color_tracker.py</code> in the editor to explore the numpy-based detection logic. The key section:</p>
+    <p>Open <code>diffbot_vision/color_tracker.py</code> in the editor to explore the numpy-based detection logic. The key section:</p>
 
     <div class="code-block">
-      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">vision_demos/vision_demos/color_tracker.py</span></div>
+      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">diffbot/diffbot_vision/diffbot_vision/color_tracker.py</span></div>
 <pre><span class="kw">def</span> <span class="fn">_on_image</span>(self, msg):
     w, h = msg.width, msg.height
 
@@ -428,7 +432,7 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
           <strong>Add coloured obstacles</strong> and run the detector:
           <div class="terminal">
             <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div></div>
-            <pre><span class="prompt">$</span> <span class="cmd">ros2 run vision_demos wrist_detector</span>
+            <pre><span class="prompt">$</span> <span class="cmd">ros2 run ur5_vision wrist_detector</span>
 <span class="out">[INFO] [wrist_detector]: Detected — red: pos=(0.48,0.52) area=4.1%  |  blue: pos=(0.72,0.61) area=2.3%</span></pre>
           </div>
           Position values are normalised (0,0) = top-left, (1,1) = bottom-right of the camera frame.
@@ -591,7 +595,7 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
 
     <div class="info-box tip" style="margin-top:24px">
       <span class="info-icon">🔬</span>
-      <p><strong>Quick pipeline check:</strong> Run <code>ros2 run vision_demos image_info</code> right after launching the camera URDF. It prints the image dimensions and mean RGB every 10 frames. If you see output, the camera pipeline is working end-to-end.</p>
+      <p><strong>Quick pipeline check:</strong> Run <code>ros2 run ur5_vision image_info</code> right after launching the camera URDF. It prints the image dimensions and mean RGB every 10 frames. If you see output, the camera pipeline is working end-to-end.</p>
     </div>
   </div>
 

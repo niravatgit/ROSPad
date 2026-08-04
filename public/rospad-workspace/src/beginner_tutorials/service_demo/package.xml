@@ -2,7 +2,7 @@
 <package format="3">
   <name>service_demo</name>
   <version>0.0.1</version>
-  <description>ROS2 service demo: AddTwoInts server/client and UR5 joint-state query</description>
+  <description>ROS2 service demo — AddTwoInts server and client showing request/response communication</description>
   <maintainer email="student@github.com">Student</maintainer>
   <license>Apache-2.0</license>
   <depend>rclpy</depend>

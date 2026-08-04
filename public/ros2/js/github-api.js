@@ -2,7 +2,7 @@
  * github-api.js — drop-in replacement for the Express server API
  *
  * User workspace  → private GitHub repo "rospad-workspace" in the user's account
- * System packages → served statically from rospad-workspace/src/sys_packages/ on GitHub Pages
+ * Description packages → served statically from rospad-workspace/src/{diffbot,ur5}/ on GitHub Pages
  *
  * Configure before use:
  *   ROSPAD_CONFIG.oauthProxyUrl  — Cloudflare Worker URL for code→token exchange
@@ -140,11 +140,11 @@ class GitHubAPI {
     }
   }
 
-  // Seeds only sys_packages into the workspace on login.
-  // Demos are never auto-seeded — use resetWorkspace() to get the full collection,
-  // or the "Add Package" picker to add individual demo packages during a teaching session.
-  // Checks each package individually so new sys_packages are seeded for existing users
-  // without touching packages they've already modified.
+  // Seeds description packages (robot models) into the workspace on login.
+  // Demo, control, and vision packages are never auto-seeded — use resetWorkspace() for the
+  // full collection, or the "Add Package" picker during a teaching session.
+  // Checks each package individually so new description packages are seeded for existing
+  // users without touching packages they've already modified.
   async seedIfNeeded(onProgress) {
     const base = this._pagesBase();
     const r = await fetch(`${base}/rospad-workspace/src-index.json`);
@@ -169,10 +169,12 @@ class GitHubAPI {
       }
     };
 
-    // Only seed sys_packages on login — demos are added explicitly via Reset or the package picker.
+    // Auto-seed description packages (robot models) on login.
+    // Demo and control packages are added explicitly via Reset or the package picker.
     for (const container of tree) {
-      if (container.name !== 'sys_packages') continue;
+      if (!['diffbot', 'ur5'].includes(container.name)) continue;
       for (const pkg of (container.children || [])) {
+        if (!pkg.name.endsWith('_description')) continue;
         try {
           await this._get(`/repos/${this.username}/${CFG.workspaceRepo}/contents/src/${pkg.path}`);
           // package already exists — skip it
@@ -296,7 +298,7 @@ class GitHubAPI {
     return newPath;
   }
 
-  // ── System packages — served from rospad-workspace/src/sys_packages/ ────────
+  // ── System packages — served statically from rospad-workspace/src/ ───────────
 
   async listRosDir(relPath) {
     if (!this._pkgIndex) {
@@ -316,7 +318,18 @@ class GitHubAPI {
   }
 
   async readRosFile(relPath) {
-    const r = await fetch(`${this._pagesBase()}/rospad-workspace/src/sys_packages/${relPath}`);
+    // relPath is pkg-relative, e.g. "diffbot_description/launch/diffbot_bringup.launch.py"
+    // Description packages moved from sys_packages/ into their robot container.
+    const PKG_CONTAINERS = {
+      'diffbot_description':        'diffbot',
+      'diffbot_camera_description': 'diffbot',
+      'ur5_description':            'ur5',
+      'ur5_camera_description':     'ur5',
+    };
+    const firstSeg  = relPath.split('/')[0];
+    const container = PKG_CONTAINERS[firstSeg];
+    const srcPath   = container ? `${container}/${relPath}` : relPath;
+    const r = await fetch(`${this._pagesBase()}/rospad-workspace/src/${srcPath}`);
     if (!r.ok) throw new Error(`GitHub ${r.status}`);
     return r.text();
   }

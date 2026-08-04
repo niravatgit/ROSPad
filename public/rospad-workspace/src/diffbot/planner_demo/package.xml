@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>demo_robot</name>
+  <name>planner_demo</name>
   <version>0.1.0</version>
-  <description>Demo robot package for ROSpad — differential drive + RRT planner</description>
+  <description>DiffBot autonomous navigation demo — differential drive controller + RRT path planner</description>
   <maintainer email="student@iitm.ac.in">Student</maintainer>
   <license>Apache-2.0</license>
   <depend>rclpy</depend>

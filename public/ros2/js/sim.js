@@ -825,12 +825,20 @@ function make6DOFFallback() {
 }
 
 // Resolve package:// URLs used in URDF mesh filenames.
-// Prefer /rospad-workspace/src/sys_packages/ (served statically by GitHub Pages).
-// Falls back to /ros2/packages/ if the static path 404s (Express server mode).
+// Description packages live under their robot container (diffbot/ or ur5/).
 function _resolveRosUrl(url) {
-  // Use a relative path so it works both on GitHub Pages (/ROSPad/) and localhost (/)
   const base = window.location.pathname.split('/').slice(0, -1).join('/');
-  return url.replace(/^package:\/\/([^/]+)\/(.*)$/, `${base}/rospad-workspace/src/sys_packages/$1/$2`);
+  const PKG_CONTAINERS = {
+    'diffbot_description':        'diffbot',
+    'diffbot_camera_description': 'diffbot',
+    'ur5_description':            'ur5',
+    'ur5_camera_description':     'ur5',
+  };
+  return url.replace(/^package:\/\/([^/]+)\/(.*)$/, (_, pkg, rest) => {
+    const container = PKG_CONTAINERS[pkg] || '';
+    const srcPath = container ? `${container}/${pkg}/${rest}` : `${pkg}/${rest}`;
+    return `${base}/rospad-workspace/src/${srcPath}`;
+  });
 }
 
 // Custom minimal GLB parser — all objects built with global THREE so

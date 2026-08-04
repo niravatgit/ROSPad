@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>ur5_vision</name>
+  <version>0.1.0</version>
+  <description>UR5 vision demos — wrist camera colour detection and image diagnostics for eye-in-hand perception</description>
+  <maintainer email="nirav.robotics@gmail.com">Nirav</maintainer>
+  <license>Apache-2.0</license>
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -128,12 +128,12 @@ async function refreshTree() {
       item.appendChild(nameEl);
 
       // ⚡ launch — always-visible, shown before the hover-only action buttons
-      // Depth-3 = nested package (src/demos/pkg, src/sys_packages/pkg)
-      // Depth-2 non-container = user top-level package
+      // Depth-3 = nested package (src/diffbot/pkg, src/ur5/pkg, src/beginner_tutorials/pkg)
+      // Depth-2 non-container = user top-level package (unusual but supported)
       if (e.type === 'dir') {
         const parts = e.path.split('/');
         const isLikelyPkg = parts.length === 3 ||
-          (parts.length === 2 && !['demos', 'sys_packages'].includes(e.name));
+          (parts.length === 2 && !['beginner_tutorials', 'diffbot', 'ur5'].includes(e.name));
         if (isLikelyPkg) {
           const lb = document.createElement('span');
           lb.className = 'tree-launch-icon';
@@ -212,7 +212,8 @@ function _updateSysBanner(path) {
     if (center && editorEl) center.insertBefore(banner, editorEl);
     else document.body.appendChild(banner);
   }
-  const isSys = path && (path.startsWith('src/sys_packages/') || path.startsWith('ros2:'));
+  const isSys = path && (path.startsWith('ros2:') ||
+    /src\/(diffbot|ur5)\/\w+_description\//.test(path));
   banner.style.display = isSys ? 'block' : 'none';
 }
 

@@ -9,7 +9,7 @@ Prerequisites:
   1. Launch ur5_camera_description:  ros2 launch ur5_camera_description ur5_camera.launch.py
   2. Run ur5_control joint_state_server (so /joint_states are published)
   3. Add coloured obstacles in the sim (Obstacles panel)
-  4. Run this node:  ros2 run vision_demos wrist_detector
+  4. Run this node:  ros2 run ur5_vision wrist_detector
   5. Enable /wrist_camera/image_raw in the Viz panel to see the camera feed
 
 Image format: sensor_msgs/Image, encoding=rgb8, 320×240

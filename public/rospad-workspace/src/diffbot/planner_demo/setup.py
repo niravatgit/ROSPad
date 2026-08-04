@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'demo_robot'
+package_name = 'planner_demo'
 
 setup(
     name=package_name,
@@ -9,8 +9,8 @@ setup(
     install_requires=['setuptools'],
     entry_points={
         'console_scripts': [
-            'diff_drive = demo_robot.diff_drive_controller:main',
-            'rrt_planner = demo_robot.rrt_planner:main',
+            'diff_drive = planner_demo.diff_drive_controller:main',
+            'rrt_planner = planner_demo.rrt_planner:main',
         ],
     },
 )

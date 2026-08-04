@@ -1,446 +1,158 @@
 [
   {
-    "name": "demos",
-    "path": "demos",
     "type": "dir",
+    "name": "beginner_tutorials",
+    "path": "beginner_tutorials",
     "children": [
       {
-        "name": "demo_robot",
-        "path": "demos/demo_robot",
         "type": "dir",
-        "children": [
-          {
-            "name": "demo_robot",
-            "path": "demos/demo_robot/demo_robot",
-            "type": "dir",
-            "children": [
-              {
-                "name": "__init__.py",
-                "path": "demos/demo_robot/demo_robot/__init__.py",
-                "type": "file"
-              },
-              {
-                "name": "diff_drive_controller.py",
-                "path": "demos/demo_robot/demo_robot/diff_drive_controller.py",
-                "type": "file"
-              },
-              {
-                "name": "rrt_planner.py",
-                "path": "demos/demo_robot/demo_robot/rrt_planner.py",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "launch",
-            "path": "demos/demo_robot/launch",
-            "type": "dir",
-            "children": [
-              {
-                "name": "demo.launch.py",
-                "path": "demos/demo_robot/launch/demo.launch.py",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "package.xml",
-            "path": "demos/demo_robot/package.xml",
-            "type": "file"
-          },
-          {
-            "name": "setup.py",
-            "path": "demos/demo_robot/setup.py",
-            "type": "file"
-          },
-          {
-            "name": "urdf",
-            "path": "demos/demo_robot/urdf",
-            "type": "dir",
-            "children": [
-              {
-                "name": "demo_robot.urdf",
-                "path": "demos/demo_robot/urdf/demo_robot.urdf",
-                "type": "file"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "diffbot_control",
-        "path": "demos/diffbot_control",
-        "type": "dir",
-        "children": [
-          {
-            "name": "diffbot_control",
-            "path": "demos/diffbot_control/diffbot_control",
-            "type": "dir",
-            "children": [
-              {
-                "name": "__init__.py",
-                "path": "demos/diffbot_control/diffbot_control/__init__.py",
-                "type": "file"
-              },
-              {
-                "name": "circle_drive.py",
-                "path": "demos/diffbot_control/diffbot_control/circle_drive.py",
-                "type": "file"
-              },
-              {
-                "name": "odometry_reader.py",
-                "path": "demos/diffbot_control/diffbot_control/odometry_reader.py",
-                "type": "file"
-              },
-              {
-                "name": "teleop_keyboard.py",
-                "path": "demos/diffbot_control/diffbot_control/teleop_keyboard.py",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "launch",
-            "path": "demos/diffbot_control/launch",
-            "type": "dir",
-            "children": [
-              {
-                "name": "diffbot_control.launch.py",
-                "path": "demos/diffbot_control/launch/diffbot_control.launch.py",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "package.xml",
-            "path": "demos/diffbot_control/package.xml",
-            "type": "file"
-          },
-          {
-            "name": "setup.py",
-            "path": "demos/diffbot_control/setup.py",
-            "type": "file"
-          }
-        ]
-      },
-      {
         "name": "service_demo",
-        "path": "demos/service_demo",
-        "type": "dir",
+        "path": "beginner_tutorials/service_demo",
         "children": [
           {
-            "name": "launch",
-            "path": "demos/service_demo/launch",
             "type": "dir",
+            "name": "launch",
+            "path": "beginner_tutorials/service_demo/launch",
             "children": [
               {
+                "type": "file",
                 "name": "service_demo.launch.py",
-                "path": "demos/service_demo/launch/service_demo.launch.py",
-                "type": "file"
+                "path": "beginner_tutorials/service_demo/launch/service_demo.launch.py"
               }
             ]
           },
           {
+            "type": "file",
             "name": "package.xml",
-            "path": "demos/service_demo/package.xml",
-            "type": "file"
+            "path": "beginner_tutorials/service_demo/package.xml"
           },
           {
+            "type": "dir",
             "name": "service_demo",
-            "path": "demos/service_demo/service_demo",
-            "type": "dir",
+            "path": "beginner_tutorials/service_demo/service_demo",
             "children": [
               {
+                "type": "file",
                 "name": "__init__.py",
-                "path": "demos/service_demo/service_demo/__init__.py",
-                "type": "file"
+                "path": "beginner_tutorials/service_demo/service_demo/__init__.py"
               },
               {
+                "type": "file",
                 "name": "add_two_ints_client.py",
-                "path": "demos/service_demo/service_demo/add_two_ints_client.py",
-                "type": "file"
+                "path": "beginner_tutorials/service_demo/service_demo/add_two_ints_client.py"
               },
               {
+                "type": "file",
                 "name": "add_two_ints_server.py",
-                "path": "demos/service_demo/service_demo/add_two_ints_server.py",
-                "type": "file"
+                "path": "beginner_tutorials/service_demo/service_demo/add_two_ints_server.py"
               }
             ]
           },
           {
+            "type": "file",
             "name": "setup.py",
-            "path": "demos/service_demo/setup.py",
-            "type": "file"
+            "path": "beginner_tutorials/service_demo/setup.py"
           }
         ]
       },
       {
+        "type": "dir",
         "name": "talker_listener",
-        "path": "demos/talker_listener",
-        "type": "dir",
+        "path": "beginner_tutorials/talker_listener",
         "children": [
           {
-            "name": "launch",
-            "path": "demos/talker_listener/launch",
             "type": "dir",
+            "name": "launch",
+            "path": "beginner_tutorials/talker_listener/launch",
             "children": [
               {
+                "type": "file",
                 "name": "talker_listener.launch.py",
-                "path": "demos/talker_listener/launch/talker_listener.launch.py",
-                "type": "file"
+                "path": "beginner_tutorials/talker_listener/launch/talker_listener.launch.py"
               }
             ]
           },
           {
+            "type": "file",
             "name": "package.xml",
-            "path": "demos/talker_listener/package.xml",
-            "type": "file"
+            "path": "beginner_tutorials/talker_listener/package.xml"
           },
           {
+            "type": "file",
             "name": "setup.py",
-            "path": "demos/talker_listener/setup.py",
-            "type": "file"
+            "path": "beginner_tutorials/talker_listener/setup.py"
           },
           {
+            "type": "dir",
             "name": "talker_listener",
-            "path": "demos/talker_listener/talker_listener",
-            "type": "dir",
+            "path": "beginner_tutorials/talker_listener/talker_listener",
             "children": [
               {
+                "type": "file",
                 "name": "__init__.py",
-                "path": "demos/talker_listener/talker_listener/__init__.py",
-                "type": "file"
+                "path": "beginner_tutorials/talker_listener/talker_listener/__init__.py"
               },
               {
+                "type": "file",
                 "name": "listener.py",
-                "path": "demos/talker_listener/talker_listener/listener.py",
-                "type": "file"
+                "path": "beginner_tutorials/talker_listener/talker_listener/listener.py"
               },
               {
+                "type": "file",
                 "name": "talker.py",
-                "path": "demos/talker_listener/talker_listener/talker.py",
-                "type": "file"
+                "path": "beginner_tutorials/talker_listener/talker_listener/talker.py"
               }
             ]
           }
         ]
       },
       {
+        "type": "dir",
         "name": "turtlesim_demo",
-        "path": "demos/turtlesim_demo",
-        "type": "dir",
+        "path": "beginner_tutorials/turtlesim_demo",
         "children": [
           {
-            "name": "launch",
-            "path": "demos/turtlesim_demo/launch",
             "type": "dir",
+            "name": "launch",
+            "path": "beginner_tutorials/turtlesim_demo/launch",
             "children": [
               {
+                "type": "file",
                 "name": "turtlesim.launch.py",
-                "path": "demos/turtlesim_demo/launch/turtlesim.launch.py",
-                "type": "file"
+                "path": "beginner_tutorials/turtlesim_demo/launch/turtlesim.launch.py"
               }
             ]
           },
           {
+            "type": "file",
             "name": "package.xml",
-            "path": "demos/turtlesim_demo/package.xml",
-            "type": "file"
+            "path": "beginner_tutorials/turtlesim_demo/package.xml"
           },
           {
+            "type": "file",
             "name": "setup.py",
-            "path": "demos/turtlesim_demo/setup.py",
-            "type": "file"
+            "path": "beginner_tutorials/turtlesim_demo/setup.py"
           },
           {
+            "type": "dir",
             "name": "turtlesim_demo",
-            "path": "demos/turtlesim_demo/turtlesim_demo",
-            "type": "dir",
+            "path": "beginner_tutorials/turtlesim_demo/turtlesim_demo",
             "children": [
               {
+                "type": "file",
                 "name": "__init__.py",
-                "path": "demos/turtlesim_demo/turtlesim_demo/__init__.py",
-                "type": "file"
+                "path": "beginner_tutorials/turtlesim_demo/turtlesim_demo/__init__.py"
               },
               {
+                "type": "file",
                 "name": "teleop_key.py",
-                "path": "demos/turtlesim_demo/turtlesim_demo/teleop_key.py",
-                "type": "file"
+                "path": "beginner_tutorials/turtlesim_demo/turtlesim_demo/teleop_key.py"
               },
               {
+                "type": "file",
                 "name": "turtle_node.py",
-                "path": "demos/turtlesim_demo/turtlesim_demo/turtle_node.py",
-                "type": "file"
+                "path": "beginner_tutorials/turtlesim_demo/turtlesim_demo/turtle_node.py"
               }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "ur5_control",
-        "path": "demos/ur5_control",
-        "type": "dir",
-        "children": [
-          {
-            "name": "launch",
-            "path": "demos/ur5_control/launch",
-            "type": "dir",
-            "children": [
-              {
-                "name": "ur5_control.launch.py",
-                "path": "demos/ur5_control/launch/ur5_control.launch.py",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "package.xml",
-            "path": "demos/ur5_control/package.xml",
-            "type": "file"
-          },
-          {
-            "name": "setup.py",
-            "path": "demos/ur5_control/setup.py",
-            "type": "file"
-          },
-          {
-            "name": "ur5_control",
-            "path": "demos/ur5_control/ur5_control",
-            "type": "dir",
-            "children": [
-              {
-                "name": "__init__.py",
-                "path": "demos/ur5_control/ur5_control/__init__.py",
-                "type": "file"
-              },
-              {
-                "name": "joint_controller.py",
-                "path": "demos/ur5_control/ur5_control/joint_controller.py",
-                "type": "file"
-              },
-              {
-                "name": "joint_sine_demo.py",
-                "path": "demos/ur5_control/ur5_control/joint_sine_demo.py",
-                "type": "file"
-              },
-              {
-                "name": "joint_state_publisher.py",
-                "path": "demos/ur5_control/ur5_control/joint_state_publisher.py",
-                "type": "file"
-              },
-              {
-                "name": "joint_state_server.py",
-                "path": "demos/ur5_control/ur5_control/joint_state_server.py",
-                "type": "file"
-              },
-              {
-                "name": "ur5_pose_client.py",
-                "path": "demos/ur5_control/ur5_control/ur5_pose_client.py",
-                "type": "file"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "diffbot_camera_description",
-        "path": "demos/diffbot_camera_description",
-        "type": "dir",
-        "children": [
-          {
-            "name": "diffbot_camera_description",
-            "path": "demos/diffbot_camera_description/diffbot_camera_description",
-            "type": "dir",
-            "children": [
-              { "name": "__init__.py", "path": "demos/diffbot_camera_description/diffbot_camera_description/__init__.py", "type": "file" }
-            ]
-          },
-          {
-            "name": "launch",
-            "path": "demos/diffbot_camera_description/launch",
-            "type": "dir",
-            "children": [
-              { "name": "diffbot_camera.launch.py", "path": "demos/diffbot_camera_description/launch/diffbot_camera.launch.py", "type": "file" }
-            ]
-          },
-          {
-            "name": "setup.py",
-            "path": "demos/diffbot_camera_description/setup.py",
-            "type": "file"
-          },
-          {
-            "name": "urdf",
-            "path": "demos/diffbot_camera_description/urdf",
-            "type": "dir",
-            "children": [
-              { "name": "diffbot_camera.urdf", "path": "demos/diffbot_camera_description/urdf/diffbot_camera.urdf", "type": "file" }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "ur5_camera_description",
-        "path": "demos/ur5_camera_description",
-        "type": "dir",
-        "children": [
-          {
-            "name": "ur5_camera_description",
-            "path": "demos/ur5_camera_description/ur5_camera_description",
-            "type": "dir",
-            "children": [
-              { "name": "__init__.py", "path": "demos/ur5_camera_description/ur5_camera_description/__init__.py", "type": "file" }
-            ]
-          },
-          {
-            "name": "launch",
-            "path": "demos/ur5_camera_description/launch",
-            "type": "dir",
-            "children": [
-              { "name": "ur5_camera.launch.py", "path": "demos/ur5_camera_description/launch/ur5_camera.launch.py", "type": "file" }
-            ]
-          },
-          {
-            "name": "setup.py",
-            "path": "demos/ur5_camera_description/setup.py",
-            "type": "file"
-          },
-          {
-            "name": "urdf",
-            "path": "demos/ur5_camera_description/urdf",
-            "type": "dir",
-            "children": [
-              { "name": "ur5_camera.urdf", "path": "demos/ur5_camera_description/urdf/ur5_camera.urdf", "type": "file" }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "vision_demos",
-        "path": "demos/vision_demos",
-        "type": "dir",
-        "children": [
-          {
-            "name": "launch",
-            "path": "demos/vision_demos/launch",
-            "type": "dir",
-            "children": [
-              { "name": "color_tracker.launch.py", "path": "demos/vision_demos/launch/color_tracker.launch.py", "type": "file" }
-            ]
-          },
-          {
-            "name": "setup.py",
-            "path": "demos/vision_demos/setup.py",
-            "type": "file"
-          },
-          {
-            "name": "vision_demos",
-            "path": "demos/vision_demos/vision_demos",
-            "type": "dir",
-            "children": [
-              { "name": "__init__.py",        "path": "demos/vision_demos/vision_demos/__init__.py",        "type": "file" },
-              { "name": "color_tracker.py",   "path": "demos/vision_demos/vision_demos/color_tracker.py",   "type": "file" },
-              { "name": "image_info.py",      "path": "demos/vision_demos/vision_demos/image_info.py",      "type": "file" },
-              { "name": "wrist_detector.py",  "path": "demos/vision_demos/vision_demos/wrist_detector.py",  "type": "file" }
             ]
           }
         ]
@@ -448,228 +160,623 @@
     ]
   },
   {
-    "name": "sys_packages",
-    "path": "sys_packages",
     "type": "dir",
+    "name": "diffbot",
+    "path": "diffbot",
     "children": [
       {
-        "name": "diffbot_description",
-        "path": "sys_packages/diffbot_description",
         "type": "dir",
+        "name": "diffbot_camera_description",
+        "path": "diffbot/diffbot_camera_description",
         "children": [
           {
-            "name": "config",
-            "path": "sys_packages/diffbot_description/config",
             "type": "dir",
+            "name": "diffbot_camera_description",
+            "path": "diffbot/diffbot_camera_description/diffbot_camera_description",
             "children": [
               {
-                "name": "diffbot_params.yaml",
-                "path": "sys_packages/diffbot_description/config/diffbot_params.yaml",
-                "type": "file"
+                "type": "file",
+                "name": "__init__.py",
+                "path": "diffbot/diffbot_camera_description/diffbot_camera_description/__init__.py"
               }
             ]
           },
           {
+            "type": "dir",
             "name": "launch",
-            "path": "sys_packages/diffbot_description/launch",
-            "type": "dir",
+            "path": "diffbot/diffbot_camera_description/launch",
             "children": [
               {
-                "name": "diffbot_bringup.launch.py",
-                "path": "sys_packages/diffbot_description/launch/diffbot_bringup.launch.py",
-                "type": "file"
+                "type": "file",
+                "name": "diffbot_camera.launch.py",
+                "path": "diffbot/diffbot_camera_description/launch/diffbot_camera.launch.py"
               }
             ]
           },
           {
-            "name": "meshes",
-            "path": "sys_packages/diffbot_description/meshes",
-            "type": "dir",
-            "children": []
-          },
-          {
+            "type": "file",
             "name": "package.xml",
-            "path": "sys_packages/diffbot_description/package.xml",
-            "type": "file"
+            "path": "diffbot/diffbot_camera_description/package.xml"
           },
           {
-            "name": "resource",
-            "path": "sys_packages/diffbot_description/resource",
-            "type": "dir",
-            "children": [
-              {
-                "name": "diffbot_description",
-                "path": "sys_packages/diffbot_description/resource/diffbot_description",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "rviz",
-            "path": "sys_packages/diffbot_description/rviz",
-            "type": "dir",
-            "children": [
-              {
-                "name": "diffbot.rviz",
-                "path": "sys_packages/diffbot_description/rviz/diffbot.rviz",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "scripts",
-            "path": "sys_packages/diffbot_description/scripts",
-            "type": "dir",
-            "children": [
-              {
-                "name": "odometry_reader.py",
-                "path": "sys_packages/diffbot_description/scripts/odometry_reader.py",
-                "type": "file"
-              },
-              {
-                "name": "teleop_keyboard.py",
-                "path": "sys_packages/diffbot_description/scripts/teleop_keyboard.py",
-                "type": "file"
-              }
-            ]
-          },
-          {
-            "name": "setup.cfg",
-            "path": "sys_packages/diffbot_description/setup.cfg",
-            "type": "file"
-          },
-          {
+            "type": "file",
             "name": "setup.py",
-            "path": "sys_packages/diffbot_description/setup.py",
-            "type": "file"
+            "path": "diffbot/diffbot_camera_description/setup.py"
           },
           {
-            "name": "urdf",
-            "path": "sys_packages/diffbot_description/urdf",
             "type": "dir",
+            "name": "urdf",
+            "path": "diffbot/diffbot_camera_description/urdf",
             "children": [
               {
-                "name": "diffbot.urdf",
-                "path": "sys_packages/diffbot_description/urdf/diffbot.urdf",
-                "type": "file"
+                "type": "file",
+                "name": "diffbot_camera.urdf",
+                "path": "diffbot/diffbot_camera_description/urdf/diffbot_camera.urdf"
               }
             ]
           }
         ]
       },
       {
-        "name": "ur5_description",
-        "path": "sys_packages/ur5_description",
         "type": "dir",
+        "name": "diffbot_control",
+        "path": "diffbot/diffbot_control",
         "children": [
           {
-            "name": "config",
-            "path": "sys_packages/ur5_description/config",
             "type": "dir",
+            "name": "diffbot_control",
+            "path": "diffbot/diffbot_control/diffbot_control",
             "children": [
               {
-                "name": "joint_limits.yaml",
-                "path": "sys_packages/ur5_description/config/joint_limits.yaml",
-                "type": "file"
+                "type": "file",
+                "name": "__init__.py",
+                "path": "diffbot/diffbot_control/diffbot_control/__init__.py"
+              },
+              {
+                "type": "file",
+                "name": "circle_drive.py",
+                "path": "diffbot/diffbot_control/diffbot_control/circle_drive.py"
+              },
+              {
+                "type": "file",
+                "name": "odometry_reader.py",
+                "path": "diffbot/diffbot_control/diffbot_control/odometry_reader.py"
+              },
+              {
+                "type": "file",
+                "name": "teleop_keyboard.py",
+                "path": "diffbot/diffbot_control/diffbot_control/teleop_keyboard.py"
               }
             ]
           },
           {
+            "type": "dir",
             "name": "launch",
-            "path": "sys_packages/ur5_description/launch",
-            "type": "dir",
+            "path": "diffbot/diffbot_control/launch",
             "children": [
               {
-                "name": "ur5_bringup.launch.py",
-                "path": "sys_packages/ur5_description/launch/ur5_bringup.launch.py",
-                "type": "file"
+                "type": "file",
+                "name": "diffbot_control.launch.py",
+                "path": "diffbot/diffbot_control/launch/diffbot_control.launch.py"
               }
             ]
           },
           {
-            "name": "meshes",
-            "path": "sys_packages/ur5_description/meshes",
-            "type": "dir",
-            "children": [
-              {
-                "name": "collision",
-                "path": "sys_packages/ur5_description/meshes/collision",
-                "type": "dir",
-                "children": []
-              },
-              {
-                "name": "visual",
-                "path": "sys_packages/ur5_description/meshes/visual",
-                "type": "dir",
-                "children": []
-              }
-            ]
-          },
-          {
+            "type": "file",
             "name": "package.xml",
-            "path": "sys_packages/ur5_description/package.xml",
-            "type": "file"
+            "path": "diffbot/diffbot_control/package.xml"
           },
           {
+            "type": "file",
+            "name": "setup.py",
+            "path": "diffbot/diffbot_control/setup.py"
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "diffbot_description",
+        "path": "diffbot/diffbot_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "config",
+            "path": "diffbot/diffbot_description/config",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_params.yaml",
+                "path": "diffbot/diffbot_description/config/diffbot_params.yaml"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "diffbot/diffbot_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_bringup.launch.py",
+                "path": "diffbot/diffbot_description/launch/diffbot_bringup.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "meshes",
+            "path": "diffbot/diffbot_description/meshes",
+            "children": []
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "diffbot/diffbot_description/package.xml"
+          },
+          {
+            "type": "dir",
             "name": "resource",
-            "path": "sys_packages/ur5_description/resource",
-            "type": "dir",
+            "path": "diffbot/diffbot_description/resource",
             "children": [
               {
-                "name": "ur5_description",
-                "path": "sys_packages/ur5_description/resource/ur5_description",
-                "type": "file"
+                "type": "file",
+                "name": "diffbot_description",
+                "path": "diffbot/diffbot_description/resource/diffbot_description"
               }
             ]
           },
           {
+            "type": "dir",
             "name": "rviz",
-            "path": "sys_packages/ur5_description/rviz",
-            "type": "dir",
+            "path": "diffbot/diffbot_description/rviz",
             "children": [
               {
-                "name": "ur5.rviz",
-                "path": "sys_packages/ur5_description/rviz/ur5.rviz",
-                "type": "file"
+                "type": "file",
+                "name": "diffbot.rviz",
+                "path": "diffbot/diffbot_description/rviz/diffbot.rviz"
               }
             ]
           },
           {
-            "name": "scripts",
-            "path": "sys_packages/ur5_description/scripts",
             "type": "dir",
+            "name": "scripts",
+            "path": "diffbot/diffbot_description/scripts",
             "children": [
               {
-                "name": "joint_sine_demo.py",
-                "path": "sys_packages/ur5_description/scripts/joint_sine_demo.py",
-                "type": "file"
+                "type": "file",
+                "name": "odometry_reader.py",
+                "path": "diffbot/diffbot_description/scripts/odometry_reader.py"
               },
               {
-                "name": "joint_state_publisher.py",
-                "path": "sys_packages/ur5_description/scripts/joint_state_publisher.py",
-                "type": "file"
+                "type": "file",
+                "name": "teleop_keyboard.py",
+                "path": "diffbot/diffbot_description/scripts/teleop_keyboard.py"
               }
             ]
           },
           {
+            "type": "file",
             "name": "setup.cfg",
-            "path": "sys_packages/ur5_description/setup.cfg",
-            "type": "file"
+            "path": "diffbot/diffbot_description/setup.cfg"
           },
           {
+            "type": "file",
             "name": "setup.py",
-            "path": "sys_packages/ur5_description/setup.py",
-            "type": "file"
+            "path": "diffbot/diffbot_description/setup.py"
           },
           {
-            "name": "urdf",
-            "path": "sys_packages/ur5_description/urdf",
             "type": "dir",
+            "name": "urdf",
+            "path": "diffbot/diffbot_description/urdf",
             "children": [
               {
+                "type": "file",
+                "name": "diffbot.urdf",
+                "path": "diffbot/diffbot_description/urdf/diffbot.urdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "diffbot_vision",
+        "path": "diffbot/diffbot_vision",
+        "children": [
+          {
+            "type": "dir",
+            "name": "diffbot_vision",
+            "path": "diffbot/diffbot_vision/diffbot_vision",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "diffbot/diffbot_vision/diffbot_vision/__init__.py"
+              },
+              {
+                "type": "file",
+                "name": "color_tracker.py",
+                "path": "diffbot/diffbot_vision/diffbot_vision/color_tracker.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "diffbot/diffbot_vision/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "color_tracker.launch.py",
+                "path": "diffbot/diffbot_vision/launch/color_tracker.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "diffbot/diffbot_vision/package.xml"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "diffbot/diffbot_vision/setup.py"
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "planner_demo",
+        "path": "diffbot/planner_demo",
+        "children": [
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "diffbot/planner_demo/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "demo.launch.py",
+                "path": "diffbot/planner_demo/launch/demo.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "diffbot/planner_demo/package.xml"
+          },
+          {
+            "type": "dir",
+            "name": "planner_demo",
+            "path": "diffbot/planner_demo/planner_demo",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "diffbot/planner_demo/planner_demo/__init__.py"
+              },
+              {
+                "type": "file",
+                "name": "diff_drive_controller.py",
+                "path": "diffbot/planner_demo/planner_demo/diff_drive_controller.py"
+              },
+              {
+                "type": "file",
+                "name": "rrt_planner.py",
+                "path": "diffbot/planner_demo/planner_demo/rrt_planner.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "diffbot/planner_demo/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "diffbot/planner_demo/urdf",
+            "children": [
+              {
+                "type": "file",
+                "name": "demo_robot.urdf",
+                "path": "diffbot/planner_demo/urdf/demo_robot.urdf"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "dir",
+    "name": "ur5",
+    "path": "ur5",
+    "children": [
+      {
+        "type": "dir",
+        "name": "ur5_camera_description",
+        "path": "ur5/ur5_camera_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "ur5/ur5_camera_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_camera.launch.py",
+                "path": "ur5/ur5_camera_description/launch/ur5_camera.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "ur5/ur5_camera_description/package.xml"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "ur5/ur5_camera_description/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "ur5_camera_description",
+            "path": "ur5/ur5_camera_description/ur5_camera_description",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "ur5/ur5_camera_description/ur5_camera_description/__init__.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "ur5/ur5_camera_description/urdf",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_camera.urdf",
+                "path": "ur5/ur5_camera_description/urdf/ur5_camera.urdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "ur5_control",
+        "path": "ur5/ur5_control",
+        "children": [
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "ur5/ur5_control/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_control.launch.py",
+                "path": "ur5/ur5_control/launch/ur5_control.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "ur5/ur5_control/package.xml"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "ur5/ur5_control/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "ur5_control",
+            "path": "ur5/ur5_control/ur5_control",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "ur5/ur5_control/ur5_control/__init__.py"
+              },
+              {
+                "type": "file",
+                "name": "joint_controller.py",
+                "path": "ur5/ur5_control/ur5_control/joint_controller.py"
+              },
+              {
+                "type": "file",
+                "name": "joint_sine_demo.py",
+                "path": "ur5/ur5_control/ur5_control/joint_sine_demo.py"
+              },
+              {
+                "type": "file",
+                "name": "joint_state_publisher.py",
+                "path": "ur5/ur5_control/ur5_control/joint_state_publisher.py"
+              },
+              {
+                "type": "file",
+                "name": "joint_state_server.py",
+                "path": "ur5/ur5_control/ur5_control/joint_state_server.py"
+              },
+              {
+                "type": "file",
+                "name": "ur5_pose_client.py",
+                "path": "ur5/ur5_control/ur5_control/ur5_pose_client.py"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "ur5_description",
+        "path": "ur5/ur5_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "config",
+            "path": "ur5/ur5_description/config",
+            "children": [
+              {
+                "type": "file",
+                "name": "joint_limits.yaml",
+                "path": "ur5/ur5_description/config/joint_limits.yaml"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "ur5/ur5_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_bringup.launch.py",
+                "path": "ur5/ur5_description/launch/ur5_bringup.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "meshes",
+            "path": "ur5/ur5_description/meshes",
+            "children": [
+              {
+                "type": "dir",
+                "name": "collision",
+                "path": "ur5/ur5_description/meshes/collision",
+                "children": []
+              },
+              {
+                "type": "dir",
+                "name": "visual",
+                "path": "ur5/ur5_description/meshes/visual",
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "ur5/ur5_description/package.xml"
+          },
+          {
+            "type": "dir",
+            "name": "resource",
+            "path": "ur5/ur5_description/resource",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_description",
+                "path": "ur5/ur5_description/resource/ur5_description"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "rviz",
+            "path": "ur5/ur5_description/rviz",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5.rviz",
+                "path": "ur5/ur5_description/rviz/ur5.rviz"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "scripts",
+            "path": "ur5/ur5_description/scripts",
+            "children": [
+              {
+                "type": "file",
+                "name": "joint_sine_demo.py",
+                "path": "ur5/ur5_description/scripts/joint_sine_demo.py"
+              },
+              {
+                "type": "file",
+                "name": "joint_state_publisher.py",
+                "path": "ur5/ur5_description/scripts/joint_state_publisher.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "setup.cfg",
+            "path": "ur5/ur5_description/setup.cfg"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "ur5/ur5_description/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "ur5/ur5_description/urdf",
+            "children": [
+              {
+                "type": "file",
                 "name": "ur5.urdf",
-                "path": "sys_packages/ur5_description/urdf/ur5.urdf",
-                "type": "file"
+                "path": "ur5/ur5_description/urdf/ur5.urdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "ur5_vision",
+        "path": "ur5/ur5_vision",
+        "children": [
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "ur5/ur5_vision/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "wrist_detector.launch.py",
+                "path": "ur5/ur5_vision/launch/wrist_detector.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "ur5/ur5_vision/package.xml"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "ur5/ur5_vision/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "ur5_vision",
+            "path": "ur5/ur5_vision/ur5_vision",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "ur5/ur5_vision/ur5_vision/__init__.py"
+              },
+              {
+                "type": "file",
+                "name": "image_info.py",
+                "path": "ur5/ur5_vision/ur5_vision/image_info.py"
+              },
+              {
+                "type": "file",
+                "name": "wrist_detector.py",
+                "path": "ur5/ur5_vision/ur5_vision/wrist_detector.py"
               }
             ]
           }

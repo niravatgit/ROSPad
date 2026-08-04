@@ -3,5 +3,5 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     return LaunchDescription([
-        Node(package='vision_demos', executable='color_tracker', name='color_tracker'),
+        Node(package='diffbot_vision', executable='color_tracker', name='color_tracker'),
     ])

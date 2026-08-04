@@ -8,7 +8,7 @@ to steer the DiffBot toward it.
 Prerequisites:
   1. Launch diffbot_camera_description:  ros2 launch diffbot_camera_description diffbot_camera.launch.py
   2. Add a red obstacle in the sim (Obstacles panel → Add Box, set color #ff2020)
-  3. Run this node:  ros2 run vision_demos color_tracker
+  3. Run this node:  ros2 run diffbot_vision color_tracker
   4. Enable /camera/image_raw in the Viz panel to see the camera feed live
 
 Image format: sensor_msgs/Image, encoding=rgb8, 320×240
@@ -41,7 +41,7 @@ class ColorTracker(Node):
 
         # Convert JsProxy Uint8Array to numpy RGB array
         # msg.data is a JsProxy wrapping the raw pixel bytes from sim.js
-        arr = np.asarray(msg.data, dtype=np.uint8).reshape(h, w, 3)
+        arr = np.asarray(list(msg.data), dtype=np.uint8).reshape(h, w, 3)
 
         # Detect red pixels: R > 150, G < 80, B < 80
         red_mask = (arr[:, :, 0] > 150) & (arr[:, :, 1] < 80) & (arr[:, :, 2] < 80)

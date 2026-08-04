@@ -1,1 +1,345 @@
-[{"name": "diffbot_description", "type": "dir", "path": "diffbot_description", "children": [{"name": "config", "type": "dir", "path": "diffbot_description/config", "children": [{"name": "diffbot_params.yaml", "type": "file", "path": "diffbot_description/config/diffbot_params.yaml"}]}, {"name": "launch", "type": "dir", "path": "diffbot_description/launch", "children": [{"name": "diffbot_bringup.launch.py", "type": "file", "path": "diffbot_description/launch/diffbot_bringup.launch.py"}]}, {"name": "meshes", "type": "dir", "path": "diffbot_description/meshes", "children": []}, {"name": "package.xml", "type": "file", "path": "diffbot_description/package.xml"}, {"name": "resource", "type": "dir", "path": "diffbot_description/resource", "children": [{"name": "diffbot_description", "type": "file", "path": "diffbot_description/resource/diffbot_description"}]}, {"name": "rviz", "type": "dir", "path": "diffbot_description/rviz", "children": [{"name": "diffbot.rviz", "type": "file", "path": "diffbot_description/rviz/diffbot.rviz"}]}, {"name": "scripts", "type": "dir", "path": "diffbot_description/scripts", "children": [{"name": "odometry_reader.py", "type": "file", "path": "diffbot_description/scripts/odometry_reader.py"}, {"name": "teleop_keyboard.py", "type": "file", "path": "diffbot_description/scripts/teleop_keyboard.py"}]}, {"name": "setup.cfg", "type": "file", "path": "diffbot_description/setup.cfg"}, {"name": "setup.py", "type": "file", "path": "diffbot_description/setup.py"}, {"name": "urdf", "type": "dir", "path": "diffbot_description/urdf", "children": [{"name": "diffbot.urdf", "type": "file", "path": "diffbot_description/urdf/diffbot.urdf"}]}]}, {"name": "ur5_description", "type": "dir", "path": "ur5_description", "children": [{"name": "config", "type": "dir", "path": "ur5_description/config", "children": [{"name": "joint_limits.yaml", "type": "file", "path": "ur5_description/config/joint_limits.yaml"}]}, {"name": "launch", "type": "dir", "path": "ur5_description/launch", "children": [{"name": "ur5_bringup.launch.py", "type": "file", "path": "ur5_description/launch/ur5_bringup.launch.py"}]}, {"name": "meshes", "type": "dir", "path": "ur5_description/meshes", "children": [{"name": "collision", "type": "dir", "path": "ur5_description/meshes/collision", "children": []}, {"name": "visual", "type": "dir", "path": "ur5_description/meshes/visual", "children": [{"name": "base.dae", "type": "file", "path": "ur5_description/meshes/visual/base.dae"}, {"name": "base.glb", "type": "file", "path": "ur5_description/meshes/visual/base.glb"}, {"name": "forearm.dae", "type": "file", "path": "ur5_description/meshes/visual/forearm.dae"}, {"name": "forearm.glb", "type": "file", "path": "ur5_description/meshes/visual/forearm.glb"}, {"name": "shoulder.dae", "type": "file", "path": "ur5_description/meshes/visual/shoulder.dae"}, {"name": "shoulder.glb", "type": "file", "path": "ur5_description/meshes/visual/shoulder.glb"}, {"name": "upperarm.dae", "type": "file", "path": "ur5_description/meshes/visual/upperarm.dae"}, {"name": "upperarm.glb", "type": "file", "path": "ur5_description/meshes/visual/upperarm.glb"}, {"name": "wrist1.dae", "type": "file", "path": "ur5_description/meshes/visual/wrist1.dae"}, {"name": "wrist1.glb", "type": "file", "path": "ur5_description/meshes/visual/wrist1.glb"}, {"name": "wrist2.dae", "type": "file", "path": "ur5_description/meshes/visual/wrist2.dae"}, {"name": "wrist2.glb", "type": "file", "path": "ur5_description/meshes/visual/wrist2.glb"}, {"name": "wrist3.dae", "type": "file", "path": "ur5_description/meshes/visual/wrist3.dae"}, {"name": "wrist3.glb", "type": "file", "path": "ur5_description/meshes/visual/wrist3.glb"}]}]}, {"name": "package.xml", "type": "file", "path": "ur5_description/package.xml"}, {"name": "resource", "type": "dir", "path": "ur5_description/resource", "children": [{"name": "ur5_description", "type": "file", "path": "ur5_description/resource/ur5_description"}]}, {"name": "rviz", "type": "dir", "path": "ur5_description/rviz", "children": [{"name": "ur5.rviz", "type": "file", "path": "ur5_description/rviz/ur5.rviz"}]}, {"name": "scripts", "type": "dir", "path": "ur5_description/scripts", "children": [{"name": "joint_sine_demo.py", "type": "file", "path": "ur5_description/scripts/joint_sine_demo.py"}, {"name": "joint_state_publisher.py", "type": "file", "path": "ur5_description/scripts/joint_state_publisher.py"}]}, {"name": "setup.cfg", "type": "file", "path": "ur5_description/setup.cfg"}, {"name": "setup.py", "type": "file", "path": "ur5_description/setup.py"}, {"name": "urdf", "type": "dir", "path": "ur5_description/urdf", "children": [{"name": "ur5.urdf", "type": "file", "path": "ur5_description/urdf/ur5.urdf"}]}]}]
+[
+  {
+    "type": "dir",
+    "name": "diffbot",
+    "path": "diffbot",
+    "children": [
+      {
+        "type": "dir",
+        "name": "diffbot_description",
+        "path": "diffbot/diffbot_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "config",
+            "path": "diffbot/diffbot_description/config",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_params.yaml",
+                "path": "diffbot/diffbot_description/config/diffbot_params.yaml"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "diffbot/diffbot_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_bringup.launch.py",
+                "path": "diffbot/diffbot_description/launch/diffbot_bringup.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "meshes",
+            "path": "diffbot/diffbot_description/meshes",
+            "children": []
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "diffbot/diffbot_description/package.xml"
+          },
+          {
+            "type": "dir",
+            "name": "resource",
+            "path": "diffbot/diffbot_description/resource",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_description",
+                "path": "diffbot/diffbot_description/resource/diffbot_description"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "rviz",
+            "path": "diffbot/diffbot_description/rviz",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot.rviz",
+                "path": "diffbot/diffbot_description/rviz/diffbot.rviz"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "scripts",
+            "path": "diffbot/diffbot_description/scripts",
+            "children": [
+              {
+                "type": "file",
+                "name": "odometry_reader.py",
+                "path": "diffbot/diffbot_description/scripts/odometry_reader.py"
+              },
+              {
+                "type": "file",
+                "name": "teleop_keyboard.py",
+                "path": "diffbot/diffbot_description/scripts/teleop_keyboard.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "setup.cfg",
+            "path": "diffbot/diffbot_description/setup.cfg"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "diffbot/diffbot_description/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "diffbot/diffbot_description/urdf",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot.urdf",
+                "path": "diffbot/diffbot_description/urdf/diffbot.urdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "diffbot_camera_description",
+        "path": "diffbot/diffbot_camera_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "diffbot_camera_description",
+            "path": "diffbot/diffbot_camera_description/diffbot_camera_description",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "diffbot/diffbot_camera_description/diffbot_camera_description/__init__.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "diffbot/diffbot_camera_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_camera.launch.py",
+                "path": "diffbot/diffbot_camera_description/launch/diffbot_camera.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "diffbot/diffbot_camera_description/package.xml"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "diffbot/diffbot_camera_description/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "diffbot/diffbot_camera_description/urdf",
+            "children": [
+              {
+                "type": "file",
+                "name": "diffbot_camera.urdf",
+                "path": "diffbot/diffbot_camera_description/urdf/diffbot_camera.urdf"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "dir",
+    "name": "ur5",
+    "path": "ur5",
+    "children": [
+      {
+        "type": "dir",
+        "name": "ur5_description",
+        "path": "ur5/ur5_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "config",
+            "path": "ur5/ur5_description/config",
+            "children": [
+              {
+                "type": "file",
+                "name": "joint_limits.yaml",
+                "path": "ur5/ur5_description/config/joint_limits.yaml"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "ur5/ur5_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_bringup.launch.py",
+                "path": "ur5/ur5_description/launch/ur5_bringup.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "meshes",
+            "path": "ur5/ur5_description/meshes",
+            "children": [
+              {
+                "type": "dir",
+                "name": "collision",
+                "path": "ur5/ur5_description/meshes/collision",
+                "children": []
+              },
+              {
+                "type": "dir",
+                "name": "visual",
+                "path": "ur5/ur5_description/meshes/visual",
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "ur5/ur5_description/package.xml"
+          },
+          {
+            "type": "dir",
+            "name": "resource",
+            "path": "ur5/ur5_description/resource",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_description",
+                "path": "ur5/ur5_description/resource/ur5_description"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "rviz",
+            "path": "ur5/ur5_description/rviz",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5.rviz",
+                "path": "ur5/ur5_description/rviz/ur5.rviz"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "scripts",
+            "path": "ur5/ur5_description/scripts",
+            "children": [
+              {
+                "type": "file",
+                "name": "joint_sine_demo.py",
+                "path": "ur5/ur5_description/scripts/joint_sine_demo.py"
+              },
+              {
+                "type": "file",
+                "name": "joint_state_publisher.py",
+                "path": "ur5/ur5_description/scripts/joint_state_publisher.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "setup.cfg",
+            "path": "ur5/ur5_description/setup.cfg"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "ur5/ur5_description/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "ur5/ur5_description/urdf",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5.urdf",
+                "path": "ur5/ur5_description/urdf/ur5.urdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "dir",
+        "name": "ur5_camera_description",
+        "path": "ur5/ur5_camera_description",
+        "children": [
+          {
+            "type": "dir",
+            "name": "launch",
+            "path": "ur5/ur5_camera_description/launch",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_camera.launch.py",
+                "path": "ur5/ur5_camera_description/launch/ur5_camera.launch.py"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "package.xml",
+            "path": "ur5/ur5_camera_description/package.xml"
+          },
+          {
+            "type": "file",
+            "name": "setup.py",
+            "path": "ur5/ur5_camera_description/setup.py"
+          },
+          {
+            "type": "dir",
+            "name": "ur5_camera_description",
+            "path": "ur5/ur5_camera_description/ur5_camera_description",
+            "children": [
+              {
+                "type": "file",
+                "name": "__init__.py",
+                "path": "ur5/ur5_camera_description/ur5_camera_description/__init__.py"
+              }
+            ]
+          },
+          {
+            "type": "dir",
+            "name": "urdf",
+            "path": "ur5/ur5_camera_description/urdf",
+            "children": [
+              {
+                "type": "file",
+                "name": "ur5_camera.urdf",
+                "path": "ur5/ur5_camera_description/urdf/ur5_camera.urdf"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
