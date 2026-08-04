@@ -898,6 +898,9 @@
     }
     #user-badge .username::before { content: '@'; opacity: 0.6; }
   </style>
+  <!-- Cloudflare Web Analytics — no cookies, no PII -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "YOUR_CF_TOKEN_HERE"}'></script>
 </head>
 <body>
 
@@ -984,6 +987,10 @@
       </button>
 
       <div id="auth-error"></div>
+      <p style="margin-top:14px;font-size:11px;color:var(--text2);line-height:1.5;text-align:center">
+        ROSpad uses <a href="https://www.cloudflare.com/web-analytics/" target="_blank" style="color:var(--accent);text-decoration:none">Cloudflare Web Analytics</a>
+        to count page visits — no cookies, no personal data collected.
+      </p>
     </div>
   </div>
 
