@@ -16,7 +16,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding       = "DB"
 database_name = "rospad-analytics"
-database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id   = "2acefa8a-70c6-47c0-8f49-31769cc8332e"
 
 # Step 2: create the schema (run once after setting database_id above):
 #   wrangler d1 execute rospad-analytics --remote --command \
