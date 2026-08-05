@@ -223,30 +223,30 @@ class ROS2CLI {
   // ── ros2 param ────────────────────────────────────────────────────────────
 
   async _param(cmd, args) {
-    this.term.writeln('\x1b[33mParameter server (stub — full impl coming)\x1b[0m');
+    this.term.writeln('\x1b[33m[ros2 param] Not yet implemented in ROSpad.\x1b[0m');
+    this.term.writeln('\x1b[2mParameter server support is planned for a future release.\x1b[0m');
   }
 
   // ── ros2 bag ──────────────────────────────────────────────────────────────
 
   async _bag(cmd, args) {
-    switch(cmd) {
-      case 'record':
-        this.term.writeln('\x1b[33m[ros2 bag] Recording... (Ctrl+C to stop)\x1b[0m');
-        window.dispatchEvent(new CustomEvent('rospad:bag-record', { detail: { args } }));
-        break;
-      case 'play':
-        this.term.writeln('\x1b[33m[ros2 bag] Playback (stub)\x1b[0m');
-        break;
-      default:
-        this.term.writeln('Usage: ros2 bag {record|play}');
-    }
+    this.term.writeln('\x1b[33m[ros2 bag] Not yet implemented in ROSpad.\x1b[0m');
+    this.term.writeln('\x1b[2mBag recording/playback is planned for a future release.\x1b[0m');
+    this.term.writeln('\x1b[2mFor now, use ros2 topic echo <topic> to inspect live data.\x1b[0m');
   }
 
   // ── ros2 service ──────────────────────────────────────────────────────────
 
   async _service(cmd, args) {
     if (cmd === 'list') {
-      this.term.writeln('(service listing stub)');
+      this.term.writeln('\x1b[33m[ros2 service list] Not yet implemented in ROSpad.\x1b[0m');
+      this.term.writeln('\x1b[2mTo check if a service is running, look for its node in: ros2 node list\x1b[0m');
+    } else if (cmd === 'call') {
+      this.term.writeln('\x1b[33m[ros2 service call] Not yet implemented in ROSpad.\x1b[0m');
+      this.term.writeln('\x1b[2mCall services from Python nodes using node.create_client() instead.\x1b[0m');
+    } else {
+      this.term.writeln('Usage: ros2 service {list|call}');
+      this.term.writeln('\x1b[2mNote: service commands are not yet implemented in ROSpad.\x1b[0m');
     }
   }
 
@@ -284,12 +284,10 @@ class ROS2CLI {
   ros2 run <pkg> <executable>
   ros2 launch <pkg> <launch_file>
 
-\x1b[33mBag commands:\x1b[0m
-  ros2 bag record -a
-  ros2 bag play <bag_name>
-
 \x1b[33mOther:\x1b[0m
-  colcon build`);
+  colcon build
+
+\x1b[2mNot yet implemented: ros2 bag, ros2 param, ros2 service list/call\x1b[0m`);
   }
 
   stopEcho(topic) {

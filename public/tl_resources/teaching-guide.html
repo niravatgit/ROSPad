@@ -1725,7 +1725,7 @@ self.create_timer(<span class="nu">1.0</span>, self._call_once)
   <div class="callout note" style="margin-top:8px;">
     <div class="callout-label">End of Session 2 — Wrap-up points</div>
     <p>You have now covered all three core ROS2 communication patterns: <strong>topics</strong> (streaming data), <strong>publishers/subscribers</strong> (continuous control loops), and <strong>services</strong> (on-demand request–response). Every pattern appears verbatim in production robotics code.</p>
-    <p>The path forward: (1) learn actions for long-running goals with feedback and cancellation, (2) use <code>ros2 bag record -a</code> to record joint sequences and play them back, (3) connect a real UR5 to a ROS2 driver — the same Python code works without changes.</p>
+    <p>The path forward: (1) learn actions for long-running goals with feedback and cancellation, (2) on a real ROS2 machine, use <code>ros2 bag record -a</code> to record joint sequences and play them back (bag recording is not yet available in ROSpad), (3) connect a real UR5 to a ROS2 driver — the same Python code works without changes.</p>
   </div>
 
 </section>
@@ -1756,8 +1756,8 @@ self.create_timer(<span class="nu">1.0</span>, self._call_once)
         <tr><td>ros2 run &lt;pkg&gt; &lt;executable&gt;</td><td>Run a registered node in the background</td></tr>
         <tr><td>ros2 launch &lt;pkg&gt; &lt;file&gt;</td><td>Run a launch file (starts multiple nodes)</td></tr>
         <tr><td>colcon build</td><td>Index workspace packages — required after pkg create or any setup.py change</td></tr>
-        <tr><td>ros2 service list</td><td>List all active services</td></tr>
-        <tr><td>ros2 bag record -a</td><td>Record all topics to a bag file</td></tr>
+        <tr><td style="opacity:.55">ros2 service list</td><td style="opacity:.55">List all active services — <em>not yet implemented in ROSpad</em></td></tr>
+        <tr><td style="opacity:.55">ros2 bag record -a</td><td style="opacity:.55">Record all topics to a bag file — <em>not yet implemented in ROSpad</em></td></tr>
       </tbody>
     </table>
     </div>
@@ -1801,7 +1801,7 @@ self.create_timer(<span class="nu">1.0</span>, self._call_once)
     </div>
     <div class="callout warn">
       <div class="callout-label">Service client prints default value (e.g. sum = 0)</div>
-      <p>This usually means the server has not started yet. Make sure the server node is running (check <code>ros2 service list</code>) before running the client. The server must be launched first; the client waits one second via timer then calls once.</p>
+      <p>This usually means the server has not started yet. Make sure the server node is running (check <code>ros2 node list</code>) before running the client. The server must be launched first; the client waits one second via timer then calls once. (<code>ros2 service list</code> is not yet implemented in ROSpad — use <code>ros2 node list</code> as a proxy.)</p>
     </div>
   </div>
 </section>
