@@ -1,8 +1,29 @@
-name            = "rospad-oauth-proxy"
-main            = "oauth-proxy.js"
+name               = "rospad-oauth-proxy"
+main               = "oauth-proxy.js"
 compatibility_date = "2024-01-01"
 
 [vars]
-# GH_CLIENT_ID and GH_CLIENT_SECRET are set as secrets via:
+# Secrets are set via wrangler secret put (never put secrets here):
 #   wrangler secret put GH_CLIENT_ID
 #   wrangler secret put GH_CLIENT_SECRET
+#   wrangler secret put STATS_KEY        ← pick any strong password for /stats
+
+# ── D1 Analytics Database ────────────────────────────────────────────────────
+# Step 1: create the database (run once):
+#   wrangler d1 create rospad-analytics
+#   → copy the database_id it prints and paste below
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "rospad-analytics"
+database_id   = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Step 2: create the schema (run once after setting database_id above):
+#   wrangler d1 execute rospad-analytics --remote --command \
+#     "CREATE TABLE IF NOT EXISTS sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_hash TEXT NOT NULL, ts INTEGER NOT NULL, country TEXT); CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_hash); CREATE INDEX IF NOT EXISTS idx_sessions_ts ON sessions(ts);"
+
+# Step 3: deploy:
+#   wrangler deploy
+
+# Stats dashboard:
+#   https://rospad-oauth-proxy.nirav-robotics.workers.dev/stats?key=YOUR_STATS_KEY
