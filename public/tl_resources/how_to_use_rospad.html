@@ -535,31 +535,31 @@ footer {
         <p>In the file explorer, open <span class="inline-code">src/my_talker/my_talker/my_node.py</span>. Replace its contents with:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — talker.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String                       <span class="cm"># plain-text message type</span>
 
 
-<span class="kw">class</span> <span class="fn">Talker</span>(Node):
+<span class="kw">class</span> <span class="fn">Talker</span>(Node):                                    <span class="cm"># our node inherits from Node</span>
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'talker'</span>)
-        self.pub   = self.create_publisher(String, <span class="st">'/chatter'</span>, <span class="nm">10</span>)
-        self.timer = self.create_timer(<span class="nm">1.0</span>, self.publish_msg)
-        self.count = <span class="nm">0</span>
-        self.get_logger().info(<span class="st">'Talker started!'</span>)
+        <span class="fn">super()</span>.__init__(<span class="st">'talker'</span>)                     <span class="cm"># register the node name on the ROS graph</span>
+        self.pub   = self.create_publisher(String, <span class="st">'/chatter'</span>, <span class="nm">10</span>)  <span class="cm"># publish String on /chatter, queue 10</span>
+        self.timer = self.create_timer(<span class="nm">1.0</span>, self.publish_msg)       <span class="cm"># call publish_msg every 1 second</span>
+        self.count = <span class="nm">0</span>                                  <span class="cm"># counter tracks how many messages sent</span>
+        self.get_logger().info(<span class="st">'Talker started!'</span>)      <span class="cm"># print startup message to terminal</span>
 
-    <span class="kw">def</span> <span class="fn">publish_msg</span>(self):
-        msg = String()
-        msg.data = <span class="st">f'Hello ROS2! count=</span><span class="op">{</span>self.count<span class="op">}</span><span class="st">'</span>
-        self.pub.publish(msg)
-        self.get_logger().info(<span class="st">f'Publishing: </span><span class="op">{</span>msg.data<span class="op">}</span><span class="st">'</span>)
-        self.count += <span class="nm">1</span>
+    <span class="kw">def</span> <span class="fn">publish_msg</span>(self):                             <span class="cm"># called by the timer every second</span>
+        msg = String()                                  <span class="cm"># create a blank String message</span>
+        msg.data = <span class="st">f'Hello ROS2! count=</span><span class="op">{</span>self.count<span class="op">}</span><span class="st">'</span>  <span class="cm"># fill in the text field</span>
+        self.pub.publish(msg)                           <span class="cm"># send the message to /chatter</span>
+        self.get_logger().info(<span class="st">f'Publishing: </span><span class="op">{</span>msg.data<span class="op">}</span><span class="st">'</span>)  <span class="cm"># echo to terminal</span>
+        self.count += <span class="nm">1</span>                                <span class="cm"># increment the counter</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(Talker())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(Talker())                                <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up when done</span></pre>
         </div>
         <p>Click <span class="btn-ref run">▶ Run</span>. You should see <em>"Talker started!"</em> in the terminal, followed by publish messages every second.</p>
       </div>
@@ -571,26 +571,26 @@ footer {
         <p>Click <strong>+</strong> next to the terminal tabs to open a second terminal session. Then click <strong>+ File</strong> and create <span class="inline-code">src/my_talker/my_talker/listener.py</span>:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — listener.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String                       <span class="cm"># plain-text message type</span>
 
 
 <span class="kw">class</span> <span class="fn">Listener</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'listener'</span>)
+        <span class="fn">super()</span>.__init__(<span class="st">'listener'</span>)                   <span class="cm"># register this node as 'listener'</span>
         self.sub = self.create_subscription(
-            String, <span class="st">'/chatter'</span>, self.on_msg, <span class="nm">10</span>)
+            String, <span class="st">'/chatter'</span>, self.on_msg, <span class="nm">10</span>)       <span class="cm"># subscribe to /chatter, call on_msg each time</span>
         self.get_logger().info(<span class="st">'Listener ready — waiting for messages…'</span>)
 
-    <span class="kw">def</span> <span class="fn">on_msg</span>(self, msg):
-        self.get_logger().info(<span class="st">f'Heard: </span><span class="op">{</span>msg.data<span class="op">}</span><span class="st">'</span>)
+    <span class="kw">def</span> <span class="fn">on_msg</span>(self, msg):                             <span class="cm"># called automatically for each incoming message</span>
+        self.get_logger().info(<span class="st">f'Heard: </span><span class="op">{</span>msg.data<span class="op">}</span><span class="st">'</span>)  <span class="cm"># print the received text to terminal</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(Listener())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(Listener())                              <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up when done</span></pre>
         </div>
         <p>Open <span class="inline-code">listener.py</span> in the editor, then click <span class="btn-ref run">▶ Run</span>. You will see the messages arriving from the talker.</p>
         <div class="note note-tip"><span class="note-icon">💡</span><span>To stop, click <span class="btn-ref stop">■ Stop</span>. This stops <strong>all</strong> running nodes.</span></div>
@@ -614,14 +614,14 @@ footer {
         <p>Add both nodes to a launch file so they start together. Create <span class="inline-code">src/my_talker/launch/demo.launch.py</span>:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — demo.launch.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">from</span> launch <span class="kw">import</span> LaunchDescription
-<span class="kw">from</span> launch_ros.actions <span class="kw">import</span> Node
+<pre><span class="kw">from</span> launch <span class="kw">import</span> LaunchDescription            <span class="cm"># container that groups launch actions</span>
+<span class="kw">from</span> launch_ros.actions <span class="kw">import</span> Node             <span class="cm"># action that starts one ROS 2 node</span>
 
 
-<span class="kw">def</span> <span class="fn">generate_launch_description</span>():
+<span class="kw">def</span> <span class="fn">generate_launch_description</span>():              <span class="cm"># ros2 launch calls this function</span>
     <span class="kw">return</span> LaunchDescription([
-        Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'my_node'</span>, name=<span class="st">'talker'</span>),
-        Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'listener'</span>, name=<span class="st">'listener'</span>),
+        Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'my_node'</span>, name=<span class="st">'talker'</span>),    <span class="cm"># start the talker</span>
+        Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'listener'</span>, name=<span class="st">'listener'</span>),  <span class="cm"># start the listener</span>
     ])</pre>
         </div>
         <p>Also add the listener entry point to <span class="inline-code">setup.py</span>. Open it and add <span class="inline-code">'listener = my_talker.listener:main'</span> to <span class="inline-code">console_scripts</span>. Then open <span class="inline-code">demo.launch.py</span> and click <span class="btn-ref launch">⚡ Launch</span>.</p>
@@ -663,37 +663,37 @@ footer {
         <p>Open <span class="inline-code">src/turtle_demo/turtle_demo/my_node.py</span> and replace with:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — turtle_circle.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> math
-<span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
+<pre><span class="kw">import</span> math                                            <span class="cm"># for cos() and sin()</span>
+<span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 
 
 <span class="kw">class</span> <span class="fn">TurtleCircle</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'turtle_circle'</span>)
-        <span class="cm"># Use raw rosBus to publish turtlesim pose</span>
-        <span class="kw">import</span> js
-        self.bus = js.window.rosBus
-        self.t   = <span class="nm">0.0</span>
-        self.timer = self.create_timer(<span class="nm">0.05</span>, self.step)
+        <span class="fn">super()</span>.__init__(<span class="st">'turtle_circle'</span>)             <span class="cm"># register node name</span>
+        <span class="cm"># Use raw rosBus to publish turtlesim pose (bypasses rclpy message types)</span>
+        <span class="kw">import</span> js                                       <span class="cm"># access the browser JavaScript environment</span>
+        self.bus = js.window.rosBus                    <span class="cm"># rosBus is the in-browser ROS message bus</span>
+        self.t   = <span class="nm">0.0</span>                                 <span class="cm"># elapsed time (drives the circle parameter)</span>
+        self.timer = self.create_timer(<span class="nm">0.05</span>, self.step)  <span class="cm"># update pose at 20 Hz</span>
         self.get_logger().info(<span class="st">'Turtle circle started!'</span>)
 
-    <span class="kw">def</span> <span class="fn">step</span>(self):
-        self.t += <span class="nm">0.05</span>
-        x     = <span class="nm">5.5</span> + <span class="nm">3.0</span> * math.cos(self.t)
-        y     = <span class="nm">5.5</span> + <span class="nm">3.0</span> * math.sin(self.t)
-        theta = self.t + math.pi / <span class="nm">2</span>
+    <span class="kw">def</span> <span class="fn">step</span>(self):                                    <span class="cm"># called every 0.05 s</span>
+        self.t += <span class="nm">0.05</span>                                 <span class="cm"># advance the parameter</span>
+        x     = <span class="nm">5.5</span> + <span class="nm">3.0</span> * math.cos(self.t)         <span class="cm"># x centre ± 3 units radius</span>
+        y     = <span class="nm">5.5</span> + <span class="nm">3.0</span> * math.sin(self.t)         <span class="cm"># y centre ± 3 units radius</span>
+        theta = self.t + math.pi / <span class="nm">2</span>                  <span class="cm"># heading = tangent to the circle</span>
         self.bus.publish(
-            <span class="st">'/turtle1/pose'</span>, <span class="st">'turtlesim/Pose'</span>,
+            <span class="st">'/turtle1/pose'</span>, <span class="st">'turtlesim/Pose'</span>,        <span class="cm"># topic and message type</span>
             {<span class="st">'x'</span>: x, <span class="st">'y'</span>: y, <span class="st">'theta'</span>: theta,
-             <span class="st">'linear_velocity'</span>: <span class="nm">1.0</span>, <span class="st">'angular_velocity'</span>: <span class="nm">1.0</span>}
+             <span class="st">'linear_velocity'</span>: <span class="nm">1.0</span>, <span class="st">'angular_velocity'</span>: <span class="nm">1.0</span>}  <span class="cm"># position + speed</span>
         )
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(TurtleCircle())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(TurtleCircle())                          <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
         </div>
         <p>Click <span class="btn-ref run">▶ Run</span>. The sim switches to the turtle canvas and draws a circle. Click <span class="btn-ref stop">■ Stop</span> when done.</p>
       </div>
@@ -773,29 +773,29 @@ footer {
         <p>Open <span class="inline-code">src/my_diffbot_ctrl/my_diffbot_ctrl/my_node.py</span> and replace with a simple forward-move controller:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — simple_drive.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist
+<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist                  <span class="cm"># velocity command: linear + angular</span>
 
 
 <span class="kw">class</span> <span class="fn">DriveForward</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'drive_forward'</span>)
-        self.pub   = self.create_publisher(Twist, <span class="st">'/cmd_vel'</span>, <span class="nm">10</span>)
-        self.timer = self.create_timer(<span class="nm">0.1</span>, self.drive)
-        self.get_logger().info(<span class="st">'Driving forward at 0.3 m/s'</span>)
+        <span class="fn">super()</span>.__init__(<span class="st">'drive_forward'</span>)              <span class="cm"># register node name</span>
+        self.pub   = self.create_publisher(Twist, <span class="st">'/cmd_vel'</span>, <span class="nm">10</span>)  <span class="cm"># publish to /cmd_vel</span>
+        self.timer = self.create_timer(<span class="nm">0.1</span>, self.drive)             <span class="cm"># call drive() at 10 Hz</span>
+        self.get_logger().info(<span class="st">'Driving forward at 0.3 m/s'</span>)      <span class="cm"># log startup</span>
 
-    <span class="kw">def</span> <span class="fn">drive</span>(self):
-        msg = Twist()
-        msg.linear.x  = <span class="nm">0.3</span>   <span class="cm"># m/s forward</span>
-        msg.angular.z = <span class="nm">0.0</span>   <span class="cm"># no turning</span>
-        self.pub.publish(msg)
+    <span class="kw">def</span> <span class="fn">drive</span>(self):                                   <span class="cm"># called every 0.1 s</span>
+        msg = Twist()                                   <span class="cm"># create a blank velocity command</span>
+        msg.linear.x  = <span class="nm">0.3</span>   <span class="cm"># forward speed in m/s</span>
+        msg.angular.z = <span class="nm">0.0</span>   <span class="cm"># no rotation</span>
+        self.pub.publish(msg)                           <span class="cm"># send to the robot</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(DriveForward())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(DriveForward())                          <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
         </div>
         <p>Keep the launch file running. In a new terminal session, open the controller file and click <span class="btn-ref run">▶ Run</span>. The robot moves forward. Click <span class="btn-ref stop">■ Stop</span> to halt.</p>
       </div>
@@ -807,26 +807,26 @@ footer {
         <p>Create <span class="inline-code">src/my_diffbot_ctrl/my_diffbot_ctrl/odom_reader.py</span>:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — odom_reader.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> nav_msgs.msg <span class="kw">import</span> Odometry
+<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> nav_msgs.msg <span class="kw">import</span> Odometry                     <span class="cm"># message carrying position + velocity</span>
 
 
 <span class="kw">class</span> <span class="fn">OdomReader</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'odom_reader'</span>)
-        self.create_subscription(Odometry, <span class="st">'/odom'</span>, self.cb, <span class="nm">10</span>)
+        <span class="fn">super()</span>.__init__(<span class="st">'odom_reader'</span>)                <span class="cm"># register node name</span>
+        self.create_subscription(Odometry, <span class="st">'/odom'</span>, self.cb, <span class="nm">10</span>)  <span class="cm"># listen to /odom topic</span>
 
-    <span class="kw">def</span> <span class="fn">cb</span>(self, msg):
-        x = msg.pose.pose.position.x
-        y = msg.pose.pose.position.y
-        self.get_logger().info(<span class="st">f'Position: x=</span><span class="op">{</span>x:.3f<span class="op">}</span><span class="st">  y=</span><span class="op">{</span>y:.3f<span class="op">}</span><span class="st">'</span>)
+    <span class="kw">def</span> <span class="fn">cb</span>(self, msg):                                <span class="cm"># called every time an Odometry message arrives</span>
+        x = msg.pose.pose.position.x               <span class="cm"># x position in metres</span>
+        y = msg.pose.pose.position.y               <span class="cm"># y position in metres</span>
+        self.get_logger().info(<span class="st">f'Position: x=</span><span class="op">{</span>x:.3f<span class="op">}</span><span class="st">  y=</span><span class="op">{</span>y:.3f<span class="op">}</span><span class="st">'</span>)  <span class="cm"># print x, y to 3 dp</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(OdomReader())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(OdomReader())                            <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
         </div>
       </div>
     </details>
@@ -884,41 +884,41 @@ footer {
         <p>Open <span class="inline-code">src/my_ur5_ctrl/my_ur5_ctrl/my_node.py</span> and replace with:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — joint_publisher.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> math
-<span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState
+<pre><span class="kw">import</span> math                                            <span class="cm"># for radians conversions</span>
+<span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState                <span class="cm"># message type for robot joint angles</span>
 
-JOINTS = [
+JOINTS = [                                             <span class="cm"># joint names must match the URDF exactly</span>
     <span class="st">'shoulder_pan_joint'</span>, <span class="st">'shoulder_lift_joint'</span>, <span class="st">'elbow_joint'</span>,
     <span class="st">'wrist_1_joint'</span>,      <span class="st">'wrist_2_joint'</span>,       <span class="st">'wrist_3_joint'</span>,
 ]
 
-<span class="cm"># Edit these angles (radians) to move the arm</span>
-POSITIONS = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">0.0</span>]
+<span class="cm"># Edit these angles (radians) to move the arm  (-1.57 ≈ -90°)</span>
+POSITIONS = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">0.0</span>]   <span class="cm"># home pose — arm pointing up</span>
 
 
 <span class="kw">class</span> <span class="fn">JointPublisher</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'joint_publisher'</span>)
-        self.pub   = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nm">10</span>)
-        self.timer = self.create_timer(<span class="nm">0.05</span>, self.publish)
+        <span class="fn">super()</span>.__init__(<span class="st">'joint_publisher'</span>)             <span class="cm"># register node name</span>
+        self.pub   = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nm">10</span>)  <span class="cm"># publish to arm topic</span>
+        self.timer = self.create_timer(<span class="nm">0.05</span>, self.publish)  <span class="cm"># 20 Hz publish loop</span>
         self.get_logger().info(<span class="st">'Publishing joint states at 20 Hz'</span>)
 
-    <span class="kw">def</span> <span class="fn">publish</span>(self):
-        msg = JointState()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.name     = JOINTS
-        msg.position = <span class="fn">list</span>(POSITIONS)
-        msg.velocity = [<span class="nm">0.0</span>] * <span class="nm">6</span>
-        msg.effort   = [<span class="nm">0.0</span>] * <span class="nm">6</span>
-        self.pub.publish(msg)
+    <span class="kw">def</span> <span class="fn">publish</span>(self):                                <span class="cm"># called every 0.05 s</span>
+        msg = JointState()                             <span class="cm"># create an empty JointState message</span>
+        msg.header.stamp = self.get_clock().now().to_msg()  <span class="cm"># timestamp for TF transforms</span>
+        msg.name     = JOINTS                          <span class="cm"># list of joint names</span>
+        msg.position = <span class="fn">list</span>(POSITIONS)                <span class="cm"># copy POSITIONS so it can be modified</span>
+        msg.velocity = [<span class="nm">0.0</span>] * <span class="nm">6</span>                      <span class="cm"># velocity not used — set to zero</span>
+        msg.effort   = [<span class="nm">0.0</span>] * <span class="nm">6</span>                      <span class="cm"># torque not used — set to zero</span>
+        self.pub.publish(msg)                          <span class="cm"># send to the simulator</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(JointPublisher())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(JointPublisher())                        <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
         </div>
         <p>Edit <span class="inline-code">POSITIONS</span> to set joint angles, then click <span class="btn-ref run">▶ Run</span>.</p>
         <div class="note note-tip"><span class="note-icon">💡</span><span>Joint values are in radians. <em>−1.57 ≈ −90°</em>, <em>1.57 ≈ 90°</em>. Positive elbow_joint bends the arm upward.</span></div>
@@ -931,41 +931,41 @@ POSITIONS = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span c
         <p>Create <span class="inline-code">src/my_ur5_ctrl/my_ur5_ctrl/sine_demo.py</span>:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — sine_demo.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> math, rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState
+<pre><span class="kw">import</span> math, rclpy                                    <span class="cm"># math for sin(); rclpy for ROS 2</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState                <span class="cm"># message type for robot joint angles</span>
 
-JOINTS = [<span class="st">'shoulder_pan_joint'</span>, <span class="st">'shoulder_lift_joint'</span>,
+JOINTS = [<span class="st">'shoulder_pan_joint'</span>, <span class="st">'shoulder_lift_joint'</span>,  <span class="cm"># joint names match the URDF</span>
           <span class="st">'elbow_joint'</span>, <span class="st">'wrist_1_joint'</span>,
           <span class="st">'wrist_2_joint'</span>, <span class="st">'wrist_3_joint'</span>]
 
-AMP  = [<span class="nm">0.8</span>, <span class="nm">0.4</span>, <span class="nm">0.6</span>, <span class="nm">0.4</span>, <span class="nm">0.5</span>, <span class="nm">0.3</span>]
-FREQ = [<span class="nm">0.3</span>, <span class="nm">0.5</span>, <span class="nm">0.4</span>, <span class="nm">0.7</span>, <span class="nm">0.6</span>, <span class="nm">0.9</span>]
-OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">0.0</span>]
+AMP  = [<span class="nm">0.8</span>, <span class="nm">0.4</span>, <span class="nm">0.6</span>, <span class="nm">0.4</span>, <span class="nm">0.5</span>, <span class="nm">0.3</span>]   <span class="cm"># amplitude in radians per joint</span>
+FREQ = [<span class="nm">0.3</span>, <span class="nm">0.5</span>, <span class="nm">0.4</span>, <span class="nm">0.7</span>, <span class="nm">0.6</span>, <span class="nm">0.9</span>]   <span class="cm"># frequency in Hz — different per joint for variety</span>
+OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class="nm">0.0</span>, <span class="nm">0.0</span>]  <span class="cm"># home pose offset (-1.57 ≈ -90°)</span>
 
 
 <span class="kw">class</span> <span class="fn">SineDemo</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super()</span>.__init__(<span class="st">'sine_demo'</span>)
-        self.pub   = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nm">10</span>)
-        self.timer = self.create_timer(<span class="nm">0.033</span>, self.step)
-        self.t = <span class="nm">0.0</span>
+        <span class="fn">super()</span>.__init__(<span class="st">'sine_demo'</span>)                  <span class="cm"># register node name</span>
+        self.pub   = self.create_publisher(JointState, <span class="st">'/joint_states'</span>, <span class="nm">10</span>)  <span class="cm"># publish joint angles</span>
+        self.timer = self.create_timer(<span class="nm">0.033</span>, self.step)  <span class="cm"># ~30 Hz control loop</span>
+        self.t = <span class="nm">0.0</span>                                   <span class="cm"># elapsed time in seconds</span>
 
-    <span class="kw">def</span> <span class="fn">step</span>(self):
-        self.t += <span class="nm">0.033</span>
+    <span class="kw">def</span> <span class="fn">step</span>(self):                                    <span class="cm"># called every 0.033 s</span>
+        self.t += <span class="nm">0.033</span>                                <span class="cm"># advance the clock by one tick</span>
         pos = [OFF[i] + AMP[i] * math.sin(<span class="nm">2</span>*math.pi*FREQ[i]*self.t)
-               <span class="kw">for</span> i <span class="kw">in</span> range(<span class="nm">6</span>)]
-        msg = JointState()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.name = JOINTS; msg.position = pos
-        msg.velocity = [<span class="nm">0.0</span>]*<span class="nm">6</span>; msg.effort = [<span class="nm">0.0</span>]*<span class="nm">6</span>
-        self.pub.publish(msg)
+               <span class="kw">for</span> i <span class="kw">in</span> range(<span class="nm">6</span>)]                     <span class="cm"># compute sine-wave angle for each joint</span>
+        msg = JointState()                             <span class="cm"># create the message</span>
+        msg.header.stamp = self.get_clock().now().to_msg()  <span class="cm"># timestamp for TF</span>
+        msg.name = JOINTS; msg.position = pos         <span class="cm"># set joint names and angles</span>
+        msg.velocity = [<span class="nm">0.0</span>]*<span class="nm">6</span>; msg.effort = [<span class="nm">0.0</span>]*<span class="nm">6</span>  <span class="cm"># unused in this sim</span>
+        self.pub.publish(msg)                          <span class="cm"># send to the simulator</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(SineDemo())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(SineDemo())                              <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
         </div>
         <p>Open <span class="inline-code">sine_demo.py</span> and click <span class="btn-ref run">▶ Run</span>. The arm dances through smooth sine-wave motion across all 6 joints.</p>
       </div>
@@ -1029,32 +1029,32 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
         <p>The service pattern in Python:</p>
         <div class="code-block">
           <div class="code-header"><span class="code-lang">Python — service call pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> asyncio, rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> example_interfaces.srv <span class="kw">import</span> AddTwoInts
+<pre><span class="kw">import</span> asyncio, rclpy                                 <span class="cm"># asyncio needed for async service calls</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> example_interfaces.srv <span class="kw">import</span> AddTwoInts         <span class="cm"># service type: request a+b, get sum</span>
 
 <span class="kw">class</span> <span class="fn">MyClient</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super</span>().__init__(<span class="st">'my_client'</span>)
-        self.cli   = self.create_client(AddTwoInts, <span class="st">'/add_two_ints'</span>)
-        self._done = <span class="kw">False</span>
-        self.create_timer(<span class="nm">1.5</span>, self._call_once)
+        <span class="fn">super</span>().__init__(<span class="st">'my_client'</span>)                  <span class="cm"># register node name</span>
+        self.cli   = self.create_client(AddTwoInts, <span class="st">'/add_two_ints'</span>)  <span class="cm"># client for /add_two_ints</span>
+        self._done = <span class="kw">False</span>                              <span class="cm"># guard so we only call once</span>
+        self.create_timer(<span class="nm">1.5</span>, self._call_once)        <span class="cm"># wait 1.5 s then trigger the call</span>
 
-    <span class="kw">def</span> <span class="fn">_call_once</span>(self):
-        <span class="kw">if</span> self._done: <span class="kw">return</span>
-        self._done = <span class="kw">True</span>
-        asyncio.ensure_future(self._do_call())
+    <span class="kw">def</span> <span class="fn">_call_once</span>(self):                              <span class="cm"># timer fires this — synchronous context</span>
+        <span class="kw">if</span> self._done: <span class="kw">return</span>                          <span class="cm"># already called, do nothing</span>
+        self._done = <span class="kw">True</span>                               <span class="cm"># mark as done so timer won't repeat</span>
+        asyncio.ensure_future(self._do_call())          <span class="cm"># schedule the coroutine on the event loop</span>
 
-    <span class="kw">async def</span> <span class="fn">_do_call</span>(self):
-        req = AddTwoInts.Request()
-        req.a = <span class="nm">10</span>; req.b = <span class="nm">20</span>
-        resp = <span class="kw">await</span> self.cli.call_async(req)
-        self.get_logger().info(<span class="kw">f</span><span class="st">'Result: {resp.sum}'</span>)
+    <span class="kw">async def</span> <span class="fn">_do_call</span>(self):                         <span class="cm"># coroutine — can use await</span>
+        req = AddTwoInts.Request()                      <span class="cm"># build the request object</span>
+        req.a = <span class="nm">10</span>; req.b = <span class="nm">20</span>                         <span class="cm"># set the two numbers to add</span>
+        resp = <span class="kw">await</span> self.cli.call_async(req)           <span class="cm"># send request and wait for server reply</span>
+        self.get_logger().info(<span class="kw">f</span><span class="st">'Result: {resp.sum}'</span>)  <span class="cm"># print the sum returned by the server</span>
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    rclpy.spin(<span class="fn">MyClient</span>())
-    rclpy.shutdown()</pre>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    rclpy.spin(<span class="fn">MyClient</span>())                             <span class="cm"># create node and loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
         </div>
         <p>Key points: service calls are async — use <code>asyncio.ensure_future()</code> from a timer callback to schedule them, then <code>await client.call_async(req)</code> inside an <code>async def</code>.</p>
       </div>

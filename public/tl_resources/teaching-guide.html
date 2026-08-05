@@ -795,31 +795,31 @@ a:hover { text-decoration: underline; }
           <p>The file appears in the tree. Click it to open it in the editor, then paste the code below. The file auto-saves when you click away.</p>
           <div class="code-block">
             <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/talker_listener/talker_listener/my_node.py</span></div>
-            <div class="code-body"><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+            <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String                       <span class="cm"># plain-text message type</span>
 
 
-<span class="kw">class</span> <span class="cl">Talker</span>(Node):
+<span class="kw">class</span> <span class="cl">Talker</span>(Node):                                    <span class="cm"># our node inherits from Node</span>
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super</span>().__init__(<span class="st">'talker'</span>)
-        self.pub   = self.create_publisher(String, <span class="st">'/chatter'</span>, <span class="nu">10</span>)
-        self.timer = self.create_timer(<span class="nu">1.0</span>, self.publish_msg)
-        self.count = <span class="nu">0</span>
+        <span class="fn">super</span>().__init__(<span class="st">'talker'</span>)                     <span class="cm"># register node name on the ROS graph</span>
+        self.pub   = self.create_publisher(String, <span class="st">'/chatter'</span>, <span class="nu">10</span>)  <span class="cm"># publish String on /chatter</span>
+        self.timer = self.create_timer(<span class="nu">1.0</span>, self.publish_msg)       <span class="cm"># fire publish_msg every 1 s</span>
+        self.count = <span class="nu">0</span>                                  <span class="cm"># message counter</span>
 
-    <span class="kw">def</span> <span class="fn">publish_msg</span>(self):
-        msg      = String()
-        msg.data = <span class="st">f'Hello ROS2! count={self.count}'</span>
-        self.pub.publish(msg)
-        self.get_logger().info(<span class="st">f'Publishing: {msg.data}'</span>)
-        self.count += <span class="nu">1</span>
+    <span class="kw">def</span> <span class="fn">publish_msg</span>(self):                             <span class="cm"># called by the timer every second</span>
+        msg      = String()                             <span class="cm"># create a blank String message</span>
+        msg.data = <span class="st">f'Hello ROS2! count={self.count}'</span>  <span class="cm"># fill in the text field</span>
+        self.pub.publish(msg)                           <span class="cm"># send to /chatter</span>
+        self.get_logger().info(<span class="st">f'Publishing: {msg.data}'</span>)  <span class="cm"># echo to terminal</span>
+        self.count += <span class="nu">1</span>                                <span class="cm"># increment counter</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    node = Talker()
-    rclpy.spin(node)
-    rclpy.shutdown()</div>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    node = Talker()                                     <span class="cm"># instantiate the node</span>
+    rclpy.spin(node)                                    <span class="cm"># loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
           </div>
           <div class="callout note">
             <div class="callout-label">Instructor note</div>
@@ -889,27 +889,27 @@ a:hover { text-decoration: underline; }
           <p>Open it in the editor and paste the subscriber code:</p>
           <div class="code-block">
             <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/talker_listener/talker_listener/listener.py</span></div>
-            <div class="code-body"><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String
+            <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String                       <span class="cm"># plain-text message type</span>
 
 
 <span class="kw">class</span> <span class="cl">Listener</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super</span>().__init__(<span class="st">'listener'</span>)
+        <span class="fn">super</span>().__init__(<span class="st">'listener'</span>)                   <span class="cm"># register this node as 'listener'</span>
         self.sub = self.create_subscription(
-            String, <span class="st">'/chatter'</span>, self.callback, <span class="nu">10</span>)
+            String, <span class="st">'/chatter'</span>, self.callback, <span class="nu">10</span>)    <span class="cm"># subscribe to /chatter, queue 10</span>
         self.get_logger().info(<span class="st">'Listener started, waiting for messages...'</span>)
 
-    <span class="kw">def</span> <span class="fn">callback</span>(self, msg):
-        self.get_logger().info(<span class="st">f'Heard: {msg.data}'</span>)
+    <span class="kw">def</span> <span class="fn">callback</span>(self, msg):                          <span class="cm"># called for each message received</span>
+        self.get_logger().info(<span class="st">f'Heard: {msg.data}'</span>)  <span class="cm"># print the received text</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    node = Listener()
-    rclpy.spin(node)
-    rclpy.shutdown()</div>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    node = Listener()                                   <span class="cm"># instantiate the node</span>
+    rclpy.spin(node)                                    <span class="cm"># loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
           </div>
           <p>Add the listener to <code>setup.py</code> — open <code>src/talker_listener/setup.py</code> and extend <code>console_scripts</code> with a second line:</p>
           <div class="code-block">
@@ -1068,30 +1068,30 @@ a:hover { text-decoration: underline; }
           <p>Open <code>src/my_teleop/my_teleop/my_node.py</code> in the editor and paste the code:</p>
           <div class="code-block">
             <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">src/my_teleop/my_teleop/my_node.py</span></div>
-            <div class="code-body"><span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node
-<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist
+            <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
+<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist                  <span class="cm"># velocity command: linear + angular</span>
 
 
-<span class="kw">class</span> <span class="cl">CircleDrive</span>(Node):
+<span class="kw">class</span> <span class="cl">CircleDrive</span>(Node):                               <span class="cm"># our node inherits from Node</span>
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super</span>().__init__(<span class="st">'circle_drive'</span>)
-        self.pub   = self.create_publisher(Twist, <span class="st">'/cmd_vel'</span>, <span class="nu">10</span>)
-        self.timer = self.create_timer(<span class="nu">0.1</span>, self.drive)  <span class="cm"># 10 Hz</span>
+        <span class="fn">super</span>().__init__(<span class="st">'circle_drive'</span>)               <span class="cm"># register node name</span>
+        self.pub   = self.create_publisher(Twist, <span class="st">'/cmd_vel'</span>, <span class="nu">10</span>)  <span class="cm"># publish to /cmd_vel</span>
+        self.timer = self.create_timer(<span class="nu">0.1</span>, self.drive)  <span class="cm"># 10 Hz control loop</span>
         self.get_logger().info(<span class="st">'CircleDrive started — driving in a circle!'</span>)
 
-    <span class="kw">def</span> <span class="fn">drive</span>(self):
-        msg             = Twist()
+    <span class="kw">def</span> <span class="fn">drive</span>(self):                                   <span class="cm"># called every 0.1 s</span>
+        msg             = Twist()                       <span class="cm"># create a blank velocity command</span>
         msg.linear.x    = <span class="nu">0.3</span>   <span class="cm"># forward speed  (m/s)</span>
-        msg.angular.z   = <span class="nu">0.6</span>   <span class="cm"># rotation speed (rad/s)</span>
-        self.pub.publish(msg)
+        msg.angular.z   = <span class="nu">0.6</span>   <span class="cm"># rotation speed (rad/s) — radius = linear.x / angular.z</span>
+        self.pub.publish(msg)                           <span class="cm"># send to the robot</span>
 
 
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
-    rclpy.init(args=args)
-    node = CircleDrive()
-    rclpy.spin(node)
-    rclpy.shutdown()</div>
+    rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
+    node = CircleDrive()                                <span class="cm"># instantiate the node</span>
+    rclpy.spin(node)                                    <span class="cm"># loop until Ctrl-C</span>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
           </div>
           <p>Update <code>src/my_teleop/setup.py</code> to register the node, then build and run:</p>
           <div class="code-block">
@@ -1487,13 +1487,13 @@ SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <sp
           <div class="code-block">
             <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Add inside __init__</span></div>
             <div class="code-body">self.sub = self.create_subscription(
-    JointState, <span class="st">'/joint_states'</span>, self.feedback_cb, <span class="nu">10</span>)
+    JointState, <span class="st">'/joint_states'</span>, self.feedback_cb, <span class="nu">10</span>)  <span class="cm"># subscribe to own output</span>
 
-<span class="kw">def</span> <span class="fn">feedback_cb</span>(self, msg):
-    errors = [<span class="fn">abs</span>(t - c) <span class="kw">for</span> t, c <span class="kw">in</span> <span class="fn">zip</span>(self.target, msg.position)]
-    max_err = <span class="fn">max</span>(errors) <span class="kw">if</span> errors <span class="kw">else</span> <span class="nu">0</span>
-    <span class="kw">if</span> max_err < <span class="nu">0.01</span>:
-        self.get_logger().info(<span class="st">f'At target! Max error: {max_err:.4f} rad'</span>)</div>
+<span class="kw">def</span> <span class="fn">feedback_cb</span>(self, msg):                           <span class="cm"># called each time a JointState arrives</span>
+    errors = [<span class="fn">abs</span>(t - c) <span class="kw">for</span> t, c <span class="kw">in</span> <span class="fn">zip</span>(self.target, msg.position)]  <span class="cm"># error per joint</span>
+    max_err = <span class="fn">max</span>(errors) <span class="kw">if</span> errors <span class="kw">else</span> <span class="nu">0</span>             <span class="cm"># largest error across all 6 joints</span>
+    <span class="kw">if</span> max_err < <span class="nu">0.01</span>:                                  <span class="cm"># within 0.01 rad — "close enough"</span>
+        self.get_logger().info(<span class="st">f'At target! Max error: {max_err:.4f} rad'</span>)  <span class="cm"># log success</span></div>
           </div>
         </div>
       </div>
@@ -1574,17 +1574,17 @@ SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <sp
           <p>Open <code>add_two_ints_server.py</code>. The pattern mirrors a subscriber but returns a value:</p>
           <div class="code-block">
             <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">service_demo/add_two_ints_server.py — key section</span></div>
-            <div class="code-body"><span class="kw">from</span> example_interfaces.srv <span class="kw">import</span> AddTwoInts
+            <div class="code-body"><span class="kw">from</span> example_interfaces.srv <span class="kw">import</span> AddTwoInts         <span class="cm"># service type: request a+b, get sum</span>
 
 <span class="kw">class</span> <span class="cl">AddTwoIntsServer</span>(Node):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        <span class="fn">super</span>().__init__(<span class="st">'add_two_ints_server'</span>)
-        self.create_service(AddTwoInts, <span class="st">'/add_two_ints'</span>, self.handle_request)
+        <span class="fn">super</span>().__init__(<span class="st">'add_two_ints_server'</span>)          <span class="cm"># register node name</span>
+        self.create_service(AddTwoInts, <span class="st">'/add_two_ints'</span>, self.handle_request)  <span class="cm"># advertise the service</span>
 
-    <span class="kw">def</span> <span class="fn">handle_request</span>(self, request, response):
-        response.sum = request.a + request.b
-        self.get_logger().info(<span class="st">f'Request: {request.a} + {request.b}'</span>)
-        <span class="kw">return</span> response</div>
+    <span class="kw">def</span> <span class="fn">handle_request</span>(self, request, response):       <span class="cm"># called each time a client sends a request</span>
+        response.sum = request.a + request.b            <span class="cm"># compute the answer</span>
+        self.get_logger().info(<span class="st">f'Request: {request.a} + {request.b}'</span>)  <span class="cm"># log what was asked</span>
+        <span class="kw">return</span> response                                <span class="cm"># send the filled response back to the client</span></div>
           </div>
           <div class="callout note">
             <div class="callout-label">Instructor note — code walkthrough questions</div>
@@ -1600,19 +1600,19 @@ SEQUENCE = [<span class="st">'home'</span>, <span class="st">'reach'</span>, <sp
           <p>Open <code>add_two_ints_client.py</code>. The async call pattern is slightly different from a subscription callback:</p>
           <div class="code-block">
             <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">service_demo/add_two_ints_client.py — key section</span></div>
-            <div class="code-body">self.client = self.create_client(AddTwoInts, <span class="st">'/add_two_ints'</span>)
-self.create_timer(<span class="nu">1.0</span>, self._call_once)
+            <div class="code-body">self.client = self.create_client(AddTwoInts, <span class="st">'/add_two_ints'</span>)  <span class="cm"># client for /add_two_ints</span>
+self.create_timer(<span class="nu">1.0</span>, self._call_once)                        <span class="cm"># wait 1 s then trigger call</span>
 
-<span class="kw">def</span> <span class="fn">_call_once</span>(self):
-    <span class="kw">if</span> self._done: <span class="kw">return</span>
-    self._done = <span class="kw">True</span>
-    asyncio.ensure_future(self._do_call())
+<span class="kw">def</span> <span class="fn">_call_once</span>(self):                              <span class="cm"># timer callback — synchronous context</span>
+    <span class="kw">if</span> self._done: <span class="kw">return</span>                          <span class="cm"># guard: only call once</span>
+    self._done = <span class="kw">True</span>                               <span class="cm"># set flag to prevent repeat calls</span>
+    asyncio.ensure_future(self._do_call())          <span class="cm"># schedule async call on the event loop</span>
 
-<span class="kw">async def</span> <span class="fn">_do_call</span>(self):
-    req = AddTwoInts.Request()
-    req.a, req.b = A, B
-    resp = <span class="kw">await</span> self.client.call_async(req)
-    self.get_logger().info(<span class="st">f'Result: {A} + {B} = {resp.sum}'</span>)</div>
+<span class="kw">async def</span> <span class="fn">_do_call</span>(self):                         <span class="cm"># coroutine that does the actual call</span>
+    req = AddTwoInts.Request()                      <span class="cm"># build the request object</span>
+    req.a, req.b = A, B                             <span class="cm"># set both operands (A and B defined above)</span>
+    resp = <span class="kw">await</span> self.client.call_async(req)        <span class="cm"># send request and wait for server reply</span>
+    self.get_logger().info(<span class="st">f'Result: {A} + {B} = {resp.sum}'</span>)  <span class="cm"># print the answer</span></div>
           </div>
           <div class="callout note">
             <div class="callout-label">Instructor note — why asyncio.ensure_future?</div>

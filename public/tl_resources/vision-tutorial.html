@@ -375,23 +375,23 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
 
     <div class="code-block">
       <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">diffbot/diffbot_vision/diffbot_vision/color_tracker.py</span></div>
-<pre><span class="kw">def</span> <span class="fn">_on_image</span>(self, msg):
-    w, h = msg.width, msg.height
+<pre><span class="kw">def</span> <span class="fn">_on_image</span>(self, msg):                             <span class="comment"># called for every camera frame</span>
+    w, h = msg.width, msg.height                       <span class="comment"># image dimensions in pixels</span>
 
-    <span class="comment"># Convert JsProxy Uint8Array → NumPy RGB array</span>
+    <span class="comment"># Convert JsProxy Uint8Array → NumPy RGB array (h rows × w columns × 3 channels)</span>
     arr = np.asarray(msg.data, dtype=np.uint8).reshape(h, w, <span class="num">3</span>)
 
-    <span class="comment"># Boolean mask: True where pixel is "red enough"</span>
+    <span class="comment"># Boolean mask: True where pixel is "red enough" (R high, G and B low)</span>
     red_mask = (arr[:, :, <span class="num">0</span>] > <span class="num">150</span>) &amp; (arr[:, :, <span class="num">1</span>] &lt; <span class="num">80</span>) &amp; (arr[:, :, <span class="num">2</span>] &lt; <span class="num">80</span>)
 
-    <span class="kw">if</span> np.sum(red_mask) &lt; <span class="num">50</span>:
-        twist.angular.z = <span class="num">0.4</span>          <span class="comment"># spin to search</span>
+    <span class="kw">if</span> np.sum(red_mask) &lt; <span class="num">50</span>:                         <span class="comment"># fewer than 50 red pixels — target not found</span>
+        twist.angular.z = <span class="num">0.4</span>          <span class="comment"># spin slowly to search</span>
     <span class="kw">else</span>:
-        ys, xs = np.where(red_mask)
-        cx = float(np.mean(xs))        <span class="comment"># horizontal centroid</span>
-        offset = (cx - w/<span class="num">2</span>) / (w/<span class="num">2</span>)   <span class="comment"># −1 = left, +1 = right</span>
-        twist.angular.z = -<span class="num">0.8</span> * offset  <span class="comment"># steer toward target</span>
-        twist.linear.x  = <span class="num">0.3</span></pre>
+        ys, xs = np.where(red_mask)    <span class="comment"># pixel coordinates of all red pixels</span>
+        cx = float(np.mean(xs))        <span class="comment"># horizontal centroid of the red blob</span>
+        offset = (cx - w/<span class="num">2</span>) / (w/<span class="num">2</span>)   <span class="comment"># normalised offset: −1 = far left, +1 = far right</span>
+        twist.angular.z = -<span class="num">0.8</span> * offset  <span class="comment"># steer toward target (negative because axes flip)</span>
+        twist.linear.x  = <span class="num">0.3</span>         <span class="comment"># drive forward (m/s)</span></pre>
     </div>
   </div>
 
@@ -457,12 +457,12 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
 
     <div class="code-block">
       <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">import pattern</span></div>
-<pre><span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>
-<span class="kw">import</span> numpy <span class="kw">as</span> np
+<pre><span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>                    <span class="comment"># camera message type</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np                                    <span class="comment"># NumPy for pixel math</span>
 
-<span class="kw">def</span> <span class="fn">callback</span>(msg):
+<span class="kw">def</span> <span class="fn">callback</span>(msg):                                    <span class="comment"># called for each camera frame</span>
     arr = np.asarray(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, <span class="num">3</span>)
-    <span class="comment"># arr is now a (H, W, 3) uint8 NumPy array — standard RGB</span></pre>
+    <span class="comment"># arr is now a (H, W, 3) uint8 NumPy array — standard RGB, ready for pixel math</span></pre>
     </div>
 
     <p>The fields of <code>sensor_msgs/Image</code>:</p>
@@ -494,31 +494,31 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
 
     <div class="code-block">
       <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">minimal vision node template</span></div>
-<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
-<span class="kw">import</span> rclpy
-<span class="kw">from</span> rclpy.node <span class="kw">import</span> <span class="cls">Node</span>
-<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>
-<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> <span class="cls">Twist</span>
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np                                    <span class="comment"># NumPy for pixel math</span>
+<span class="kw">import</span> rclpy                                          <span class="comment"># ROS 2 Python library</span>
+<span class="kw">from</span> rclpy.node <span class="kw">import</span> <span class="cls">Node</span>                           <span class="comment"># base class for every node</span>
+<span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>                    <span class="comment"># camera frame message</span>
+<span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> <span class="cls">Twist</span>                  <span class="comment"># velocity command message</span>
 
 <span class="kw">class</span> <span class="cls">MyVisionNode</span>(<span class="cls">Node</span>):
     <span class="kw">def</span> <span class="fn">__init__</span>(self):
-        super().__init__(<span class="str">'my_vision_node'</span>)
-        self.create_subscription(<span class="cls">Image</span>, <span class="str">'/camera/image_raw'</span>, self.on_image, <span class="num">10</span>)
-        self._pub = self.create_publisher(<span class="cls">Twist</span>, <span class="str">'/cmd_vel'</span>, <span class="num">10</span>)
+        super().__init__(<span class="str">'my_vision_node'</span>)              <span class="comment"># register node name</span>
+        self.create_subscription(<span class="cls">Image</span>, <span class="str">'/camera/image_raw'</span>, self.on_image, <span class="num">10</span>)  <span class="comment"># subscribe to camera</span>
+        self._pub = self.create_publisher(<span class="cls">Twist</span>, <span class="str">'/cmd_vel'</span>, <span class="num">10</span>)  <span class="comment"># publisher for drive commands</span>
 
-    <span class="kw">def</span> <span class="fn">on_image</span>(self, msg):
+    <span class="kw">def</span> <span class="fn">on_image</span>(self, msg):                           <span class="comment"># called for every camera frame</span>
         <span class="comment"># 1. Convert to NumPy array</span>
         img = np.asarray(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, <span class="num">3</span>)
 
         <span class="comment"># 2. Process: detect, threshold, find blobs, etc.</span>
-        brightness = float(np.mean(img))
+        brightness = float(np.mean(img))               <span class="comment"># average pixel brightness 0–255</span>
         self.get_logger().info(f<span class="str">'Mean brightness: {brightness:.1f}'</span>)
 
         <span class="comment"># 3. Act: publish velocity, log results, etc.</span>
 
 <span class="kw">def</span> <span class="fn">main</span>():
-    rclpy.init()
-    rclpy.spin(<span class="cls">MyVisionNode</span>())
+    rclpy.init()                                       <span class="comment"># start the ROS 2 runtime</span>
+    rclpy.spin(<span class="cls">MyVisionNode</span>())                        <span class="comment"># create node and loop until Ctrl-C</span>
 
 <span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
     main()</pre>
