@@ -88,16 +88,21 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
 
 /* ── Code blocks ────────────────────────────────────────────────────────────── */
 .code-block { background:var(--code-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:16px 0; }
-.code-block-header { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:var(--surface); border-bottom:1px solid var(--border); }
-.code-lang { font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
-.code-path { font-size:11px; color:var(--accent); font-family:'SF Mono',Consolas,monospace; }
-.code-block pre { padding:16px; overflow-x:auto; font-family:'SF Mono',Consolas,monospace; font-size:12.5px; line-height:1.6; color:#e6edf3; }
-.code-block pre .comment { color:#6e7681; }
-.code-block pre .kw     { color:#ff7b72; }
-.code-block pre .fn     { color:#d2a8ff; }
-.code-block pre .str    { color:#a5d6ff; }
-.code-block pre .num    { color:#79c0ff; }
-.code-block pre .cls    { color:#ffa657; }
+.code-chrome { display:flex; align-items:center; gap:6px; padding:7px 12px; border-bottom:1px solid var(--border); background:var(--surface); }
+.code-chrome-dots { display:flex; gap:5px; }
+.code-dot { width:9px; height:9px; border-radius:50%; }
+.code-dot.r { background:#FF5F56; } .code-dot.y { background:#FFBD2E; } .code-dot.g { background:#27C93F; }
+.code-chrome-label { font-family:'SF Mono',Consolas,monospace; font-size:10px; color:var(--muted); margin-left:6px; letter-spacing:.04em; }
+.copy-btn { margin-left:auto; padding:2px 9px; font-size:10px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:3px; cursor:pointer; font-family:'SF Mono',Consolas,monospace; letter-spacing:.04em; transition:color .1s,background .1s; flex-shrink:0; }
+.copy-btn:hover { background:var(--surface); color:var(--text); }
+.copy-btn.copied { border-color:var(--green); color:var(--green); }
+.code-body { padding:16px; overflow-x:auto; font-family:'SF Mono',Consolas,monospace; font-size:12.5px; line-height:1.6; color:#e6edf3; white-space:pre; }
+.code-body .comment { color:#6e7681; }
+.code-body .kw      { color:#ff7b72; }
+.code-body .fn      { color:#d2a8ff; }
+.code-body .str     { color:#a5d6ff; }
+.code-body .num     { color:#79c0ff; }
+.code-body .cls     { color:#ffa657; }
 
 /* ── Terminal blocks ────────────────────────────────────────────────────────── */
 .terminal { background:#010409; border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:16px 0; }
@@ -225,8 +230,8 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
     <p>The camera sensor is declared with Gazebo-compatible XML so the same URDF works in both ROSpad (browser) and real Gazebo (on a Linux machine):</p>
 
     <div class="code-block">
-      <div class="code-block-header"><span class="code-lang">XML</span><span class="code-path">in any .urdf file</span></div>
-<pre><span class="comment">&lt;!-- 1. Add a link for the camera body --&gt;</span>
+      <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">XML — in any .urdf file</span></div>
+      <div class="code-body"><span class="comment">&lt;!-- 1. Add a link for the camera body --&gt;</span>
 &lt;link name=<span class="str">"camera_link"</span>&gt;
   &lt;visual&gt;&lt;geometry&gt;&lt;box size=<span class="str">"0.03 0.06 0.04"</span>/&gt;&lt;/geometry&gt;&lt;/visual&gt;
 &lt;/link&gt;
@@ -250,7 +255,7 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
       &lt;frame_name&gt;camera_link&lt;/frame_name&gt;
     &lt;/plugin&gt;
   &lt;/sensor&gt;
-&lt;/gazebo&gt;</pre>
+&lt;/gazebo&gt;</div>
     </div>
 
     <div class="info-box note">
@@ -374,8 +379,8 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
     <p>Open <code>diffbot_vision/color_tracker.py</code> in the editor to explore the numpy-based detection logic. The key section:</p>
 
     <div class="code-block">
-      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">diffbot/diffbot_vision/diffbot_vision/color_tracker.py</span></div>
-<pre><span class="kw">def</span> <span class="fn">_on_image</span>(self, msg):                             <span class="comment"># called for every camera frame</span>
+      <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — diffbot/diffbot_vision/diffbot_vision/color_tracker.py</span></div>
+      <div class="code-body"><span class="kw">def</span> <span class="fn">_on_image</span>(self, msg):                             <span class="comment"># called for every camera frame</span>
     w, h = msg.width, msg.height                       <span class="comment"># image dimensions in pixels</span>
 
     <span class="comment"># Convert JsProxy Uint8Array → NumPy RGB array (h rows × w columns × 3 channels)</span>
@@ -391,7 +396,7 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
         cx = float(np.mean(xs))        <span class="comment"># horizontal centroid of the red blob</span>
         offset = (cx - w/<span class="num">2</span>) / (w/<span class="num">2</span>)   <span class="comment"># normalised offset: −1 = far left, +1 = far right</span>
         twist.angular.z = -<span class="num">0.8</span> * offset  <span class="comment"># steer toward target (negative because axes flip)</span>
-        twist.linear.x  = <span class="num">0.3</span>         <span class="comment"># drive forward (m/s)</span></pre>
+        twist.linear.x  = <span class="num">0.3</span>         <span class="comment"># drive forward (m/s)</span></div>
     </div>
   </div>
 
@@ -456,13 +461,13 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
     <p>Camera topics publish <code>sensor_msgs/Image</code> messages. In Python, you receive them in a subscription callback:</p>
 
     <div class="code-block">
-      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">import pattern</span></div>
-<pre><span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>                    <span class="comment"># camera message type</span>
+      <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — import pattern</span></div>
+      <div class="code-body"><span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>                    <span class="comment"># camera message type</span>
 <span class="kw">import</span> numpy <span class="kw">as</span> np                                    <span class="comment"># NumPy for pixel math</span>
 
 <span class="kw">def</span> <span class="fn">callback</span>(msg):                                    <span class="comment"># called for each camera frame</span>
     arr = np.asarray(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, <span class="num">3</span>)
-    <span class="comment"># arr is now a (H, W, 3) uint8 NumPy array — standard RGB, ready for pixel math</span></pre>
+    <span class="comment"># arr is now a (H, W, 3) uint8 NumPy array — standard RGB, ready for pixel math</span></div>
     </div>
 
     <p>The fields of <code>sensor_msgs/Image</code>:</p>
@@ -493,8 +498,8 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
     <p>Use <code>image_info.py</code> as a starting template — it's the minimal subscriber with NumPy access:</p>
 
     <div class="code-block">
-      <div class="code-block-header"><span class="code-lang">Python</span><span class="code-path">minimal vision node template</span></div>
-<pre><span class="kw">import</span> numpy <span class="kw">as</span> np                                    <span class="comment"># NumPy for pixel math</span>
+      <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — minimal vision node template</span></div>
+      <div class="code-body"><span class="kw">import</span> numpy <span class="kw">as</span> np                                    <span class="comment"># NumPy for pixel math</span>
 <span class="kw">import</span> rclpy                                          <span class="comment"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> <span class="cls">Node</span>                           <span class="comment"># base class for every node</span>
 <span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> <span class="cls">Image</span>                    <span class="comment"># camera frame message</span>
@@ -521,7 +526,7 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
     rclpy.spin(<span class="cls">MyVisionNode</span>())                        <span class="comment"># create node and loop until Ctrl-C</span>
 
 <span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
-    main()</pre>
+    main()</div>
     </div>
 
     <div class="cards">
@@ -600,5 +605,48 @@ header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,.92); bac
   </div>
 
 </div><!-- /page-wrap -->
+<script>
+// Add copy buttons to every code block
+document.querySelectorAll('.code-block').forEach(block => {
+  const chrome = block.querySelector('.code-chrome');
+  const body   = block.querySelector('.code-body');
+  if (!chrome || !body) return;
+
+  const btn = document.createElement('button');
+  btn.className   = 'copy-btn';
+  btn.textContent = 'Copy';
+  chrome.appendChild(btn);
+
+  btn.onclick = async () => {
+    const text = (body.innerText || body.textContent)
+      .split('\n')
+      .map(l => l.replace(/^\$\s/, ''))
+      .join('\n')
+      .trim();
+
+    function execCopy(t) {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    let ok = false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (_) {}
+    }
+    if (!ok) ok = execCopy(text);
+
+    btn.textContent = ok ? 'Copied!' : 'Selected ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+  };
+});
+</script>
 </body>
 </html>

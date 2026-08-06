@@ -192,25 +192,40 @@ a { color: var(--accent); }
   border-radius: 8px; overflow: hidden; margin: 12px 0;
   font-family: 'JetBrains Mono','Fira Code','Cascadia Code',monospace;
 }
-.code-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px; background: rgba(255,255,255,0.04);
+.code-chrome {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
   border-bottom: 1px solid var(--border);
-  font-size: 11px; color: var(--muted);
+  background: rgba(255,255,255,0.04);
 }
-.code-lang { font-weight: 600; }
+.code-chrome-dots { display: flex; gap: 5px; }
+.code-dot { width: 9px; height: 9px; border-radius: 50%; }
+.code-dot.r { background: #FF5F56; }
+.code-dot.y { background: #FFBD2E; }
+.code-dot.g { background: #27C93F; }
+.code-chrome-label {
+  font-family: 'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+  font-size: 10px; color: var(--muted);
+  margin-left: 6px; letter-spacing: 0.04em;
+}
 .copy-btn {
-  background: none; border: 1px solid var(--border); color: var(--muted);
-  font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer;
-  font-family: inherit; transition: all 0.15s;
+  margin-left: auto;
+  padding: 2px 9px; font-size: 10px;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 3px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+  letter-spacing: 0.04em;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
 }
 .copy-btn:hover { background: var(--surface); color: var(--text); }
 .copy-btn.copied { border-color: var(--green); color: var(--green); }
-pre {
-  margin: 0; padding: 16px 14px;
+.code-body {
+  padding: 14px 16px; overflow-x: auto;
+  font-family: 'JetBrains Mono','Fira Code','Cascadia Code',monospace;
   font-size: 13px; line-height: 1.6;
-  overflow-x: auto; white-space: pre;
-  color: #c9d1d9;
+  color: #c9d1d9; white-space: pre;
 }
 code { font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 0.9em; }
 .inline-code {
@@ -534,8 +549,8 @@ footer {
       <div class="step-body">
         <p>In the file explorer, open <span class="inline-code">src/my_talker/my_talker/my_node.py</span>. Replace its contents with:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — talker.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — talker.py</span></div>
+          <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String                       <span class="cm"># plain-text message type</span>
 
@@ -559,7 +574,7 @@ footer {
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(Talker())                                <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up when done</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up when done</span></div>
         </div>
         <p>Click <span class="btn-ref run">▶ Run</span>. You should see <em>"Talker started!"</em> in the terminal, followed by publish messages every second.</p>
       </div>
@@ -570,8 +585,8 @@ footer {
       <div class="step-body">
         <p>Click <strong>+</strong> next to the terminal tabs to open a second terminal session. Then click <strong>+ File</strong> and create <span class="inline-code">src/my_talker/my_talker/listener.py</span>:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — listener.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — listener.py</span></div>
+          <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> std_msgs.msg <span class="kw">import</span> String                       <span class="cm"># plain-text message type</span>
 
@@ -590,7 +605,7 @@ footer {
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(Listener())                              <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up when done</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up when done</span></div>
         </div>
         <p>Open <span class="inline-code">listener.py</span> in the editor, then click <span class="btn-ref run">▶ Run</span>. You will see the messages arriving from the talker.</p>
         <div class="note note-tip"><span class="note-icon">💡</span><span>To stop, click <span class="btn-ref stop">■ Stop</span>. This stops <strong>all</strong> running nodes.</span></div>
@@ -613,8 +628,8 @@ footer {
       <div class="step-body">
         <p>Add both nodes to a launch file so they start together. Create <span class="inline-code">src/my_talker/launch/demo.launch.py</span>:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — demo.launch.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">from</span> launch <span class="kw">import</span> LaunchDescription            <span class="cm"># container that groups launch actions</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — demo.launch.py</span></div>
+          <div class="code-body"><span class="kw">from</span> launch <span class="kw">import</span> LaunchDescription            <span class="cm"># container that groups launch actions</span>
 <span class="kw">from</span> launch_ros.actions <span class="kw">import</span> Node             <span class="cm"># action that starts one ROS 2 node</span>
 
 
@@ -622,17 +637,17 @@ footer {
     <span class="kw">return</span> LaunchDescription([
         Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'my_node'</span>, name=<span class="st">'talker'</span>),    <span class="cm"># start the talker</span>
         Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'listener'</span>, name=<span class="st">'listener'</span>),  <span class="cm"># start the listener</span>
-    ])</pre>
+    ])</div>
         </div>
         <p>The launch file references both executables by name (<span class="inline-code">my_node</span> and <span class="inline-code">listener</span>). Make sure both are registered in <span class="inline-code">src/my_talker/setup.py</span> under <span class="inline-code">console_scripts</span>:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — setup.py (console_scripts)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre>    entry_points={
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — setup.py (console_scripts)</span></div>
+          <div class="code-body">    entry_points={
         <span class="st">'console_scripts'</span>: [
             <span class="st">'my_node = my_talker.my_node:main'</span>,     <span class="cm"># talker — already there from pkg create</span>
             <span class="st">'listener = my_talker.listener:main'</span>,   <span class="cm"># ← add this line</span>
         ],
-    },</pre>
+    },</div>
         </div>
         <p>Then open <span class="inline-code">demo.launch.py</span> and click <span class="btn-ref launch">⚡ Launch</span>. Both nodes start in one step.</p>
       </div>
@@ -672,8 +687,8 @@ footer {
       <div class="step-body">
         <p>Open <span class="inline-code">src/turtle_demo/turtle_demo/my_node.py</span> and replace with:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — turtle_circle.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> math                                            <span class="cm"># for cos() and sin()</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — turtle_circle.py</span></div>
+          <div class="code-body"><span class="kw">import</span> math                                            <span class="cm"># for cos() and sin()</span>
 <span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 
@@ -703,7 +718,7 @@ footer {
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(TurtleCircle())                          <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
         </div>
         <p>Click <span class="btn-ref run">▶ Run</span>. The sim switches to the turtle canvas and draws a circle. Click <span class="btn-ref stop">■ Stop</span> when done.</p>
       </div>
@@ -714,8 +729,8 @@ footer {
       <div class="step-body">
         <p>Change the <span class="inline-code">step()</span> method to draw a square:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — square path</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre>    <span class="kw">def</span> <span class="fn">step</span>(self):
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — square path</span></div>
+          <div class="code-body">    <span class="kw">def</span> <span class="fn">step</span>(self):
         self.t += <span class="nm">0.05</span>
         side   = <span class="nm">4.0</span>           <span class="cm"># square side length</span>
         period = self.t % (<span class="nm">4</span> * side / <span class="nm">1.0</span>)
@@ -728,7 +743,7 @@ footer {
         x = cx0 + t * (cx1 - cx0)
         y = cy0 + t * (cy1 - cy0)
         self.bus.publish(<span class="st">'/turtle1/pose'</span>, <span class="st">'turtlesim/Pose'</span>,
-                         {<span class="st">'x'</span>: x, <span class="st">'y'</span>: y, <span class="st">'theta'</span>: <span class="nm">0.0</span>})</pre>
+                         {<span class="st">'x'</span>: x, <span class="st">'y'</span>: y, <span class="st">'theta'</span>: <span class="nm">0.0</span>})</div>
         </div>
       </div>
     </details>
@@ -782,8 +797,8 @@ footer {
         <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 pkg create my_diffbot_ctrl</span></div>
         <p>Open <span class="inline-code">src/my_diffbot_ctrl/my_diffbot_ctrl/my_node.py</span> and replace with a simple forward-move controller:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — simple_drive.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — simple_drive.py</span></div>
+          <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> geometry_msgs.msg <span class="kw">import</span> Twist                  <span class="cm"># velocity command: linear + angular</span>
 
@@ -805,7 +820,7 @@ footer {
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(DriveForward())                          <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
         </div>
         <p>Keep the launch file running. In a new terminal session, open the controller file and click <span class="btn-ref run">▶ Run</span>. The robot moves forward. Click <span class="btn-ref stop">■ Stop</span> to halt.</p>
       </div>
@@ -816,8 +831,8 @@ footer {
       <div class="step-body">
         <p>Create <span class="inline-code">src/my_diffbot_ctrl/my_diffbot_ctrl/odom_reader.py</span>:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — odom_reader.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — odom_reader.py</span></div>
+          <div class="code-body"><span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> nav_msgs.msg <span class="kw">import</span> Odometry                     <span class="cm"># message carrying position + velocity</span>
 
@@ -836,7 +851,7 @@ footer {
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(OdomReader())                            <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
         </div>
       </div>
     </details>
@@ -893,8 +908,8 @@ footer {
         <div class="cmd-block"><span class="cmd-prompt">$</span><span class="cmd-text">ros2 pkg create my_ur5_ctrl</span></div>
         <p>Open <span class="inline-code">src/my_ur5_ctrl/my_ur5_ctrl/my_node.py</span> and replace with:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — joint_publisher.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> math                                            <span class="cm"># for radians conversions</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — joint_publisher.py</span></div>
+          <div class="code-body"><span class="kw">import</span> math                                            <span class="cm"># for radians conversions</span>
 <span class="kw">import</span> rclpy                                          <span class="cm"># ROS 2 Python library</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState                <span class="cm"># message type for robot joint angles</span>
@@ -928,7 +943,7 @@ POSITIONS = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span c
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(JointPublisher())                        <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
         </div>
         <p>Edit <span class="inline-code">POSITIONS</span> to set joint angles, then click <span class="btn-ref run">▶ Run</span>.</p>
         <div class="note note-tip"><span class="note-icon">💡</span><span>Joint values are in radians. <em>−1.57 ≈ −90°</em>, <em>1.57 ≈ 90°</em>. Positive elbow_joint bends the arm upward.</span></div>
@@ -940,8 +955,8 @@ POSITIONS = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span c
       <div class="step-body">
         <p>Create <span class="inline-code">src/my_ur5_ctrl/my_ur5_ctrl/sine_demo.py</span>:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — sine_demo.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> math, rclpy                                    <span class="cm"># math for sin(); rclpy for ROS 2</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — sine_demo.py</span></div>
+          <div class="code-body"><span class="kw">import</span> math, rclpy                                    <span class="cm"># math for sin(); rclpy for ROS 2</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> sensor_msgs.msg <span class="kw">import</span> JointState                <span class="cm"># message type for robot joint angles</span>
 
@@ -975,7 +990,7 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(SineDemo())                              <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
         </div>
         <p>Open <span class="inline-code">sine_demo.py</span> and click <span class="btn-ref run">▶ Run</span>. The arm dances through smooth sine-wave motion across all 6 joints.</p>
       </div>
@@ -1038,8 +1053,8 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
       <div class="step-body">
         <p>The service pattern in Python:</p>
         <div class="code-block">
-          <div class="code-header"><span class="code-lang">Python — service call pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-<pre><span class="kw">import</span> asyncio, rclpy                                 <span class="cm"># asyncio needed for async service calls</span>
+          <div class="code-chrome"><div class="code-chrome-dots"><div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div></div><span class="code-chrome-label">Python — service call pattern</span></div>
+          <div class="code-body"><span class="kw">import</span> asyncio, rclpy                                 <span class="cm"># asyncio needed for async service calls</span>
 <span class="kw">from</span> rclpy.node <span class="kw">import</span> Node                           <span class="cm"># base class for every node</span>
 <span class="kw">from</span> example_interfaces.srv <span class="kw">import</span> AddTwoInts         <span class="cm"># service type: request a+b, get sum</span>
 
@@ -1064,7 +1079,7 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
 <span class="kw">def</span> <span class="fn">main</span>(args=<span class="kw">None</span>):
     rclpy.init(args=args)                               <span class="cm"># start the ROS 2 runtime</span>
     rclpy.spin(<span class="fn">MyClient</span>())                             <span class="cm"># create node and loop until Ctrl-C</span>
-    rclpy.shutdown()                                    <span class="cm"># clean up</span></pre>
+    rclpy.shutdown()                                    <span class="cm"># clean up</span></div>
         </div>
         <p>Key points: service calls are async — use <code>asyncio.ensure_future()</code> from a timer callback to schedule them, then <code>await client.call_async(req)</code> inside an <code>async def</code>.</p>
       </div>
@@ -1289,13 +1304,45 @@ OFF  = [<span class="nm">0.0</span>, <span class="nm">-1.57</span>, <span class=
 <footer>ROSpad — Browser-based ROS2 IDE · IIT Madras Robotics</footer>
 
 <script>
-function copyCode(btn) {
-  const pre = btn.closest('.code-block').querySelector('pre');
-  const text = pre.innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = 'Copied!';
+// Add copy buttons to every code block
+document.querySelectorAll('.code-block').forEach(block => {
+  const chrome = block.querySelector('.code-chrome');
+  const body   = block.querySelector('.code-body');
+  if (!chrome || !body) return;
+
+  const btn = document.createElement('button');
+  btn.className   = 'copy-btn';
+  btn.textContent = 'Copy';
+  chrome.appendChild(btn);
+
+  btn.onclick = async () => {
+    const text = (body.innerText || body.textContent)
+      .split('\n')
+      .map(l => l.replace(/^\$\s/, ''))
+      .join('\n')
+      .trim();
+
+    function execCopy(t) {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    let ok = false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (_) {}
+    }
+    if (!ok) ok = execCopy(text);
+
+    btn.textContent = ok ? 'Copied!' : 'Selected ✓';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-  });
-}
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+  };
+});
 </script>
