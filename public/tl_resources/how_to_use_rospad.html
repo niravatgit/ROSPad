@@ -624,7 +624,17 @@ footer {
         Node(package=<span class="st">'my_talker'</span>, executable=<span class="st">'listener'</span>, name=<span class="st">'listener'</span>),  <span class="cm"># start the listener</span>
     ])</pre>
         </div>
-        <p>Also add the listener entry point to <span class="inline-code">setup.py</span>. Open it and add <span class="inline-code">'listener = my_talker.listener:main'</span> to <span class="inline-code">console_scripts</span>. Then open <span class="inline-code">demo.launch.py</span> and click <span class="btn-ref launch">⚡ Launch</span>.</p>
+        <p>The launch file references both executables by name (<span class="inline-code">my_node</span> and <span class="inline-code">listener</span>). Make sure both are registered in <span class="inline-code">src/my_talker/setup.py</span> under <span class="inline-code">console_scripts</span>:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">Python — setup.py (console_scripts)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre>    entry_points={
+        <span class="st">'console_scripts'</span>: [
+            <span class="st">'my_node = my_talker.my_node:main'</span>,     <span class="cm"># talker — already there from pkg create</span>
+            <span class="st">'listener = my_talker.listener:main'</span>,   <span class="cm"># ← add this line</span>
+        ],
+    },</pre>
+        </div>
+        <p>Then open <span class="inline-code">demo.launch.py</span> and click <span class="btn-ref launch">⚡ Launch</span>. Both nodes start in one step.</p>
       </div>
     </details>
 
