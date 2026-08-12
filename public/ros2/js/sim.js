@@ -257,6 +257,9 @@ function _setupCameraRigs(cameras, robot, robotType) {
       lens.rotation.x = Math.PI / 2;
       lens.position.z = -0.032;
     }
+    // Layer 1 — visible in main viewport but invisible to the robot's render camera
+    body.layers.set(1);
+    lens.layers.set(1);
     mount.add(body);
     mount.add(lens);
 
@@ -435,6 +438,7 @@ function initSim() {
   simScene.fog = new THREE.Fog(0x070a0f, 10, 50);
 
   simCamera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.01, 100);
+  simCamera.layers.enable(1); // show camera body/lens meshes (hidden from robot render cams)
   // Initial position is overridden on the first animate() tick by updateOrbitCamera()
   simCamera.position.set(3, 3, 3);
   simCamera.lookAt(0, 0, 0);
