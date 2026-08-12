@@ -213,8 +213,8 @@ function _setupCameraRigs(cameras, robot, robotType) {
   if (!cameras.length || !robot || !simRenderer || !simScene) return;
   cameras.forEach(def => {
     // URDF uses ROS frame (x=forward, y=left, z=up).
-    // Three.js robot local frame: x=forward, y=up, z=right.
-    // Conversion: urdf(x,y,z) → three(x, z, -y)
+    // Three.js DiffBot local frame: z=forward, y=up, x=right.
+    // Conversion: urdf(x,y,z) → three(-y, z, x)
     const [ux, uy, uz] = def.offset;
 
     // Attachment point: wrist_3 for arm cameras, robot root for diffbot
@@ -230,17 +230,17 @@ function _setupCameraRigs(cameras, robot, robotType) {
       // converts to Three.js Y-up). Use the URDF joint offset directly.
       mount.position.set(ux, uy, uz);
     } else {
-      // DiffBot: robot root is in Three.js Y-up space; convert ROS(x,y,z)→Three.js(x,z,-y).
-      mount.position.set(ux, uz, -uy);
+      // DiffBot: robot root is in Three.js Y-up space; convert ROS(x,y,z)→Three.js(-y,z,x).
+      mount.position.set(-uy, uz, ux);
     }
     attachTo.add(mount);
 
     const fovDeg = def.fov * (180 / Math.PI);
     const cam = new THREE.PerspectiveCamera(fovDeg, def.width / def.height, 0.01, 50);
     // Three.js camera looks along local -Z by default.
-    // DiffBot forward = robot local +X → rotate camera -90° around Y so -Z becomes +X.
+    // DiffBot forward = robot local +Z → rotate camera 180° around Y so -Z becomes +Z.
     // UR5 arm joints are in ROS Z-up space (inside the -π/2 wrapper); keep default.
-    if (robotType === 'diffbot') cam.rotation.y = -Math.PI / 2;
+    if (robotType === 'diffbot') cam.rotation.y = Math.PI;
     mount.add(cam);
 
     // Visible camera body — procedural geometry so no STL file is needed
@@ -249,9 +249,9 @@ function _setupCameraRigs(cameras, robot, robotType) {
     const body    = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.032, 0.042), bodyMat);
     const lens    = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.014, 0.022, 12), lensMat);
     if (robotType === 'diffbot') {
-      // Camera looks along mount +X; lens nub extends forward
-      lens.rotation.z = Math.PI / 2;
-      lens.position.x = 0.038;
+      // Camera looks along mount +Z; lens nub extends forward
+      lens.rotation.x = Math.PI / 2;
+      lens.position.z = 0.038;
     } else {
       // Camera looks along mount -Z; lens nub extends forward
       lens.rotation.x = Math.PI / 2;
@@ -706,8 +706,8 @@ function updateOrbitCamera() {
   // Smoothly pan target toward robot position
   if (simRobot?.userData?.type === 'diffbot') {
     const d = simRobot.userData;
-    orbitCam.tx += (d.x - orbitCam.tx) * 0.08;
-    orbitCam.tz += (d.y - orbitCam.tz) * 0.08; // d.y maps to world Z
+    orbitCam.tx += (-d.y - orbitCam.tx) * 0.08;
+    orbitCam.tz += (d.x - orbitCam.tz) * 0.08; // d.x maps to world Z (robot forward)
   } else {
     orbitCam.tx = 0; orbitCam.ty = 0.3; orbitCam.tz = 0;
   }
@@ -773,7 +773,7 @@ function makeDiffBot() {
   const g = new THREE.Group();
 
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.15, 0.3),
+    new THREE.BoxGeometry(0.3, 0.15, 0.4),
     new THREE.MeshLambertMaterial({ color: 0x22c55e })
   );
   body.position.y = 0.12;
@@ -1177,31 +1177,33 @@ function animate(time = 0) {
     d.y     += d.vx * Math.sin(d.theta) * dt;
 
     // Sphere-vs-AABB depenetration for each obstacle
+    // Robot THREE.js world position: x = -d.y, z = d.x
     for (const obs of simObstacles) {
       const bb = new THREE.Box3().setFromObject(obs);
-      const nearX = Math.max(bb.min.x, Math.min(d.x, bb.max.x));
-      const nearZ = Math.max(bb.min.z, Math.min(d.y, bb.max.z));
-      const dx = d.x - nearX, dz = d.y - nearZ;
+      const rx = -d.y, rz = d.x;
+      const nearX = Math.max(bb.min.x, Math.min(rx, bb.max.x));
+      const nearZ = Math.max(bb.min.z, Math.min(rz, bb.max.z));
+      const dx = rx - nearX, dz = rz - nearZ;
       const dist2 = dx * dx + dz * dz;
       if (dist2 < ROBOT_RADIUS * ROBOT_RADIUS) {
         const dist = Math.sqrt(dist2) || 1e-6;
         const pen  = ROBOT_RADIUS - dist;
-        d.x += (dx / dist) * pen;
-        d.y += (dz / dist) * pen;
+        d.y -= (dx / dist) * pen;  // THREE.js x = -d.y
+        d.x += (dz / dist) * pen;  // THREE.js z = d.x
       }
     }
 
     // Keep ammo.js kinematic body in sync with resolved position
     if (robotBody && _Ammo && _tmpAmmoTransform) {
       _tmpAmmoTransform.setIdentity();
-      _tmpAmmoVec.setValue(d.x, ROBOT_RADIUS, d.y);
+      _tmpAmmoVec.setValue(-d.y, ROBOT_RADIUS, d.x);
       _tmpAmmoTransform.setOrigin(_tmpAmmoVec);
       robotBody.setWorldTransform(_tmpAmmoTransform);
       robotBody.getMotionState().setWorldTransform(_tmpAmmoTransform);
     }
 
-    simRobot.position.set(d.x, 0, d.y);
-    simRobot.rotation.y = d.theta;
+    simRobot.position.set(-d.y, 0, d.x);
+    simRobot.rotation.y = -d.theta;
 
     // Publish odometry
     rosBus.publish('/odom', 'nav_msgs/Odometry', {
