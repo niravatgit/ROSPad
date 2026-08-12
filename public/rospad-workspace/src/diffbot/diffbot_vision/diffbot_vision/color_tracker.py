@@ -43,8 +43,10 @@ class ColorTracker(Node):
         # msg.data is a JsProxy wrapping the raw pixel bytes from sim.js
         arr = np.asarray(list(msg.data), dtype=np.uint8).reshape(h, w, 3)
 
-        # Detect red pixels: R > 150, G < 80, B < 80
-        red_mask = (arr[:, :, 0] > 150) & (arr[:, :, 1] < 80) & (arr[:, :, 2] < 80)
+        # Detect red pixels — thresholds account for Lambert shading (ambient 0.4 →
+        # shadow at 40% brightness) and the sim palette red 0xf85149 (G=81 in full light).
+        # Matches wrist_detector.py 'red' bounds: R ∈ [70,255], G ∈ [0,95], B ∈ [0,95].
+        red_mask = (arr[:, :, 0] > 70) & (arr[:, :, 1] < 95) & (arr[:, :, 2] < 95)
         red_count = int(np.sum(red_mask))
 
         twist = Twist()
