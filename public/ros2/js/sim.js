@@ -47,6 +47,7 @@ const LIDAR_N     = 360;
 const LIDAR_RANGE = 5.0;
 const simObstacles  = []; // tracked meshes for LiDAR raycasting + collision
 const ROBOT_RADIUS  = 0.26; // metres — bounding circle of diffbot footprint
+let   _robotUrdfXml = null; // stored when URDF is loaded; reused on reset
 
 // ── Robot camera rigs (sensor_msgs/Image publishers driven by WebGLRenderTarget)
 let _robotCameras = []; // [{cam, target, mount, topic, width, height, lastMs}]
@@ -165,6 +166,160 @@ function clearRobot() {
   Object.assign(_simTurtleState, { x: 0, y: 0, theta: 0, vx: 0, wz: 0, active: false });
   _clearTurtleTrail();
   _setSimLabel('');
+}
+
+// ── URDF helpers ──────────────────────────────────────────────────────────────
+function _parseXyz(s) {
+  if (!s) return [0, 0, 0];
+  return s.trim().split(/\s+/).map(Number);
+}
+function _parseRgba(s) {
+  if (!s) return 0x888888;
+  const [r, g, b] = s.trim().split(/\s+/).map(Number);
+  return (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
+}
+
+// Build a Three.js group from a URDF XML string.
+// Supports box, cylinder, sphere primitives. Applies the full kinematic chain
+// (joint origins) and the ROS → Three.js coordinate frame conversion:
+//   ROS(x=fwd, y=left, z=up) → Three.js(-y, z, x)  i.e. T = [[0,-1,0],[0,0,1],[1,0,0]]
+//
+// Visual origins with arbitrary RPY are converted by:
+//   M_three = T * (Rz(yaw)*Ry(pitch)*Rx(roll) | xyz_ros) * T^T
+//
+// The returned group's origin is the URDF root link (e.g. base_footprint at ground).
+// A LiDAR visual element is added at the top of the robot if the URDF has no ray sensor.
+function _buildUrdfVisuals(urdfXml) {
+  const doc = new DOMParser().parseFromString(urdfXml, 'text/xml');
+  const grp = new THREE.Group();
+
+  // Frame transform matrices: T(3×3) maps ROS→THREE.js, T^T is its inverse.
+  // Encoded as homogeneous 4×4 (last row/col = identity).
+  const T = new THREE.Matrix4().set(
+     0, -1,  0, 0,
+     0,  0,  1, 0,
+     1,  0,  0, 0,
+     0,  0,  0, 1
+  );
+  const TT = new THREE.Matrix4().set(   // T^T = T^{-1} (T is orthogonal)
+     0,  0,  1, 0,
+    -1,  0,  0, 0,
+     0,  1,  0, 0,
+     0,  0,  0, 1
+  );
+
+  // Build a Three.js Matrix4 from a ROS-space pose (xyz + RPY).
+  // M_three = T * M_ros * T^T  (change-of-basis formula).
+  function rosToThreeMat(xyz, rpy) {
+    const [roll, pitch, yaw] = rpy;
+    // ROS RPY = Rz(yaw) * Ry(pitch) * Rx(roll)  (extrinsic XYZ)
+    const Rx = new THREE.Matrix4().makeRotationX(roll);
+    const Ry = new THREE.Matrix4().makeRotationY(pitch);
+    const Rz = new THREE.Matrix4().makeRotationZ(yaw);
+    const M_ros = new THREE.Matrix4().multiplyMatrices(Rz, new THREE.Matrix4().multiplyMatrices(Ry, Rx));
+    M_ros.setPosition(...xyz);
+    return new THREE.Matrix4().multiplyMatrices(T, M_ros).multiply(TT);
+  }
+
+  // Parse every link's visuals
+  const linkVisuals = {};
+  for (const link of doc.querySelectorAll('robot > link')) {
+    const name = link.getAttribute('name');
+    const vs = [];
+    for (const vis of link.querySelectorAll('visual')) {
+      const o = vis.querySelector('origin');
+      vs.push({
+        xyz:   _parseXyz(o?.getAttribute('xyz')),
+        rpy:   _parseXyz(o?.getAttribute('rpy')),
+        geo:   vis.querySelector('geometry'),
+        color: _parseRgba(vis.querySelector('material > color')?.getAttribute('rgba')),
+      });
+    }
+    linkVisuals[name] = vs;
+  }
+
+  // Parse every joint
+  const joints = {};
+  for (const j of doc.querySelectorAll('robot > joint')) {
+    const o = j.querySelector('origin');
+    joints[j.getAttribute('name')] = {
+      parent: j.querySelector('parent')?.getAttribute('link'),
+      child:  j.querySelector('child')?.getAttribute('link'),
+      xyz: _parseXyz(o?.getAttribute('xyz')),
+      rpy: _parseXyz(o?.getAttribute('rpy')),
+    };
+  }
+
+  // child link → the joint that produced it
+  const childJoint = {};
+  for (const j of Object.values(joints)) childJoint[j.child] = j;
+
+  // Compute a link's Three.js world matrix by walking up to the root (memoised)
+  const linkWorldMat = {};
+  function getLinkWorld(name) {
+    if (linkWorldMat[name]) return linkWorldMat[name];
+    const pj = childJoint[name];
+    if (!pj) return (linkWorldMat[name] = new THREE.Matrix4()); // root = identity
+    const parentMat = getLinkWorld(pj.parent);
+    const localMat  = rosToThreeMat(pj.xyz, pj.rpy);
+    return (linkWorldMat[name] = new THREE.Matrix4().multiplyMatrices(parentMat, localMat));
+  }
+
+  // Material cache
+  const matCache = {};
+  const getLambertMat = c => (matCache[c] ??= new THREE.MeshLambertMaterial({ color: c }));
+
+  // Build a Three.js geometry from a URDF <geometry> element.
+  // Dimensions are given in ROS frame; BoxGeometry(sy, sz, sx) re-maps them so that
+  // after the frame transform (x→z, y→-x, z→y) the extents land in the right axes.
+  function makeGeo(geoEl) {
+    const box = geoEl.querySelector('box');
+    const cyl = geoEl.querySelector('cylinder');
+    const sph = geoEl.querySelector('sphere');
+    if (box) {
+      const [sx, sy, sz] = _parseXyz(box.getAttribute('size'));
+      return new THREE.BoxGeometry(sy, sz, sx); // width=ROS.y, height=ROS.z, depth=ROS.x
+    }
+    if (cyl) {
+      const r = Number(cyl.getAttribute('radius') || 0.05);
+      const l = Number(cyl.getAttribute('length') || 0.1);
+      // URDF cylinder axis = ROS Z → after frame transform = Three.js Y (matches CylinderGeometry default)
+      return new THREE.CylinderGeometry(r, r, l, 20);
+    }
+    if (sph) return new THREE.SphereGeometry(Number(sph.getAttribute('radius') || 0.025), 12, 8);
+    return null; // mesh files not supported — handled via GLB loader elsewhere
+  }
+
+  // Place each visual as a mesh in the group
+  let hasLidar = false;
+  for (const [linkName, visuals] of Object.entries(linkVisuals)) {
+    if (linkName.toLowerCase().includes('lidar') || linkName.toLowerCase().includes('laser'))
+      hasLidar = true;
+    const worldMat = getLinkWorld(linkName);
+    for (const { xyz, rpy, geo, color } of visuals) {
+      if (!geo) continue;
+      const geometry = makeGeo(geo);
+      if (!geometry) continue;
+      const mesh = new THREE.Mesh(geometry, getLambertMat(color));
+      // Compose: link's world matrix × visual-origin transform (both in Three.js space)
+      const visMat = new THREE.Matrix4().multiplyMatrices(worldMat, rosToThreeMat(xyz, rpy));
+      mesh.applyMatrix4(visMat);
+      mesh.castShadow = true;
+      grp.add(mesh);
+    }
+  }
+
+  // LiDAR visual — added only if the URDF does not already define a ray sensor link
+  if (!hasLidar) {
+    const lidar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.05, 16),
+      getLambertMat(0x58a6ff)
+    );
+    lidar.position.set(0, 0.22, 0);
+    grp.add(lidar);
+  }
+
+  return grp;
 }
 
 // ── URDF camera sensor parsing ────────────────────────────────────────────────
@@ -731,7 +886,7 @@ async function loadRobot(type, cameras = []) {
   _clearCameraRigs();
   if (simRobot) simScene.remove(simRobot);
   if (type === 'diffbot') {
-    simRobot = makeDiffBot();
+    simRobot = _robotUrdfXml ? _buildUrdfVisuals(_robotUrdfXml) : _makeDiffBotFallback();
     simRobot.userData = { type: 'diffbot', vx: 0, wz: 0, x: 0, y: 0, theta: 0 };
     simScene.add(simRobot);
     _setSimLabel('DiffBot');
@@ -769,35 +924,21 @@ async function loadRobot(type, cameras = []) {
 }
 
 // ── Robot builders ────────────────────────────────────────────────────────────
-function makeDiffBot() {
+// Minimal placeholder shown before any URDF is received (or if URDF is unavailable).
+function _makeDiffBotFallback() {
   const g = new THREE.Group();
-
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(0.3, 0.15, 0.4),
+    new THREE.BoxGeometry(0.2, 0.1, 0.3),
     new THREE.MeshLambertMaterial({ color: 0x22c55e })
   );
-  body.position.y = 0.12;
-  body.castShadow = true;
+  body.position.y = 0.115;
   g.add(body);
-
-  const wMat = new THREE.MeshLambertMaterial({ color: 0x3d444d });
-  const wGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.04, 16);
-  [[-0.22, 0, 0.13], [-0.22, 0, -0.13], [0.22, 0, 0.13], [0.22, 0, -0.13]].forEach(([x, y, z]) => {
-    const w = new THREE.Mesh(wGeo, wMat);
-    w.position.set(x, 0.08, z);
-    w.rotation.z = Math.PI / 2;
-    w.castShadow = true;
-    g.add(w);
-  });
-
-  // LiDAR sensor (blue cylinder on top)
   const lidar = new THREE.Mesh(
     new THREE.CylinderGeometry(0.04, 0.04, 0.05, 16),
     new THREE.MeshLambertMaterial({ color: 0x58a6ff })
   );
   lidar.position.set(0, 0.22, 0);
   g.add(lidar);
-
   return g;
 }
 
@@ -1112,6 +1253,9 @@ function _loadRobotFromUrdf(urdfXml) {
 
   // Parse any <gazebo><sensor type="camera"> blocks from the URDF
   const cameras = _parseCamerasFromUrdf(urdfXml);
+
+  // Store for reset (loadRobot reuses _robotUrdfXml when rebuilding after resetSim)
+  _robotUrdfXml = urdfXml;
 
   const simCanvas = document.getElementById('sim-canvas');
   if (simCanvas) { simCanvas.style.display = 'block'; resize(); }
