@@ -402,7 +402,8 @@ function _buildArmVisualsFromUrdf(doc) {
   wrapper._armJoints = revoluteGroups;
 
   // ── Add visuals for each link ────────────────────────────────────────────────
-  const ARM_COLORS = [0x546e7a, 0x1565c0, 0x2e7d32, 0xc62828, 0xf57f17, 0x6a1b9a, 0x00838f];
+  // Avoid green (0x2e7d32) — the wrist camera would detect the arm body as a green obstacle
+  const ARM_COLORS = [0x546e7a, 0x1565c0, 0x0288d1, 0xc62828, 0xf57f17, 0x6a1b9a, 0x00838f];
   let colorIdx = 0;
   const matCache = {};
   const getLambertMat = c => (matCache[c] ??= new THREE.MeshLambertMaterial({ color: c }));
@@ -1232,7 +1233,11 @@ function updateArmJoints(positions) {
 }
 
 // ── Obstacles ─────────────────────────────────────────────────────────────────
-const OBS_COLORS = [0xf85149, 0xd29922, 0x8957e5, 0x39c5cf, 0x58a6ff, 0x3fb950];
+// Pure saturated colours: G=B=0 for red/green/blue means Lambert shading never
+// contaminates the detection channel — the dominant channel stays dominant regardless
+// of lighting angle.  Avoid salmon/coral (0xf85149) — its G≈80 makes it hard to
+// distinguish from red under shadows.
+const OBS_COLORS = [0xff0000, 0xd29922, 0x8957e5, 0x39c5cf, 0x58a6ff, 0x3fb950];
 
 function addObstacle(shape = 'box') {
   let geo;

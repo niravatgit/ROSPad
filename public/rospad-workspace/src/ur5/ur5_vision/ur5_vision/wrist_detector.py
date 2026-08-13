@@ -22,16 +22,24 @@ from sensor_msgs.msg import Image
 
 
 # Colour definitions: name → (R_min, R_max, G_min, G_max, B_min, B_max)
-# Ranges account for Lambert shading (ambient 0.4 → shadow at 40% brightness).
-# Pure colours: #ff0000, #00ff00, #0000ff.
-# Sim palette (OBS_COLORS): 0xf85149, 0x3fb950, 0x39c5cf, 0x58a6ff, 0xd29922, 0x8957e5.
+# Ranges account for Lambert shading with sRGB output (Three.js r160 default).
+# Shadow factor ≈ 0.4 (ambient only) → sRGB shadow brightness ≈ 55–70% of max.
+#
+# OBS_COLORS in sim.js: 0xff0000 (red), 0xd29922 (orange), 0x8957e5 (purple),
+#                        0x39c5cf (cyan), 0x58a6ff (blue), 0x3fb950 (green).
+# ARM_COLORS link 2 changed from 0x2e7d32 (green) to 0x0288d1 (blue) to avoid
+# false-positive green detection from the arm body itself.
+#
+# G_min for green raised to 110 so dark scene pixels (background sRGB G≈56,
+# floor shadow sRGB G≈55) never trigger.  Pure green 0x3fb950 in deepest
+# shadow → sRGB G ≈ 139, well above threshold.
 COLOURS = {
-    'red':    ( 70, 255,   0,  95,   0,  95),  # #ff0000 + 0xf85149
-    'green':  (  0,  85,  60, 255,   0,  90),  # #00ff00 + 0x3fb950
-    'blue':   (  0, 115,   0, 115,  80, 255),  # #0000ff + 0x58a6ff (B_min 80 covers shadow)
-    'cyan':   (  0,  70, 100, 255,  90, 255),  # 0x39c5cf (G≈B both high, R low)
-    'orange': ( 70, 220,  50, 170,   0,  55),  # 0xd29922
-    'purple': ( 40, 165,  15, 110,  60, 240),  # 0x8957e5
+    'red':    (120, 255,   0,  60,   0,  60),  # 0xff0000: shadow sRGB (183,0,0); G=B=0 always
+    'green':  (  0,  90, 110, 255,   0, 160),  # 0x3fb950: shadow sRGB (81,139,93); G>>R,B
+    'blue':   (  0, 100,   0, 100,  80, 255),  # 0x58a6ff + 0x0000ff: B dominant
+    'cyan':   (  0,  70, 100, 255,  90, 255),  # 0x39c5cf: G≈B both high, R low
+    'orange': ( 80, 240,  50, 180,   0,  60),  # 0xd29922: R high, G medium, B low
+    'purple': ( 40, 180,   0, 100,  60, 240),  # 0x8957e5: R and B both moderate, G low
 }
 
 
