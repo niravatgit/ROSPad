@@ -48,6 +48,8 @@ const LIDAR_RANGE = 5.0;
 const simObstacles  = []; // tracked meshes for LiDAR raycasting + collision
 const ROBOT_RADIUS  = 0.26; // metres — bounding circle of diffbot footprint
 let   _robotUrdfXml = null; // stored when URDF is loaded; reused on reset
+let   _armJointData = []; // [{parent,child,xyz,rpy,axis}] revolute joints — populated by arm URDF builder
+let   _armStaticTF  = []; // [{parent,child,xyz,rpy}] fixed joints — populated by arm URDF builder
 
 // ── Robot camera rigs (sensor_msgs/Image publishers driven by WebGLRenderTarget)
 let _robotCameras = []; // [{cam, target, mount, topic, width, height, lastMs}]
@@ -189,8 +191,14 @@ function _parseRgba(s) {
 //
 // The returned group's origin is the URDF root link (e.g. base_footprint at ground).
 // A LiDAR visual element is added at the top of the robot if the URDF has no ray sensor.
-function _buildUrdfVisuals(urdfXml) {
+async function _buildUrdfVisuals(urdfXml) {
   const doc = new DOMParser().parseFromString(urdfXml, 'text/xml');
+
+  // Dispatch to arm builder for serial manipulators (≥ 4 revolute joints, no wheel links)
+  const nRevolute = doc.querySelectorAll('robot > joint[type="revolute"]').length;
+  const hasWheels = /wheel/i.test(urdfXml);
+  if (!hasWheels && nRevolute >= 4) return _buildArmVisualsFromUrdf(doc);
+
   const grp = new THREE.Group();
 
   // Frame transform matrices: T(3×3) maps ROS→THREE.js, T^T is its inverse.
@@ -320,6 +328,139 @@ function _buildUrdfVisuals(urdfXml) {
   }
 
   return grp;
+}
+
+// Build a hierarchical arm scene graph from a parsed URDF document.
+// Uses wrapper.rotation.x = -π/2 to convert ROS Z-up → Three.js Y-up in one shot.
+// Joint xyz/rpy are applied in ROS-space within the wrapper.
+// GLBs are pre-aligned to their link frames so visual origins are skipped for mesh geometry.
+// Mesh loads fire in background; wrapper is returned immediately so the arm structure is visible.
+function _buildArmVisualsFromUrdf(doc) {
+  const wrapper = new THREE.Group();
+  wrapper.rotation.x = -Math.PI / 2;
+
+  // ── Parse joints ────────────────────────────────────────────────────────────
+  const parsedJoints = {};
+  for (const j of doc.querySelectorAll('robot > joint')) {
+    const o  = j.querySelector('origin');
+    const ax = j.querySelector('axis');
+    parsedJoints[j.getAttribute('name')] = {
+      type:   j.getAttribute('type') ?? 'fixed',
+      parent: j.querySelector('parent')?.getAttribute('link') ?? '',
+      child:  j.querySelector('child')?.getAttribute('link') ?? '',
+      xyz:    _parseXyz(o?.getAttribute('xyz')),
+      rpy:    _parseXyz(o?.getAttribute('rpy')),
+      axis:   ax ? _parseXyz(ax.getAttribute('xyz')) : [0, 0, 1],
+    };
+  }
+
+  // ── Find root link (not a child of any joint) ────────────────────────────────
+  const allLinks   = new Set();
+  const childLinks = new Set();
+  for (const j of Object.values(parsedJoints)) {
+    allLinks.add(j.parent); allLinks.add(j.child); childLinks.add(j.child);
+  }
+  const rootLink = [...allLinks].find(l => !childLinks.has(l)) ?? 'world';
+
+  // ── BFS to order joints parent → child ──────────────────────────────────────
+  const queue = [rootLink], visited = new Set([rootLink]), orderedJoints = [];
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const j of Object.values(parsedJoints)) {
+      if (j.parent === cur && !visited.has(j.child)) {
+        orderedJoints.push(j); visited.add(j.child); queue.push(j.child);
+      }
+    }
+  }
+
+  // ── Build group hierarchy in ROS-space ──────────────────────────────────────
+  const linkGroups = {};
+  const getLinkGrp = name => (linkGroups[name] ??= new THREE.Group());
+  const revoluteGroups = [];
+  _armJointData = [];
+  _armStaticTF  = [];
+
+  for (const j of orderedJoints) {
+    const childGrp = getLinkGrp(j.child);
+    childGrp.position.set(j.xyz[0], j.xyz[1], j.xyz[2]);
+    const origQuat = new THREE.Quaternion()
+      .setFromEuler(new THREE.Euler(j.rpy[0], j.rpy[1], j.rpy[2], 'ZYX'));
+    childGrp.quaternion.copy(origQuat);
+
+    if (j.type === 'revolute' || j.type === 'continuous') {
+      childGrp._origQuat = origQuat.clone();
+      childGrp._axis     = new THREE.Vector3(j.axis[0], j.axis[1], j.axis[2]);
+      revoluteGroups.push(childGrp);
+      _armJointData.push({ parent: j.parent, child: j.child, xyz: j.xyz, rpy: j.rpy, axis: j.axis });
+    } else if (j.type === 'fixed') {
+      _armStaticTF.push({ parent: j.parent, child: j.child, xyz: j.xyz, rpy: j.rpy });
+    }
+    getLinkGrp(j.parent).add(childGrp);
+  }
+
+  wrapper.add(getLinkGrp(rootLink));
+  wrapper._armJoints = revoluteGroups;
+
+  // ── Add visuals for each link ────────────────────────────────────────────────
+  const ARM_COLORS = [0x546e7a, 0x1565c0, 0x2e7d32, 0xc62828, 0xf57f17, 0x6a1b9a, 0x00838f];
+  let colorIdx = 0;
+  const matCache = {};
+  const getLambertMat = c => (matCache[c] ??= new THREE.MeshLambertMaterial({ color: c }));
+
+  for (const link of doc.querySelectorAll('robot > link')) {
+    const linkName = link.getAttribute('name');
+    const linkGrp  = getLinkGrp(linkName);
+
+    for (const vis of link.querySelectorAll('visual')) {
+      const o     = vis.querySelector('origin');
+      const vxyz  = _parseXyz(o?.getAttribute('xyz'));
+      const vrpy  = _parseXyz(o?.getAttribute('rpy'));
+      const geoEl = vis.querySelector('geometry');
+      if (!geoEl) continue;
+
+      const meshEl = geoEl.querySelector('mesh');
+      const boxEl  = geoEl.querySelector('box');
+      const cylEl  = geoEl.querySelector('cylinder');
+      const sphEl  = geoEl.querySelector('sphere');
+
+      if (meshEl) {
+        const filename = meshEl.getAttribute('filename') ?? '';
+        if (!filename.endsWith('.glb')) continue; // skip .dae / .stl
+        const tint = ARM_COLORS[colorIdx++ % ARM_COLORS.length];
+        // GLBs are pre-aligned to their link frame — skip visual origin (added at identity)
+        const holder = new THREE.Group();
+        linkGrp.add(holder);
+        _loadGLBMesh(_resolveRosUrl(filename)).then(mg => {
+          mg.traverse(c => { if (c.isMesh) c.material.color.setHex(tint); });
+          holder.add(mg);
+        }).catch(() => {
+          holder.add(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), getLambertMat(tint)));
+        });
+      } else {
+        // Primitive geometry: apply visual origin in ROS-space (within wrapper)
+        const color  = _parseRgba(vis.querySelector('material > color')?.getAttribute('rgba'));
+        const holder = new THREE.Group();
+        holder.position.set(vxyz[0], vxyz[1], vxyz[2]);
+        holder.quaternion.setFromEuler(new THREE.Euler(vrpy[0], vrpy[1], vrpy[2], 'ZYX'));
+        linkGrp.add(holder);
+
+        let geo = null;
+        if (boxEl) {
+          const [sx, sy, sz] = _parseXyz(boxEl.getAttribute('size'));
+          geo = new THREE.BoxGeometry(sx, sy, sz);
+        } else if (cylEl) {
+          const r = Number(cylEl.getAttribute('radius') || 0.05);
+          const l = Number(cylEl.getAttribute('length') || 0.1);
+          geo = new THREE.CylinderGeometry(r, r, l, 20);
+        } else if (sphEl) {
+          geo = new THREE.SphereGeometry(Number(sphEl.getAttribute('radius') || 0.025), 12, 8);
+        }
+        if (geo) { const m = new THREE.Mesh(geo, getLambertMat(color)); m.castShadow = true; holder.add(m); }
+      }
+    }
+  }
+
+  return wrapper;
 }
 
 // ── URDF camera sensor parsing ────────────────────────────────────────────────
@@ -886,7 +1027,7 @@ async function loadRobot(type, cameras = []) {
   _clearCameraRigs();
   if (simRobot) simScene.remove(simRobot);
   if (type === 'diffbot') {
-    simRobot = _robotUrdfXml ? _buildUrdfVisuals(_robotUrdfXml) : _makeDiffBotFallback();
+    simRobot = _robotUrdfXml ? await _buildUrdfVisuals(_robotUrdfXml) : _makeDiffBotFallback();
     simRobot.userData = { type: 'diffbot', vx: 0, wz: 0, x: 0, y: 0, theta: 0 };
     simScene.add(simRobot);
     _setSimLabel('DiffBot');
@@ -897,29 +1038,29 @@ async function loadRobot(type, cameras = []) {
     simRobot = new THREE.Group();
     simRobot.userData = { type: 'arm' };
     simScene.add(simRobot);
-    make6DOFArm().then(g => {
-      if (simRobot.userData.type !== 'arm') return;
-      simScene.remove(simRobot);
-      simRobot = g;
-      simRobot.userData = { type: 'arm' };
-      simScene.add(simRobot);
-      _setSimLabel('UR5 Arm');
-      // Upright home pose: shoulder_lift and wrist_1 at -π/2 so the arm looks
-      // correct on load. Overridden the moment any node publishes /joint_states.
-      updateArmJoints([0, -Math.PI / 2, 0, -Math.PI / 2, 0, 0]);
-      // Broadcast static TF (fixed joints) once on load
-      _publishStaticTF();
-      // Aim camera at mid-arm height
-      orbitCam.ty = 0.5;
-      if (cameras.length) _setupCameraRigs(cameras, simRobot, 'arm');
-    }).catch(() => {
-      // Fallback to stick arm if GLB loading fails
-      simScene.remove(simRobot);
-      simRobot = make6DOFFallback();
-      simRobot.userData = { type: 'arm' };
-      simScene.add(simRobot);
-      if (cameras.length) _setupCameraRigs(cameras, simRobot, 'arm');
-    });
+    (_robotUrdfXml ? _buildUrdfVisuals(_robotUrdfXml) : Promise.resolve(make6DOFFallback()))
+      .then(g => {
+        if (simRobot.userData.type !== 'arm') return;
+        simScene.remove(simRobot);
+        simRobot = g;
+        simRobot.userData = { type: 'arm' };
+        simScene.add(simRobot);
+        _setSimLabel('UR5 Arm');
+        // Upright home pose: shoulder_lift and wrist_1 at -π/2 so the arm looks
+        // correct on load. Overridden the moment any node publishes /joint_states.
+        updateArmJoints([0, -Math.PI / 2, 0, -Math.PI / 2, 0, 0]);
+        // Broadcast static TF (fixed joints) once on load
+        _publishStaticTF();
+        // Aim camera at mid-arm height
+        orbitCam.ty = 0.5;
+        if (cameras.length) _setupCameraRigs(cameras, simRobot, 'arm');
+      }).catch(() => {
+        simScene.remove(simRobot);
+        simRobot = make6DOFFallback();
+        simRobot.userData = { type: 'arm' };
+        simScene.add(simRobot);
+        if (cameras.length) _setupCameraRigs(cameras, simRobot, 'arm');
+      });
   }
 }
 
@@ -1041,139 +1182,42 @@ async function _loadGLBMesh(url) {
   return group;
 }
 
-// ── UR5 manual kinematic chain ────────────────────────────────────────────────
-// Bypasses URDFLoader hierarchy assembly. All objects use global THREE only.
-// Parameters extracted verbatim from ur5.urdf.
-//
-// Visual origin note: the ur5.urdf visual origins (rpy=[π/2,0,−π/2] etc.) were
-// calibrated for the upstream STL/DAE meshes which had arm geometry along Y.
-// Our GLBs were converted from Z_UP DAEs with vertex coords preserved exactly,
-// so each mesh already sits in the correct link frame (arm along Z where the
-// joint chain extends along Z, wrist pieces along Y where wrist joints are in Y).
-// Applying the URDF visual origin rotations maps Z_mesh → −X_link = horizontal.
-// Solution: add meshes at identity relative to each joint group — no visual origin.
-
-// Revolute joints: xyz = position in parent-link frame, rpy = joint origin rotation,
-// axis = revolute axis (in joint's own frame after rpy applied)
-const _UR5_JDEFS = [
-  { xyz: [0,  0,       0.089159], rpy: [0, 0,          0], axis: [0, 0, 1] }, // shoulder_pan
-  { xyz: [0,  0.13585, 0       ], rpy: [0, Math.PI/2,  0], axis: [0, 1, 0] }, // shoulder_lift
-  { xyz: [0, -0.1197,  0.425   ], rpy: [0, 0,          0], axis: [0, 1, 0] }, // elbow
-  { xyz: [0,  0,       0.39225 ], rpy: [0, Math.PI/2,  0], axis: [0, 1, 0] }, // wrist_1
-  { xyz: [0,  0.093,   0       ], rpy: [0, 0,          0], axis: [0, 0, 1] }, // wrist_2
-  { xyz: [0,  0,       0.09465 ], rpy: [0, 0,          0], axis: [0, 1, 0] }, // wrist_3
-];
-
-// TF frame pairs matching the URDF joint chain (ROS Z-up convention)
-const _UR5_TF_FRAMES = [
-  { parent: 'base_link_inertia', child: 'shoulder_link'  },
-  { parent: 'shoulder_link',     child: 'upper_arm_link' },
-  { parent: 'upper_arm_link',    child: 'forearm_link'   },
-  { parent: 'forearm_link',      child: 'wrist_1_link'   },
-  { parent: 'wrist_1_link',      child: 'wrist_2_link'   },
-  { parent: 'wrist_2_link',      child: 'wrist_3_link'   },
-];
-
-// Publish /tf_static for fixed joints (world→base_link, base→base_inertia, tool0, ee_link)
+// Publish /tf_static for all fixed joints parsed from the loaded arm URDF
 function _publishStaticTF() {
   function qFromRPY(r, p, y) {
-    const q = new THREE.Quaternion()
-      .setFromEuler(new THREE.Euler(r, p, y, 'ZYX'));
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(r, p, y, 'ZYX'));
     return { x: q.x, y: q.y, z: q.z, w: q.w };
   }
-  function tf(frame_id, child_frame_id, xyz, q) {
-    return {
-      header: { stamp: { sec: 0, nanosec: 0 }, frame_id },
-      child_frame_id,
-      transform: { translation: { x: xyz[0], y: xyz[1], z: xyz[2] }, rotation: q }
-    };
-  }
-  rosBus.publish('/tf_static', 'tf2_msgs/TFMessage', {
-    transforms: [
-      tf('world',        'base_link',        [0, 0, 0],      { x:0, y:0, z:0, w:1 }),
-      tf('base_link',    'base_link_inertia',[0, 0, 0],      qFromRPY(0, 0, Math.PI)),
-      tf('wrist_3_link', 'tool0',            [0, 0.0823, 0], qFromRPY(Math.PI/2, 0, 0)),
-      tf('wrist_3_link', 'ee_link',          [0, 0.0823, 0], { x:0, y:0, z:0, w:1 }),
-    ]
-  });
+  const transforms = _armStaticTF.map(j => ({
+    header: { stamp: { sec: 0, nanosec: 0 }, frame_id: j.parent },
+    child_frame_id: j.child,
+    transform: {
+      translation: { x: j.xyz[0], y: j.xyz[1], z: j.xyz[2] },
+      rotation: qFromRPY(j.rpy[0], j.rpy[1], j.rpy[2])
+    }
+  }));
+  rosBus.publish('/tf_static', 'tf2_msgs/TFMessage', { transforms });
 }
 
-// Publish /tf for the 6 revolute joints given their current angle array
+// Publish /tf for revolute joints given their current angle array
 function _publishDynamicTF(positions) {
   const stamp = { sec: Math.floor(Date.now() / 1000), nanosec: (Date.now() % 1000) * 1e6 | 0 };
-  const transforms = _UR5_TF_FRAMES.map((f, i) => {
-    const def   = _UR5_JDEFS[i];
+  const transforms = _armJointData.map((j, i) => {
     const angle = positions[i] ?? 0;
-    // total rotation = origQuat × axisRotation(angle)  (same as URDFLoader setJointValue)
     const q = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(def.axis[0], def.axis[1], def.axis[2]), angle
+      new THREE.Vector3(j.axis[0], j.axis[1], j.axis[2]), angle
     );
-    q.premultiply(new THREE.Quaternion()
-      .setFromEuler(new THREE.Euler(def.rpy[0], def.rpy[1], def.rpy[2], 'ZYX')));
+    q.premultiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(j.rpy[0], j.rpy[1], j.rpy[2], 'ZYX')));
     return {
-      header: { stamp, frame_id: f.parent },
-      child_frame_id: f.child,
+      header: { stamp, frame_id: j.parent },
+      child_frame_id: j.child,
       transform: {
-        translation: { x: def.xyz[0], y: def.xyz[1], z: def.xyz[2] },
+        translation: { x: j.xyz[0], y: j.xyz[1], z: j.xyz[2] },
         rotation: { x: q.x, y: q.y, z: q.z, w: q.w }
       }
     };
   });
   rosBus.publish('/tf', 'tf2_msgs/TFMessage', { transforms });
-}
-
-async function make6DOFArm() {
-  // Kick off all 7 mesh loads concurrently (non-blocking — hierarchy built below first)
-  // Uses package:// URL — resolved by _resolveRosUrl to /ros2/packages/ur5_description/...
-  const meshPromises = ['base','shoulder','upperarm','forearm','wrist1','wrist2','wrist3']
-    .map(n => _loadGLBMesh(`package://ur5_description/meshes/visual/${n}.glb`).catch(() => new THREE.Group()));
-
-  // ── Build the full kinematic hierarchy synchronously ────────────────────────
-  // Wrapper converts entire ROS Z-up hierarchy → Three.js Y-up in one shot.
-  const wrapper = new THREE.Group();
-  wrapper.rotation.x = -Math.PI / 2;
-
-  // Fixed base joint: base_link → base_link_inertia (URDF origin rpy=[0,0,π])
-  const baseFixed = new THREE.Group();
-  baseFixed.rotation.z = Math.PI;
-  wrapper.add(baseFixed);
-
-  // 6 revolute joint groups with stored origQuat + axis for angle updates
-  const jointGroups = _UR5_JDEFS.map(def => {
-    const g = new THREE.Group();
-    g.position.set(def.xyz[0], def.xyz[1], def.xyz[2]);
-    const origQuat = new THREE.Quaternion()
-      .setFromEuler(new THREE.Euler(def.rpy[0], def.rpy[1], def.rpy[2], 'ZYX'));
-    g.quaternion.copy(origQuat);
-    g._origQuat = origQuat.clone();
-    g._axis     = new THREE.Vector3(def.axis[0], def.axis[1], def.axis[2]);
-    return g;
-  });
-
-  // Chain joints into parent→child sequence
-  baseFixed.add(jointGroups[0]);
-  for (let i = 0; i < 5; i++) jointGroups[i].add(jointGroups[i + 1]);
-
-  // Placeholder mesh holder groups (identity transform — no visual origin rotation).
-  // Mesh 0 (base) is in baseFixed frame; meshes 1-6 are in jointGroup[0-5] frames.
-  // The GLB vertices are already in the correct link-frame coordinate system.
-  const meshHolders = Array.from({ length: 7 }, () => new THREE.Group());
-  baseFixed.add(meshHolders[0]);
-  for (let i = 0; i < 6; i++) jointGroups[i].add(meshHolders[i + 1]);
-
-  wrapper._armJoints = jointGroups;
-
-  // Per-link colors: base, shoulder, upper_arm, forearm, wrist_1, wrist_2, wrist_3
-  const _UR5_LINK_COLORS = [0x546e7a, 0x1565c0, 0x2e7d32, 0xc62828, 0xf57f17, 0x6a1b9a, 0x00838f];
-
-  // Attach each mesh to its holder as it loads; tint each link a distinct color
-  meshPromises.forEach((p, i) => p.then(mg => {
-    const hex = _UR5_LINK_COLORS[i] ?? 0xb0b4b8;
-    mg.traverse(child => { if (child.isMesh) child.material.color.setHex(hex); });
-    meshHolders[i].add(mg);
-  }));
-
-  return wrapper;
 }
 
 function updateArmJoints(positions) {
