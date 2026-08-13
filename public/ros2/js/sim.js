@@ -465,6 +465,28 @@ function _buildArmVisualsFromUrdf(doc) {
 }
 
 // ── URDF camera sensor parsing ────────────────────────────────────────────────
+// Parse <gazebo><plugin name="rospad_bridge"> blocks from a URDF.
+// Returns { subscribe: [{topic, type}], publish: [{topic, type}] }
+function _parseBridgeFromUrdf(urdfXml) {
+  const dom = new DOMParser().parseFromString(urdfXml, 'text/xml');
+  const result = { subscribe: [], publish: [] };
+  for (const gz of dom.querySelectorAll('gazebo')) {
+    const plugin = gz.querySelector('plugin[name="rospad_bridge"]');
+    if (!plugin) continue;
+    for (const el of plugin.querySelectorAll('subscribe')) {
+      const topic = el.getAttribute('topic');
+      const type  = el.getAttribute('type') || '*';
+      if (topic) result.subscribe.push({ topic, type });
+    }
+    for (const el of plugin.querySelectorAll('publish')) {
+      const topic = el.getAttribute('topic');
+      const type  = el.getAttribute('type') || '*';
+      if (topic) result.publish.push({ topic, type });
+    }
+  }
+  return result;
+}
+
 function _parseCamerasFromUrdf(urdfXml) {
   const dom = new DOMParser().parseFromString(urdfXml, 'text/xml');
   const cameras = [];
@@ -535,9 +557,14 @@ function _setupCameraRigs(cameras, robot, robotType) {
     const fovDeg = def.fov * (180 / Math.PI);
     const cam = new THREE.PerspectiveCamera(fovDeg, def.width / def.height, 0.01, 50);
     // Three.js camera looks along local -Z by default.
-    // DiffBot forward = robot local +Z → rotate camera 180° around Y so -Z becomes +Z.
-    // UR5 arm joints are in ROS Z-up space (inside the -π/2 wrapper); keep default.
-    if (robotType === 'diffbot') cam.rotation.y = Math.PI;
+    // DiffBot forward = robot local +Z → rotate 180° around Y so -Z becomes +Z.
+    // Arm: URDF says camera looks along wrist +Y (tool axis) → rotate +π/2 around X
+    //   so local -Z maps to +Y in the joint's ROS-space parent frame.
+    if (robotType === 'diffbot') {
+      cam.rotation.y = Math.PI;
+    } else {
+      cam.rotation.x = Math.PI / 2;
+    }
     mount.add(cam);
 
     // Visible camera body — procedural geometry so no STL file is needed
@@ -550,9 +577,8 @@ function _setupCameraRigs(cameras, robot, robotType) {
       lens.rotation.x = Math.PI / 2;
       lens.position.z = 0.038;
     } else {
-      // Camera looks along mount -Z; lens nub extends forward
-      lens.rotation.x = Math.PI / 2;
-      lens.position.z = -0.032;
+      // Camera looks along mount +Y; lens nub extends forward along +Y
+      lens.position.y = 0.032;
     }
     // Layer 1 — visible in main viewport but invisible to the robot's render camera
     body.layers.set(1);
@@ -1292,13 +1318,10 @@ function _loadRobotFromUrdf(urdfXml) {
     type = 'arm';
   }
 
-  // Declare only the topics this robot type actually uses
-  if (type === 'diffbot') {
-    ['/scan', '/odom', '/cmd_vel'].forEach(t => rosBus.trackPublisher(t, 'sim_bridge'));
-    rosBus.trackSubscriber('/cmd_vel', 'sim_bridge');
-  } else if (type === 'arm') {
-    rosBus.trackSubscriber('/joint_states', 'sim_bridge');
-  }
+  // Declare topics from <gazebo><plugin name="rospad_bridge"> blocks in the URDF
+  const bridge = _parseBridgeFromUrdf(urdfXml);
+  bridge.publish.forEach(({ topic, type: msgType }) => rosBus.trackPublisher(topic, 'sim_bridge', msgType));
+  bridge.subscribe.forEach(({ topic }) => rosBus.trackSubscriber(topic, 'sim_bridge'));
 
   // Parse any <gazebo><sensor type="camera"> blocks from the URDF
   const cameras = _parseCamerasFromUrdf(urdfXml);

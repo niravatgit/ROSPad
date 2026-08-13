@@ -97,4 +97,13 @@
     <origin xyz="-0.12 0 -0.04" rpy="0 0 0"/>
   </joint>
 
+  <!-- ROSpad sim bridge: topics the simulator subscribes to / publishes for this robot -->
+  <gazebo>
+    <plugin name="rospad_bridge" filename="librospad.so">
+      <subscribe topic="/cmd_vel"    type="geometry_msgs/Twist"/>
+      <publish   topic="/scan"       type="sensor_msgs/LaserScan"/>
+      <publish   topic="/odom"       type="nav_msgs/Odometry"/>
+    </plugin>
+  </gazebo>
+
 </robot>

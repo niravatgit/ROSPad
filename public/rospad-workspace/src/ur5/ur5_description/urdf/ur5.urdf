@@ -215,4 +215,11 @@
     <origin xyz="0 0.0823 0" rpy="0 0 0"/>
   </joint>
 
+  <!-- ROSpad sim bridge: topics the simulator subscribes to / publishes for this robot -->
+  <gazebo>
+    <plugin name="rospad_bridge" filename="librospad.so">
+      <subscribe topic="/joint_states" type="sensor_msgs/JointState"/>
+    </plugin>
+  </gazebo>
+
 </robot>
