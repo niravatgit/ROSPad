@@ -195,6 +195,10 @@ body {
 .map-table td { padding: .45rem .7rem; border-bottom: 1px solid #0a1520; color: #8090b0; }
 .map-table td:first-child { color: #58a6ff; font-family: monospace; }
 .map-table td:last-child { color: #22d3aa; }
+
+/* ── URDF section ── */
+.slide[data-section="urdf"] { background: #0c0a09; }
+.slide[data-section="urdf"] .badge { background: rgba(224,108,53,.15); color: #e06c35; border: 1px solid rgba(224,108,53,.35); }
 </style>
 </head>
 <body>
@@ -605,6 +609,297 @@ self.sub = self.<span class="fn">create_subscription</span>(
     </div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════ URDF SECTION ══ -->
+
+<!-- U1. What is URDF? -->
+<div class="slide" data-section="urdf" id="slide-urdf-1" data-notes="URDF is the lingua franca of ROS2 robot description. Ask students: if you change the arm length, do you need to update rviz? MoveIt2? The sim? Answer: NO — change the URDF once, every tool updates. This is the power of the single-source approach. Every professional robotics project starts with a URDF or its macro language xacro.">
+  <span class="badge">URDF</span>
+  <h2>One file, every tool</h2>
+  <div class="sub">URDF — Unified Robot Description Format. An XML file that is the single source of truth for your robot's geometry, joints, and sensors.</div>
+  <div class="cols" style="margin-top:1vh;flex:1">
+    <div class="col">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:1vh">What it captures</div>
+      <ul>
+        <li><strong>Links</strong> — rigid bodies: visual shape, collision hull, mass &amp; inertia</li>
+        <li><strong>Joints</strong> — connections between links: type, offset from parent, rotation axis, motion limits</li>
+        <li><strong>Sensors</strong> — cameras, lidar, and IMUs declared inline</li>
+        <li><strong>Materials</strong> — colours and textures for visualisation</li>
+        <li><strong>Inertial</strong> — mass, centre of mass, inertia tensor for physics simulation</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:1vh">Every tool reads it</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.6vh">
+        <div style="background:rgba(224,108,53,.15);border:1.5px solid rgba(224,108,53,.4);border-radius:6px;padding:.45rem 1.4rem;font-family:monospace;font-size:.8rem;font-weight:700;color:#e06c35">your_robot.urdf</div>
+        <div style="color:#4a2810;font-size:1.1rem">↓</div>
+        <div style="background:rgba(255,255,255,.04);border:1.5px solid #1e2e40;border-radius:6px;padding:.4rem 1.2rem;font-size:.72rem;color:#7080a0;text-align:center">robot_state_publisher<br><span style="color:#3a4a5e;font-size:.64rem">/robot_description &nbsp;·&nbsp; /tf &nbsp;·&nbsp; /tf_static</span></div>
+        <div style="color:#4a2810;font-size:1.1rem">↓</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center">
+          <div style="background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);border-radius:5px;padding:.3rem .8rem;font-size:.69rem;color:#58a6ff">rviz2</div>
+          <div style="background:rgba(188,140,255,.1);border:1px solid rgba(188,140,255,.3);border-radius:5px;padding:.3rem .8rem;font-size:.69rem;color:#bc8cff">MoveIt2</div>
+          <div style="background:rgba(34,211,170,.1);border:1px solid rgba(34,211,170,.3);border-radius:5px;padding:.3rem .8rem;font-size:.69rem;color:#22d3aa">Nav2</div>
+          <div style="background:rgba(224,108,53,.1);border:1px solid rgba(224,108,53,.3);border-radius:5px;padding:.3rem .8rem;font-size:.69rem;color:#e06c35">ROSpad</div>
+          <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.13);border-radius:5px;padding:.3rem .8rem;font-size:.69rem;color:#5a6a80">Gazebo</div>
+        </div>
+      </div>
+      <div style="margin-top:1.8vh;font-size:.74rem;color:#6a4a30;background:rgba(224,108,53,.06);border:1px solid rgba(224,108,53,.15);border-radius:6px;padding:.55rem .9rem;line-height:1.5">
+        Change the arm length in the URDF once → rviz2, MoveIt2, and the sim all update automatically. No code changes needed.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- U2. Links and Joints -->
+<div class="slide" data-section="urdf" id="slide-urdf-2" data-notes="Core vocabulary. A URDF is a kinematic tree: links are nodes (bodies), joints are directed edges (connections). Every joint has exactly one parent and one child. The root link has no parent joint — typically 'world' or 'base_link'. Draw the tree on the whiteboard for the RRR arm before showing the next slide. Ask: how many degrees of freedom does a fixed joint contribute? (Zero.) How many does a revolute contribute? (One.)">
+  <span class="badge">URDF</span>
+  <h2>Links and Joints</h2>
+  <div class="sub">A URDF is a kinematic tree. Links are rigid bodies; joints define how they connect and move.</div>
+  <div class="cols" style="margin-top:.6vh">
+    <div class="col">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:.7vh">A Link has three sub-elements</div>
+<div class="code">&lt;<span class="fn">link</span> name=<span class="st">"forearm"</span>&gt;
+
+  &lt;<span class="fn">visual</span>&gt;          <span class="cm">&lt;!-- what students see --&gt;</span>
+    &lt;<span class="fn">origin</span> xyz=<span class="st">"0 0 0.175"</span>/&gt;
+    &lt;<span class="fn">geometry</span>&gt;&lt;<span class="fn">box</span> size=<span class="st">"0.04 0.04 0.35"</span>/&gt;&lt;/<span class="fn">geometry</span>&gt;
+  &lt;/<span class="fn">visual</span>&gt;
+
+  &lt;<span class="fn">collision</span>&gt;      <span class="cm">&lt;!-- physics hit shape --&gt;</span>
+    &lt;<span class="fn">geometry</span>&gt;&lt;<span class="fn">box</span> size=<span class="st">"0.04 0.04 0.35"</span>/&gt;&lt;/<span class="fn">geometry</span>&gt;
+  &lt;/<span class="fn">collision</span>&gt;
+
+  &lt;<span class="fn">inertial</span>&gt;       <span class="cm">&lt;!-- mass and inertia for dynamics --&gt;</span>
+    &lt;<span class="fn">mass</span> value=<span class="st">"0.8"</span>/&gt;
+    &lt;<span class="fn">origin</span> xyz=<span class="st">"0 0 0.175"</span>/&gt;
+  &lt;/<span class="fn">inertial</span>&gt;
+
+&lt;/<span class="fn">link</span>&gt;</div>
+    </div>
+    <div class="col">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:.7vh">Joint types</div>
+      <table class="map-table" style="margin-bottom:1.4vh">
+        <thead><tr><th>Type</th><th>Motion</th><th>Typical use</th></tr></thead>
+        <tbody>
+          <tr><td>revolute</td><td>rotates, limited range</td><td style="color:#c0c8d8">shoulder, elbow, wrist</td></tr>
+          <tr><td>continuous</td><td>rotates, no limits</td><td style="color:#c0c8d8">wheel, propeller</td></tr>
+          <tr><td>prismatic</td><td>slides along axis</td><td style="color:#c0c8d8">linear actuator, gripper rail</td></tr>
+          <tr><td>fixed</td><td>rigid — no DOF</td><td style="color:#c0c8d8">camera mount, sensor bracket</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:.5vh">Key joint elements</div>
+      <ul>
+        <li><strong>&lt;parent&gt; / &lt;child&gt;</strong> — which links it connects (directed: parent → child)</li>
+        <li><strong>&lt;origin&gt;</strong> — offset from parent frame to child frame — effectively the link length</li>
+        <li><strong>&lt;axis&gt;</strong> — unit vector the joint rotates or slides along</li>
+        <li><strong>&lt;limit&gt;</strong> — min/max in radians (revolute) or metres (prismatic)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- U3. RRR Arm -->
+<div class="slide" data-section="urdf" id="slide-urdf-3" data-notes="Walk the kinematic tree: base_link is the root (no parent joint). joint1 attaches link1 to base_link at the top of the base cylinder (0.05 m up), rotating about Z — pan/yaw. joint2 attaches link2 to link1 at its far end (0.4 m up), rotating about Y — pitch/lift. joint3 attaches link3 the same way. The origin xyz on each joint IS the link length — that single number is all you need to change to make a longer arm. Ask students: what does joint1 axis='0 0 1' mean physically? (The shoulder rotates left-right around the vertical axis.)">
+  <span class="badge">URDF</span>
+  <h2>A 3-DOF arm in URDF</h2>
+  <div class="sub">Three revolute joints chained in series. Each &lt;joint&gt; origin encodes the link length; the axis element defines which way it bends.</div>
+  <div class="cols" style="margin-top:.4vh;align-items:flex-start">
+
+    <!-- Left: diagram + tree -->
+    <div class="col" style="display:flex;flex-direction:column;align-items:center;gap:.6vh">
+      <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#7a3a18;font-weight:700;align-self:flex-start">Kinematic tree</div>
+
+      <svg viewBox="0 0 220 215" style="width:100%;max-width:230px">
+        <!-- Ground hatch -->
+        <line x1="70" y1="206" x2="160" y2="206" stroke="#1a2535" stroke-width="1.5"/>
+        <line x1="75"  y1="210" x2="80"  y2="206" stroke="#1a2535" stroke-width="1.2"/>
+        <line x1="87"  y1="210" x2="92"  y2="206" stroke="#1a2535" stroke-width="1.2"/>
+        <line x1="99"  y1="210" x2="104" y2="206" stroke="#1a2535" stroke-width="1.2"/>
+        <line x1="111" y1="210" x2="116" y2="206" stroke="#1a2535" stroke-width="1.2"/>
+        <line x1="123" y1="210" x2="128" y2="206" stroke="#1a2535" stroke-width="1.2"/>
+        <line x1="135" y1="210" x2="140" y2="206" stroke="#1a2535" stroke-width="1.2"/>
+        <line x1="147" y1="210" x2="152" y2="206" stroke="#1a2535" stroke-width="1.2"/>
+
+        <!-- Base link (cylinder schematic) -->
+        <rect x="90" y="188" width="40" height="18" rx="3" fill="#121f2c" stroke="#243a4e" stroke-width="1.5"/>
+        <text x="110" y="200" text-anchor="middle" fill="#3a5878" font-size="7.5" font-family="monospace" font-weight="700">base_link</text>
+
+        <!-- Link 1: J1(110,186) → J2(72,112) -->
+        <line x1="110" y1="186" x2="72" y2="112" stroke="#1d4a6d" stroke-width="9" stroke-linecap="round"/>
+        <text x="82" y="154" fill="#34587e" font-size="7.5" font-family="monospace" transform="rotate(-60,82,154)">link1 · 0.4 m</text>
+
+        <!-- Link 2: J2(72,112) → J3(148,65) -->
+        <line x1="72" y1="112" x2="148" y2="65" stroke="#1d4a6d" stroke-width="7.5" stroke-linecap="round"/>
+        <text x="118" y="80" text-anchor="middle" fill="#34587e" font-size="7.5" font-family="monospace">link2 · 0.35 m</text>
+
+        <!-- Link 3: J3(148,65) → EE(193,57) -->
+        <line x1="148" y1="65" x2="193" y2="57" stroke="#1d4a6d" stroke-width="6" stroke-linecap="round"/>
+        <text x="174" y="52" text-anchor="middle" fill="#34587e" font-size="7.5" font-family="monospace">link3</text>
+
+        <!-- J1 circle + arc arrow showing Z-rotation -->
+        <circle cx="110" cy="186" r="10" fill="#090f1c" stroke="#e06c35" stroke-width="2"/>
+        <text x="110" y="189.5" text-anchor="middle" fill="#e06c35" font-size="7.5" font-weight="bold" font-family="sans-serif">J1</text>
+        <path d="M99,175 A13,13 0,0,1 122,180" fill="none" stroke="#e06c35" stroke-width="1.2" stroke-dasharray="3,2" opacity=".75"/>
+        <polygon points="122,180 119,175.5 124,176" fill="#e06c35" opacity=".75"/>
+        <text x="124" y="174" fill="#a04a1e" font-size="7" font-family="monospace">Z↑</text>
+
+        <!-- J2 circle + Y-axis dot indicator -->
+        <circle cx="72" cy="112" r="9" fill="#090f1c" stroke="#e06c35" stroke-width="2"/>
+        <text x="72" y="115.5" text-anchor="middle" fill="#e06c35" font-size="7.5" font-weight="bold" font-family="sans-serif">J2</text>
+        <circle cx="54" cy="112" r="4" fill="none" stroke="#a04a1e" stroke-width="1.3"/>
+        <circle cx="54" cy="112" r="1.4" fill="#a04a1e"/>
+        <text x="49" y="107" fill="#a04a1e" font-size="6.8" font-family="monospace">Y</text>
+
+        <!-- J3 circle + Y-axis dot indicator -->
+        <circle cx="148" cy="65" r="8" fill="#090f1c" stroke="#e06c35" stroke-width="2"/>
+        <text x="148" y="68.2" text-anchor="middle" fill="#e06c35" font-size="7.5" font-weight="bold" font-family="sans-serif">J3</text>
+        <circle cx="159" cy="60" r="3.5" fill="none" stroke="#a04a1e" stroke-width="1.3"/>
+        <circle cx="159" cy="60" r="1.2" fill="#a04a1e"/>
+        <text x="164" y="56" fill="#a04a1e" font-size="6.8" font-family="monospace">Y</text>
+
+        <!-- End effector -->
+        <circle cx="193" cy="57" r="5.5" fill="#09201a" stroke="#22d3aa" stroke-width="1.8"/>
+        <line x1="189" y1="53" x2="197" y2="61" stroke="#22d3aa" stroke-width="1.4"/>
+        <line x1="189" y1="61" x2="197" y2="53" stroke="#22d3aa" stroke-width="1.4"/>
+        <text x="201" y="55" fill="#22d3aa" font-size="7.5" font-family="monospace">EE</text>
+
+        <!-- ROS axis indicator (bottom-left) -->
+        <line x1="12" y1="196" x2="12" y2="178" stroke="#2e4a5e" stroke-width="1.2"/>
+        <polygon points="12,175 9.5,180 14.5,180" fill="#2e4a5e"/>
+        <text x="15" y="178" fill="#3a5870" font-size="6.5" font-family="monospace">Z</text>
+        <line x1="12" y1="196" x2="30" y2="196" stroke="#2e4a5e" stroke-width="1.2"/>
+        <polygon points="33,196 28,193.5 28,198.5" fill="#2e4a5e"/>
+        <text x="34" y="199" fill="#3a5870" font-size="6.5" font-family="monospace">X</text>
+      </svg>
+
+      <!-- kinematic tree text -->
+      <div style="font-size:.67rem;color:#2a3c50;font-family:monospace;line-height:1.85;align-self:flex-start;padding-left:.5rem;margin-top:.3vh">
+        base_link<br>
+        └─ <span style="color:#e06c35">joint1</span> → link1<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:#e06c35">joint2</span> → link2<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:#e06c35">joint3</span> → link3
+      </div>
+    </div>
+
+    <!-- Right: URDF code -->
+    <div class="col">
+      <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#7a3a18;font-weight:700;margin-bottom:.5vh">rrr_arm.urdf</div>
+<div class="code" style="font-size:.66rem;line-height:1.6">&lt;robot name=<span class="st">"rrr_arm"</span>&gt;
+
+  &lt;<span class="fn">link</span> name=<span class="st">"base_link"</span>&gt;
+    &lt;visual&gt;&lt;geometry&gt;
+      &lt;<span class="fn">cylinder</span> radius=<span class="st">"0.05"</span> length=<span class="st">"0.1"</span>/&gt;
+    &lt;/geometry&gt;&lt;/visual&gt;
+  &lt;/<span class="fn">link</span>&gt;
+
+  &lt;<span class="fn">link</span> name=<span class="st">"link1"</span>&gt;
+    &lt;visual&gt;&lt;origin xyz=<span class="st">"0 0 0.2"</span>/&gt;
+      &lt;geometry&gt;&lt;<span class="fn">box</span> size=<span class="st">"0.04 0.04 0.4"</span>/&gt;&lt;/geometry&gt;
+    &lt;/visual&gt;
+  &lt;/<span class="fn">link</span>&gt;
+
+  <span class="cm">&lt;!-- link2, link3: same pattern, different sizes --&gt;</span>
+
+  &lt;<span class="fn">joint</span> name=<span class="st">"joint1"</span> type=<span class="st">"revolute"</span>&gt;
+    &lt;parent link=<span class="st">"base_link"</span>/&gt;  &lt;child link=<span class="st">"link1"</span>/&gt;
+    &lt;origin xyz=<span class="st">"0 0 0.05"</span>/&gt;     <span class="cm">&lt;!-- top of base cylinder --&gt;</span>
+    &lt;axis xyz=<span class="st">"0 0 1"</span>/&gt;           <span class="cm">&lt;!-- pan: rotate about Z --&gt;</span>
+    &lt;limit lower=<span class="st">"-3.14"</span> upper=<span class="st">"3.14"</span>
+           effort=<span class="st">"10"</span> velocity=<span class="st">"1"</span>/&gt;
+  &lt;/<span class="fn">joint</span>&gt;
+
+  &lt;<span class="fn">joint</span> name=<span class="st">"joint2"</span> type=<span class="st">"revolute"</span>&gt;
+    &lt;parent link=<span class="st">"link1"</span>/&gt;  &lt;child link=<span class="st">"link2"</span>/&gt;
+    &lt;origin xyz=<span class="st">"0 0 0.4"</span>/&gt;      <span class="cm">&lt;!-- end of link1 (= its length) --&gt;</span>
+    &lt;axis xyz=<span class="st">"0 1 0"</span>/&gt;           <span class="cm">&lt;!-- pitch: rotate about Y --&gt;</span>
+    &lt;limit lower=<span class="st">"-1.57"</span> upper=<span class="st">"1.57"</span>
+           effort=<span class="st">"10"</span> velocity=<span class="st">"1"</span>/&gt;
+  &lt;/<span class="fn">joint</span>&gt;
+
+  &lt;<span class="fn">joint</span> name=<span class="st">"joint3"</span> type=<span class="st">"revolute"</span>&gt;
+    &lt;parent link=<span class="st">"link2"</span>/&gt;  &lt;child link=<span class="st">"link3"</span>/&gt;
+    &lt;origin xyz=<span class="st">"0 0 0.35"</span>/&gt;     <span class="cm">&lt;!-- end of link2 --&gt;</span>
+    &lt;axis xyz=<span class="st">"0 1 0"</span>/&gt;           <span class="cm">&lt;!-- pitch: rotate about Y --&gt;</span>
+    &lt;limit lower=<span class="st">"-1.57"</span> upper=<span class="st">"1.57"</span>
+           effort=<span class="st">"10"</span> velocity=<span class="st">"1"</span>/&gt;
+  &lt;/<span class="fn">joint</span>&gt;
+
+&lt;/robot&gt;</div>
+    </div>
+  </div>
+</div>
+
+<!-- U4. URDF Pipeline -->
+<div class="slide" data-section="urdf" id="slide-urdf-4" data-notes="This answers 'what actually runs?' when a student launches ur5_bringup.launch.py. The launch file reads the URDF from disk, passes it as a string parameter to robot_state_publisher. That node reads /joint_states and publishes the TF tree. ROSpad does the same thing automatically — it intercepts /robot_description and builds the 3D model + topic registrations from the URDF's plugin blocks. Key point: the URDF is the contract; robot_state_publisher is the engine that executes it.">
+  <span class="badge">URDF</span>
+  <h2>From .urdf to working robot</h2>
+  <div class="cols" style="margin-top:.8vh;gap:3.5vw">
+
+    <div class="col">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:.9vh">Standard ROS2 pipeline</div>
+
+      <div style="display:flex;flex-direction:column;gap:.5vh;margin-bottom:1.2vh">
+        <div style="display:flex;gap:.7rem;align-items:center">
+          <div style="width:1.5rem;height:1.5rem;border-radius:50%;background:rgba(224,108,53,.18);border:1.5px solid rgba(224,108,53,.5);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#e06c35;flex-shrink:0">1</div>
+          <div style="font-size:.77rem;color:#7a8aa8;line-height:1.4">Author writes <code style="font-family:monospace;color:#e06c35">rrr_arm.urdf</code> — links, joints, sensors all in one file</div>
+        </div>
+        <div style="padding-left:2.2rem;color:#3a2810;line-height:1">↓</div>
+        <div style="display:flex;gap:.7rem;align-items:center">
+          <div style="width:1.5rem;height:1.5rem;border-radius:50%;background:rgba(224,108,53,.18);border:1.5px solid rgba(224,108,53,.5);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#e06c35;flex-shrink:0">2</div>
+          <div style="font-size:.77rem;color:#7a8aa8;line-height:1.4">Launch file reads the URDF, passes it as a string parameter to <code style="font-family:monospace;color:#58a6ff">robot_state_publisher</code></div>
+        </div>
+        <div style="padding-left:2.2rem;color:#3a2810;line-height:1">↓</div>
+        <div style="display:flex;gap:.7rem;align-items:center">
+          <div style="width:1.5rem;height:1.5rem;border-radius:50%;background:rgba(224,108,53,.18);border:1.5px solid rgba(224,108,53,.5);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#e06c35;flex-shrink:0">3</div>
+          <div style="font-size:.77rem;color:#7a8aa8;line-height:1.4"><code style="font-family:monospace;color:#58a6ff">robot_state_publisher</code> publishes <code style="font-family:monospace;color:#22d3aa">/robot_description</code>, subscribes to <code style="font-family:monospace;color:#22d3aa">/joint_states</code></div>
+        </div>
+        <div style="padding-left:2.2rem;color:#3a2810;line-height:1">↓</div>
+        <div style="display:flex;gap:.7rem;align-items:center">
+          <div style="width:1.5rem;height:1.5rem;border-radius:50%;background:rgba(224,108,53,.18);border:1.5px solid rgba(224,108,53,.5);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#e06c35;flex-shrink:0">4</div>
+          <div style="font-size:.77rem;color:#7a8aa8;line-height:1.4">TF tree published on <code style="font-family:monospace;color:#22d3aa">/tf</code> and <code style="font-family:monospace;color:#22d3aa">/tf_static</code> — every tool knows where every link is in the world</div>
+        </div>
+      </div>
+
+<div class="code" style="font-size:.62rem;line-height:1.6"><span class="cm"># launch/rrr_arm.launch.py</span>
+<span class="kw">import</span> xacro
+urdf = xacro.<span class="fn">process_file</span>(<span class="st">'rrr_arm.urdf'</span>).<span class="fn">toxml</span>()
+
+Node(package=<span class="st">'robot_state_publisher'</span>,
+     executable=<span class="st">'robot_state_publisher'</span>,
+     parameters=[{<span class="st">'robot_description'</span>: urdf}])</div>
+    </div>
+
+    <div class="col">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#a04020;font-weight:700;margin-bottom:.9vh">ROSpad extras — same URDF, browser aware</div>
+      <div style="font-size:.76rem;color:#5a6a80;line-height:1.5;margin-bottom:.8vh">Two Gazebo-compatible plugin blocks in the URDF give ROSpad everything it needs — no sim.js changes required:</div>
+
+      <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:#5a4a28;font-weight:700;margin-bottom:.35vh">Camera sensor → publishes image topic</div>
+<div class="code" style="font-size:.62rem;line-height:1.55">&lt;gazebo reference=<span class="st">"camera_link"</span>&gt;
+  &lt;sensor type=<span class="st">"camera"</span>&gt;
+    &lt;horizontal_fov&gt;1.047&lt;/horizontal_fov&gt;
+    &lt;image&gt;&lt;width&gt;320&lt;/width&gt;&lt;height&gt;240&lt;/height&gt;&lt;/image&gt;
+    &lt;plugin name=<span class="st">"rospad_camera"</span>&gt;
+      &lt;remapping&gt;~/image_raw:=<span class="st">/camera/image_raw</span>&lt;/remapping&gt;
+    &lt;/plugin&gt;
+  &lt;/sensor&gt;
+&lt;/gazebo&gt;</div>
+
+      <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:#5a4a28;font-weight:700;margin:.7vh 0 .35vh">Bridge plugin → declares topic names</div>
+<div class="code" style="font-size:.62rem;line-height:1.55">&lt;gazebo&gt;
+  &lt;plugin name=<span class="st">"rospad_bridge"</span>&gt;
+    &lt;subscribe topic=<span class="st">"/joint_states"</span>
+               type=<span class="st">"sensor_msgs/JointState"</span>/&gt;
+  &lt;/plugin&gt;
+&lt;/gazebo&gt;</div>
+
+      <div style="margin-top:.7vh;font-size:.72rem;color:#4a4a28;background:rgba(224,108,53,.06);border:1px solid rgba(224,108,53,.14);border-radius:6px;padding:.5rem .8rem;line-height:1.5">
+        Any URDF with these blocks works in ROSpad automatically. Add a new robot package with its own URDF and it just works.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ END URDF ══ -->
 
 <!-- 10. Why ROSpad? -->
 <div class="slide" data-section="rospad" id="slide-10" data-notes="This is the sales pitch for why you're using ROSpad in this course. The key point: students learn the exact same API, concepts, and workflow — but with zero setup friction. The 30-minute install problem is gone.">
